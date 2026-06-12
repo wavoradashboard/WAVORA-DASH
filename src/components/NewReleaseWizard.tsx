@@ -19,6 +19,38 @@ import {
 import { User, Release, ReleaseTrack, ArtistProfile, Label } from '../types';
 import { supabase } from '../supabase';
 
+export const GENRE_DATA: Record<string, string[]> = {
+  "Alternative": ["Indie Rock", "Grunge", "Gothic Rock", "College Rock", "Britpop", "Dream Pop", "Shoegaze", "Post-Punk", "Noise Rock"],
+  "Anime": ["J-Pop", "OST", "Vocaloid", "J-Rock", "Ani-Song"],
+  "Blues": ["Delta Blues", "Chicago Blues", "Electric Blues", "Blues Rock", "Acoustic Blues", "Soul Blues"],
+  "Brazilian": ["Bossa Nova", "Samba", "MPB", "Forró", "Pagode", "Sertanejo", "Funk Carioca"],
+  "Children's Music": ["Nursery Rhymes", "Lullabies", "Educational", "Sing-Along", "Storytelling"],
+  "Christian & Gospel": ["Contemporary Christian", "Gospel", "Worship", "Christian Rock", "Christian Hip-Hop"],
+  "Classical": ["Baroque", "Romantic", "Classical Period", "Modern Classical", "Orchestral", "Opera", "Chamber Music", "Choral"],
+  "Comedy": ["Stand-up", "Parody", "Satire", "Musical Comedy", "Novelty"],
+  "Country": ["Traditional Country", "Outlaw Country", "Bluegrass", "Country Pop", "Honky Tonk", "Americana"],
+  "Dance": ["House", "Techno", "Trance", "Dubstep", "Drum & Bass", "Hardstyle", "Eurodance", "Bassline", "Garage"],
+  "Electronic": ["Ambient", "Downtempo", "IDM", "Synthwave", "Electro", "Chiptune", "Industrial", "Trip-Hop", "Folktronica"],
+  "Folk": ["Traditional Folk", "Contemporary Folk", "Indie Folk", "Folk Rock", "Celtic", "Americana"],
+  "Hip-Hop / Rap": ["Boom Bap", "Trap", "Lofi Hip Hop", "West Coast", "East Coast", "Conscious Rap", "Drill", "Grime", "Cloud Rap"],
+  "Holiday": ["Christmas", "Halloween", "Thanksgiving", "New Year", "Hanukkah"],
+  "Indian": ["Bollywood", "Hindustani Classical", "Carnatic Classical", "Ghazal", "Punjabi Pop", "Indie Pop", "Devotional", "Folk Indian"],
+  "Instrumental": ["Solo Piano", "Ambient Instrumental", "Acoustic Guitar", "Orchestral Instrumental", "Cinematic", "Post-Rock"],
+  "Jazz": ["Swing", "Bebop", "Cool Jazz", "Fusion", "Vocal Jazz", "Smooth Jazz", "Hard Bop", "Acid Jazz"],
+  "Latin": ["Reggaeton", "Salsa", "Bachata", "Merengue", "Latin Pop", "Cumbia", "Latin Rock", "Mariachi"],
+  "Metal": ["Heavy Metal", "Thrash Metal", "Death Metal", "Black Metal", "Power Metal", "Progressive Metal", "Doom Metal", "Nu Metal", "Metalcore"],
+  "New Age": ["Meditation", "Healing", "Nature Sounds", "Spiritual", "Relaxation", "Astral Music"],
+  "Pop": ["Synthpop", "Dance-Pop", "Indie Pop", "Teen Pop", "K-Pop", "J-Pop", "Art Pop", "Acoustic Pop"],
+  "Punk": ["Pop Punk", "Hardcore Punk", "Post-Punk", "Ska Punk", "Skate Punk", "Anarcho Punk"],
+  "R&B / Soul": ["Contemporary R&B", "Neo-Soul", "Motown", "Funk", "Quiet Storm", "Southern Soul", "Disco"],
+  "Reggae": ["Roots Reggae", "Dancehall", "Dub", "Ska", "Rocksteady", "Lovers Rock"],
+  "Rock": ["Classic Rock", "Hard Rock", "Progressive Rock", "Psychedelic Rock", "Garage Rock", "Glam Rock", "Arena Rock"],
+  "Singer/Songwriter": ["Acoustic", "Folk-Pop", "Indie Songwriter", "Chamber Pop", "Bedroom Pop"],
+  "Soundtrack": ["Film Score", "Video Game Music", "Television Theme", "Musical Theatre", "Anime OST"],
+  "Spoken Word": ["Poetry", "Audiobooks", "Motivating Speech", "ASMR", "Podcast", "Comedy Monologue"],
+  "World": ["Afrobeat", "Flamenco", "Celtic Folk", "K-Pop (World)", "Rai", "Reggae (World)", "Middle Eastern", "Carnatic"]
+};
+
 interface NewReleaseWizardProps {
   currentUser: User;
   managedArtists: ArtistProfile[];
@@ -93,7 +125,7 @@ export default function NewReleaseWizard({
   const [contentType, setContentType] = useState<'Original' | 'Licensed' | 'AI'>('Original');
   const [numTracks, setNumTracks] = useState(1);
   const [genre, setGenre] = useState('Electronic');
-  const [subGenre, setSubGenre] = useState('');
+  const [subGenre, setSubGenre] = useState('Ambient');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [cLine, setCLine] = useState(`© ${new Date().getFullYear()} Wavora Live`);
   const [pLine, setPLine] = useState(`℗ ${new Date().getFullYear()} Wavora Live`);
@@ -139,7 +171,7 @@ export default function NewReleaseWizard({
             featureArtists: [],
             otherArtists: [],
             genre: 'Electronic',
-            subGenre: '',
+            subGenre: 'Ambient',
             language: 'English',
             producer: '',
             lyricist: '',
@@ -693,32 +725,32 @@ export default function NewReleaseWizard({
                 <select
                   className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
                   value={genre}
-                  onChange={(e) => setGenre(e.target.value)}
+                  onChange={(e) => {
+                    const newGenre = e.target.value;
+                    setGenre(newGenre);
+                    const list = GENRE_DATA[newGenre] || [];
+                    setSubGenre(list[0] || '');
+                  }}
                   id="w_genre"
                 >
-                  <option value="Electronic">Electronic</option>
-                  <option value="Hip-Hop">Hip-Hop / Rap</option>
-                  <option value="Pop">Pop</option>
-                  <option value="Rock">Rock</option>
-                  <option value="Classical">Classical</option>
-                  <option value="Jazz">Jazz</option>
-                  <option value="R&B">R&B / Soul</option>
-                  <option value="Metal">Metal</option>
-                  <option value="Country">Country</option>
-                  <option value="Ambient">Ambient</option>
+                  {Object.keys(GENRE_DATA).map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Sub-Genre</label>
-                <input
-                  type="text"
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none"
+                <select
+                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
                   value={subGenre}
                   onChange={(e) => setSubGenre(e.target.value)}
-                  placeholder="Synthwave / Lofi"
                   id="w_subGenre"
-                />
+                >
+                  {(GENRE_DATA[genre] || []).map((sg) => (
+                    <option key={sg} value={sg}>{sg}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -1038,26 +1070,35 @@ export default function NewReleaseWizard({
 
                     <div className="space-y-1">
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Track Genre (Main)</label>
-                      <input
-                        type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white"
-                        placeholder="Electronic / Pop"
-                        value={track.genre}
-                        onChange={(e) => handleTrackFieldChange(idx, 'genre', e.target.value)}
+                      <select
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        value={track.genre || 'Electronic'}
+                        onChange={(e) => {
+                          const newGenre = e.target.value;
+                          handleTrackFieldChange(idx, 'genre', newGenre);
+                          const list = GENRE_DATA[newGenre] || [];
+                          handleTrackFieldChange(idx, 'subGenre', list[0] || '');
+                        }}
                         id={`w_track_${idx}_genre`}
-                      />
+                      >
+                        {Object.keys(GENRE_DATA).map((g) => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="space-y-1">
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Track Sub-Genre</label>
-                      <input
-                        type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white"
-                        placeholder="Synthwave / Lofi Beat"
+                      <select
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
                         value={track.subGenre}
                         onChange={(e) => handleTrackFieldChange(idx, 'subGenre', e.target.value)}
                         id={`w_track_${idx}_subgenre`}
-                      />
+                      >
+                        {(GENRE_DATA[track.genre || 'Electronic'] || []).map((sg) => (
+                          <option key={sg} value={sg}>{sg}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="space-y-1">
