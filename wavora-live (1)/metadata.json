@@ -1,6 +1,0 @@
-{
-  "name": "WAVORA LIVE Dashboard",
-  "description": "A sleek, dark-themed music industry distribution dashboard with administrative controls, release management, multi-step submittals, and artist portfolios.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
