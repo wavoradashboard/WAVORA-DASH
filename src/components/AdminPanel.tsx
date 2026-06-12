@@ -1392,39 +1392,6 @@ export default function AdminPanel({
                          ) : <span className="px-2 py-1 bg-gray-900/40 text-gray-650 border border-gray-800/40 rounded text-[9px] font-bold">No Instagram</span>}
                       </div>
 
-                      <div className="pt-2 border-t border-[#1F1F1F]/40 mt-2">
-                        <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Artist Connectivity:</div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {artist.spotifyLink ? (
-                            <a href={artist.spotifyLink} target="_blank" rel="noopener noreferrer" 
-                               className="px-2 py-1 bg-green-900/10 text-[#1DB954] border border-[#1DB954]/20 rounded text-[9px] font-bold hover:bg-[#1DB954] hover:text-white transition">
-                              Spotify
-                            </a>
-                          ) : <span className="px-2 py-1 bg-gray-900/40 text-gray-650 border border-gray-800/40 rounded text-[9px] font-bold">No Spotify</span>}
-
-                          {artist.appleMusicLink ? (
-                            <div className="flex items-center gap-1">
-                              <a href={artist.appleMusicLink} target="_blank" rel="noopener noreferrer" 
-                                 className="px-2 py-1 bg-red-900/10 text-red-500 border border-red-500/20 rounded text-[9px] font-bold hover:bg-red-500 hover:text-white transition">
-                                Apple Music
-                              </a>
-                              <button 
-                                onClick={() => handleCopy(artist.appleMusicLink, 'Apple Music Link')}
-                                className="p-1 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
-                              >
-                                Copy
-                              </button>
-                            </div>
-                          ) : <span className="px-2 py-1 bg-red-900/10 text-red-500/60 border border-red-900/20 rounded text-[9px] font-bold italic">No Apple ID</span>}
-
-                          {artist.instagramLink ? (
-                            <a href={artist.instagramLink} target="_blank" rel="noopener noreferrer" 
-                               className="px-2 py-1 bg-purple-900/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold hover:bg-purple-500 hover:text-white transition">
-                              Instagram
-                            </a>
-                          ) : <span className="px-2 py-1 bg-gray-900/40 text-gray-650 border border-gray-800/40 rounded text-[9px] font-bold">No Instagram</span>}
-                        </div>
-                      </div>
                     </div>
 
                     <div className="flex items-center justify-between mt-3">
