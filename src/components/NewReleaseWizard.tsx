@@ -311,9 +311,17 @@ export default function NewReleaseWizard({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check size first: 50MB (50 * 1024 * 1024 = 52428800 bytes)
+    const maxSizeBytes = 50 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      alert('Limit Exceeded: Audio files must be under 50MB in size.');
+      return;
+    }
+
     const isWav = file.name.toLowerCase().endsWith('.wav');
-    if (!isWav) {
-      alert('Strict Check: Audio is required in high-definition (24-bit/16-bit) .WAV master format only.');
+    const isMp3 = file.name.toLowerCase().endsWith('.mp3');
+    if (!isWav && !isMp3) {
+      alert('Strict Check: Audio is required in .wav or .mp3 format.');
       return;
     }
 
@@ -335,7 +343,8 @@ export default function NewReleaseWizard({
       const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
       const safeRelease = (albumName || 'Unknown_Release').replace(/[^a-zA-Z0-9_-]/g, '_');
       const safeTrack = (trackList[index].title || `Track_${index + 1}`).replace(/[^a-zA-Z0-9_-]/g, '_');
-      const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/Track/${safeTrack}_${Date.now()}.wav`;
+      const fileExt = file.name.toLowerCase().endsWith('.wav') ? 'wav' : 'mp3';
+      const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/Track/${safeTrack}_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('app-files')
@@ -1243,20 +1252,20 @@ export default function NewReleaseWizard({
                   <div className="p-3 border border-dashed border-slate-800 rounded-xl bg-slate-950/20">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <span className="text-[10px] font-bold block text-slate-300 uppercase tracking-wider">Audio File Ingestion (.WAV master)</span>
+                        <span className="text-[10px] font-bold block text-slate-300 uppercase tracking-wider">Audio File Ingestion (.WAV or .MP3 - Max 50MB)</span>
                         {track.audioFileName ? (
                           <span className="text-xs font-semibold text-green-400 mt-1 block font-mono">
                             ✓ File attached: {track.audioFileName}
                           </span>
                         ) : (
-                          <span className="text-xs text-amber-500 mt-1 block">Awaiting raw .wav file attachment...</span>
+                          <span className="text-xs text-amber-500 mt-1 block">Awaiting raw .wav or .mp3 file attachment...</span>
                         )}
                       </div>
 
                       <div className="relative">
                         <input
                           type="file"
-                          accept="audio/wav,audio/x-wav,audio/wave,audio/vnd.wave,.wav"
+                          accept="audio/wav,audio/x-wav,audio/wave,audio/vnd.wave,.wav,audio/mp3,audio/mpeg,.mp3"
                           onChange={(e) => handleAudioUploadMock(idx, e)}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           disabled={trackUploadProgress[idx] > 0}
@@ -1266,7 +1275,7 @@ export default function NewReleaseWizard({
                           disabled={trackUploadProgress[idx] > 0}
                           className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 disabled:bg-slate-800/50 disabled:text-slate-500 text-white text-[11px] font-bold rounded-lg transition"
                         >
-                          Select WAV Master File
+                          Select Audio File
                         </button>
                       </div>
                     </div>
