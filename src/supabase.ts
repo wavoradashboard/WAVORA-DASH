@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://piqzvuooqdrobqqewgtx.supabase.co';
-const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_3N-9cM8hyEkVV2sPaDqm0g_eA2PkYR9';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://piqzvuooqdrobqqewgtx.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_3N-9cM8hyEkVV2sPaDqm0g_eA2PkYR9';
 
 // Main client used for standard authentication (login, logout, active user sessions)
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
