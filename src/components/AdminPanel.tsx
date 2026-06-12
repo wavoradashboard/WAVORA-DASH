@@ -410,10 +410,10 @@ export default function AdminPanel({
                     </div>
                   </td>
                   <td className="py-2.5 text-center">
-                    {track.explicitContent ? (
-                      <span className="px-1 text-[9px] bg-red-950 text-red-400 border border-red-500/20 font-bold rounded">EXPLICIT</span>
+                    {(track.explicitContent || (track as any).explicit_content) ? (
+                      <span className="px-2 py-0.5 text-[9px] bg-red-950 text-red-500 border border-red-500/20 font-bold rounded">⚠️ YES</span>
                     ) : (
-                      <span className="text-gray-500">Clean</span>
+                      <span className="px-2 py-0.5 text-[9px] bg-emerald-950 text-emerald-400 border border-[#10b981]/25 font-bold rounded">✓ NO</span>
                     )}
                   </td>
                   <td className="py-2.5 text-[10px] text-blue-400 underline truncate max-w-[120px]">
@@ -436,10 +436,10 @@ export default function AdminPanel({
         </div>
 
         {/* Special instructions */}
-        {rel.specialRequest && (
-          <div className="p-3 bg-[#121212] rounded border border-blue-900/10 text-xs">
-            <span className="text-indigo-400 font-bold uppercase text-[9px] block tracking-wide">Artist Editorial Note:</span>
-            <p className="text-gray-300 italic mt-0.5">"{rel.specialRequest}"</p>
+        {(rel.specialRequest || (rel as any).special_request || (rel as any).special_instructions) && (
+          <div className="p-3 bg-[#17171e] rounded border border-blue-900/20 text-xs">
+            <span className="text-indigo-400 font-bold uppercase text-[9px] block tracking-wide">Artist Editorial Note (Special Pitching Request):</span>
+            <p className="text-gray-300 italic mt-0.5">"{(rel.specialRequest || (rel as any).special_request || (rel as any).special_instructions)}"</p>
           </div>
         )}
 
@@ -1681,10 +1681,10 @@ export default function AdminPanel({
 
                         {/* Badges / Audio specs */}
                         <div className="flex flex-wrap gap-1.5 items-center">
-                          {track.explicitContent ? (
-                            <span className="px-2 py-0.5 text-[8px] bg-red-950 text-red-400 border border-red-500/20 font-extrabold rounded">EXPLICIT AUDIO</span>
+                          {(track.explicitContent || (track as any).explicit_content) ? (
+                            <span className="px-2 py-0.5 text-[8px] bg-red-950 text-red-400 border border-red-500/20 font-extrabold rounded">⚠️ YES (EXPLICIT AUDIO)</span>
                           ) : (
-                            <span className="px-2 py-0.5 text-[8px] bg-emerald-950 text-emerald-400 border border-emerald-500/20 font-extrabold rounded">CLEAN EDIT</span>
+                            <span className="px-2 py-0.5 text-[8px] bg-emerald-950 text-emerald-400 border border-[#10b981]/20 font-extrabold rounded">✓ NO (CLEAN EDIT)</span>
                           )}
                           <span className="px-2 py-0.5 text-[8px] bg-blue-950 text-blue-400 border border-blue-500/20 font-extrabold rounded font-mono">
                             {track.audioFileName || 'Master_WAV.wav'}
@@ -1792,14 +1792,14 @@ export default function AdminPanel({
               </div>
 
               {/* User / Administration feedback loop details */}
-              {(inspectRelease.feedback || inspectRelease.specialRequest) && (
+              {(inspectRelease.feedback || inspectRelease.specialRequest || (inspectRelease as any).special_request || (inspectRelease as any).special_instructions) && (
                 <div className="bg-black p-4 rounded-xl border border-[#1F1F1F] space-y-3">
                   <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Revision Logs & Directives</span>
                   <div className="space-y-2 text-xs">
-                    {inspectRelease.specialRequest && (
+                    {(inspectRelease.specialRequest || (inspectRelease as any).special_request || (inspectRelease as any).special_instructions) && (
                       <div className="p-3 bg-zinc-900/40 rounded border border-zinc-850 text-left">
-                        <span className="text-[9px] text-[#1DB954] font-bold block uppercase">Artist Request Comment:</span>
-                        <p className="text-gray-300 italic mt-1">"{inspectRelease.specialRequest}"</p>
+                        <span className="text-[9px] text-[#1DB954] font-bold block uppercase">Artist Request Comment (Special Pitching Request):</span>
+                        <p className="text-gray-300 italic mt-1">"{(inspectRelease.specialRequest || (inspectRelease as any).special_request || (inspectRelease as any).special_instructions)}"</p>
                       </div>
                     )}
                     {inspectRelease.feedback && (
