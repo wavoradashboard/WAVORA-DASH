@@ -1256,7 +1256,7 @@ export default function NewReleaseWizard({
                       <div className="relative">
                         <input
                           type="file"
-                          accept=".wav"
+                          accept="audio/wav,audio/x-wav,audio/wave,audio/vnd.wave,.wav"
                           onChange={(e) => handleAudioUploadMock(idx, e)}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           disabled={trackUploadProgress[idx] > 0}
