@@ -162,6 +162,31 @@ export default function AdminPanel({
   const [createError, setCreateError] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
 
+  // User Password Revision States
+  const [editingPasswordUserEmail, setEditingPasswordUserEmail] = useState<string | null>(null);
+  const [newPasswordValue, setNewPasswordValue] = useState('');
+  const [passwordChangeSuccessEmail, setPasswordChangeSuccessEmail] = useState<string | null>(null);
+
+  const handleAdminChangePassword = async (email: string) => {
+    if (!newPasswordValue.trim()) {
+      alert('Password cannot be empty.');
+      return;
+    }
+    
+    try {
+      await onUpdateUser(email, { password: newPasswordValue });
+      setPasswordChangeSuccessEmail(email);
+      setEditingPasswordUserEmail(null);
+      setNewPasswordValue('');
+      setTimeout(() => {
+        setPasswordChangeSuccessEmail(null);
+      }, 3000);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to change user password.');
+    }
+  };
+
   // Local form states for Posting Revenue
   const [revEmail, setRevEmail] = useState('');
   const [revMonth, setRevMonth] = useState('June 2026');
@@ -702,21 +727,63 @@ export default function AdminPanel({
               
               <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1">
                 {activeUsers.map((user, idx) => (
-                  <div key={`${user.email}-a-${idx}`} className="p-3 bg-black rounded-lg border border-[#1F1F1F] flex flex-col gap-2 text-xs text-left">
+                  <div key={`${user.email}-a-${idx}`} className="p-3 bg-black rounded-lg border border-[#1F1F1F] flex flex-col gap-2 text-xs text-left" id={`active_member_card_${user.email}`}>
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1 pr-2">
                         <span className="font-bold text-gray-200 block truncate">{user.artistName}</span>
-                        <span className="text-[10px] text-gray-500 block truncate">{user.email}</span>
+                        <span className="text-[10px] text-gray-400 block truncate">{user.email}</span>
                         <span className="text-[9px] bg-slate-850 border border-slate-800 text-slate-300 font-semibold px-1 rounded inline-block mt-1">{user.plan} Tier</span>
+                        {user.password && (
+                          <span className="text-[10px] text-emerald-400 font-medium font-mono block mt-1.5 bg-emerald-950/30 border border-emerald-500/10 px-1.5 py-0.5 rounded w-fit">🔑 Active Pass: <span className="font-extrabold">{user.password}</span></span>
+                        )}
+                        {passwordChangeSuccessEmail === user.email && (
+                          <span className="text-[10px] text-emerald-400 font-extrabold block mt-1.5">✓ Credentials updated successfully!</span>
+                        )}
                       </div>
-                      <button
-                        onClick={() => onImpersonateUser(user)}
-                        className="px-2.5 py-1 bg-white hover:bg-gray-100 text-black font-bold rounded text-[10px] uppercase tracking-tight cursor-pointer transition flex-shrink-0"
-                        id={`btn_impersonate_${user.email}`}
-                      >
-                        Impersonate
-                      </button>
+                      <div className="flex flex-col gap-1.5 flex-shrink-0 items-end">
+                        <button
+                          onClick={() => onImpersonateUser(user)}
+                          className="px-2.5 py-1.5 bg-white hover:bg-gray-100 text-black font-extrabold rounded text-[9px] uppercase tracking-wider cursor-pointer transition w-24 text-center"
+                          id={`btn_impersonate_${user.email}`}
+                        >
+                          Impersonate
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (editingPasswordUserEmail === user.email) {
+                              setEditingPasswordUserEmail(null);
+                            } else {
+                              setEditingPasswordUserEmail(user.email);
+                              setNewPasswordValue('');
+                            }
+                          }}
+                          className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-850 hover:bg-zinc-800 text-gray-300 font-extrabold rounded text-[9px] uppercase tracking-wider cursor-pointer transition w-24 text-center"
+                          id={`btn_change_pass_${user.email}`}
+                        >
+                          {editingPasswordUserEmail === user.email ? 'Cancel' : 'Change Pass'}
+                        </button>
+                      </div>
                     </div>
+
+                    {editingPasswordUserEmail === user.email && (
+                      <div className="mt-2.5 pt-2 border-t border-zinc-900 flex items-center gap-1.5" id={`pwd_form_container_${user.email}`}>
+                        <input
+                          type="text"
+                          value={newPasswordValue}
+                          onChange={(e) => setNewPasswordValue(e.target.value)}
+                          placeholder="Type new password"
+                          className="flex-1 bg-zinc-905 border border-zinc-800 text-white rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-green-500"
+                          id={`input_new_pass_${user.email}`}
+                        />
+                        <button
+                          onClick={() => handleAdminChangePassword(user.email)}
+                          className="bg-[#1DB954] hover:bg-[#1ed760] text-black font-black px-3 py-1.5 rounded text-[10px] uppercase cursor-pointer"
+                          id={`btn_save_pass_${user.email}`}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

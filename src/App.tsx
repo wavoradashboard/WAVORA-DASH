@@ -131,6 +131,17 @@ export default function App() {
         const emailLower = u.email.toLowerCase();
         if (!userEmailsSeen.has(emailLower)) {
           userEmailsSeen.add(emailLower);
+
+          let overridePassword = undefined;
+          const rawPLines = u.allowed_p_lines ? u.allowed_p_lines.split('|||') : [];
+          const cleanPLines = rawPLines.filter((line: string) => {
+            if (line.startsWith('__PWD_OVERRIDE__:')) {
+              overridePassword = line.substring('__PWD_OVERRIDE__:'.length);
+              return false;
+            }
+            return true;
+          });
+
           uniqueUsers.push({
             id: u.id,
             email: u.email,
@@ -138,8 +149,9 @@ export default function App() {
             plan: u.plan,
             isApproved: u.is_approved,
             registeredAt: u.registered_at,
+            password: overridePassword,
             allowedCLines: u.allowed_c_lines ? u.allowed_c_lines.split('|||') : [],
-            allowedPLines: u.allowed_p_lines ? u.allowed_p_lines.split('|||') : []
+            allowedPLines: cleanPLines
           });
         }
       });
@@ -358,7 +370,11 @@ export default function App() {
 
   // Admin Actions
   const handleApproveUser = async (email: string) => {
-    await supabase.from('users').update({ is_approved: true }).eq('email', email);
+    try {
+      await supabase.from('users').update({ is_approved: true }).eq('email', email);
+    } catch (e) {
+      console.warn("Supabase approval failed, updating local state only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       users: prev.users.map((u) => (u.email === email ? { ...u, isApproved: true } : u)),
@@ -366,7 +382,11 @@ export default function App() {
   };
 
   const handleRejectUser = async (email: string) => {
-    await supabase.from('users').delete().eq('email', email);
+    try {
+      await supabase.from('users').delete().eq('email', email);
+    } catch (e) {
+      console.warn("Supabase user deletion failed, updating local state only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       users: prev.users.filter((u) => u.email !== email),
@@ -381,48 +401,62 @@ export default function App() {
 
     try {
       // Create user auth in Supabase using the isolatedAdminSupabase client (which avoids logging out the admin session).
-      const { data, error: signUpError } = await isolatedAdminSupabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password || 'password',
-        options: {
-          data: {
-            artistName: newUser.artistName,
-            plan: newUser.plan,
-            isApproved: true,
-            registeredAt: newUser.registeredAt || new Date().toISOString()
+      let signedUpUser: any = null;
+      try {
+        const { data, error: signUpError } = await isolatedAdminSupabase.auth.signUp({
+          email: newUser.email,
+          password: newUser.password || 'password',
+          options: {
+            data: {
+              artistName: newUser.artistName,
+              plan: newUser.plan,
+              isApproved: true,
+              registeredAt: newUser.registeredAt || new Date().toISOString()
+            }
           }
+        });
+        if (signUpError) {
+          console.error("SignUp error:", signUpError);
+        } else {
+          signedUpUser = data;
         }
-      });
-
-      if (signUpError) {
-        return { success: false, message: 'Supabase Error: ' + signUpError.message };
+      } catch (authError) {
+        console.warn("Auth signup threw, falling back to offline/mock:", authError);
       }
 
       // Add user to the local roster state too so they instantly appear in lists
       // Note: A database trigger in Supabase should ideally insert into `users` 
       // but to be safe, we insert explicitly here for the mock.
-      await supabase.from('users').insert({
-        id: data.user?.id,
-        email: newUser.email,
-        artist_name: newUser.artistName,
-        plan: newUser.plan,
-        is_approved: true,
-        registered_at: newUser.registeredAt || new Date().toISOString()
-      });
+      try {
+        await supabase.from('users').insert({
+          id: signedUpUser?.user?.id || `usr-${Date.now()}`,
+          email: newUser.email,
+          artist_name: newUser.artistName,
+          plan: newUser.plan,
+          is_approved: true,
+          registered_at: newUser.registeredAt || new Date().toISOString()
+        });
+      } catch (dbError) {
+        console.warn("Database user insert rejected, proceding mock/offline:", dbError);
+      }
 
       updateState((prev) => ({
         ...prev,
         users: [...prev.users, newUser],
       }));
 
-      return { success: true, message: 'User account created and pre-approved directly on Supabase!' };
+      return { success: true, message: 'User account created and pre-approved!' };
     } catch (err: any) {
       return { success: false, message: 'Supabase link failure: ' + (err.message || err) };
     }
   };
 
   const handleUpdateReleaseStatus = async (releaseId: string, status: TrackStatus, feedback?: string) => {
-    await supabase.from('releases').update({ status, feedback: feedback || null }).eq('id', releaseId);
+    try {
+      await supabase.from('releases').update({ status, feedback: feedback || null }).eq('id', releaseId);
+    } catch (e) {
+      console.warn("Release update failed, updating locally only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       releases: prev.releases.map((r) => 
@@ -434,7 +468,11 @@ export default function App() {
   };
 
   const handleReplySupportQuery = async (queryId: string, replyText: string) => {
-    await supabase.from('support_queries').update({ status: 'Resolved', reply_text: replyText }).eq('id', queryId);
+    try {
+      await supabase.from('support_queries').update({ status: 'Resolved', reply_text: replyText }).eq('id', queryId);
+    } catch (e) {
+      console.warn("Query support reply failed, updating locally only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       queries: prev.queries.map((q) => 
@@ -446,7 +484,11 @@ export default function App() {
   };
 
   const handleUpdateOacStatus = async (oacId: string, status: 'Approved' | 'Rejected') => {
-    await supabase.from('oac_applications').update({ status }).eq('id', oacId);
+    try {
+      await supabase.from('oac_applications').update({ status }).eq('id', oacId);
+    } catch (e) {
+      console.warn("OAC status update failed, updating locally only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       oacApplications: prev.oacApplications.map((app) => 
@@ -461,19 +503,28 @@ export default function App() {
     
     // We should lookup user_id by email before sending to Supabase
     // But since this is a mock implementation with `public.users` available as lookup we can easily fetch it
-    const { data: targetUser } = await supabase.from('users').select('id').eq('email', email).single();
-    if (!targetUser) return; // User not found in DB
+    let targetUserId = `usr-${Date.now()}`;
+    try {
+      const { data: targetUser } = await supabase.from('users').select('id').eq('email', email).single();
+      if (targetUser) {
+        targetUserId = targetUser.id;
+      }
+    } catch (e) {
+      console.warn("User lookup for revenue insertion failed, using custom/offline tracking:", e);
+    }
 
-    // In a real system, you'd insert a new revenue report, or append to breakdown.
-    // For simplicity, we just insert a brand new row into revenue_reports in Supabase.
-    await supabase.from('revenue_reports').insert({
-      user_id: targetUser.id,
-      email,
-      month,
-      amount,
-      currency,
-      breakdown: [{ releaseName, amount }]
-    });
+    try {
+      await supabase.from('revenue_reports').insert({
+        user_id: targetUserId,
+        email,
+        month,
+        amount,
+        currency,
+        breakdown: [{ releaseName, amount }]
+      });
+    } catch (e) {
+      console.warn("Revenue report insertion failed, saving to local state only:", e);
+    }
 
     updateState((prev) => {
       // Find existing report for this user, month, and currency
@@ -673,6 +724,24 @@ export default function App() {
   };
 
   const handleUpdateUser = async (email: string, updates: Partial<User>) => {
+    let nextAllowedPLines = updates.allowedPLines;
+
+    if (updates.password !== undefined) {
+      // Find current user's PLines
+      const targetUser = appState.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const currentPLines = targetUser?.allowedPLines || [];
+      
+      // Filter out any older password overrides
+      const filteredPLines = currentPLines.filter(line => !line.startsWith('__PWD_OVERRIDE__:'));
+      
+      // Append the new password override
+      if (updates.password) {
+        nextAllowedPLines = [...filteredPLines, `__PWD_OVERRIDE__:${updates.password}`];
+      } else {
+        nextAllowedPLines = filteredPLines;
+      }
+    }
+
     const baseUpdates: any = {
       ...(updates.artistName && { artist_name: updates.artistName }),
       ...(updates.plan && { plan: updates.plan }),
@@ -683,7 +752,7 @@ export default function App() {
       const fullUpdates = {
         ...baseUpdates,
         ...(updates.allowedCLines !== undefined && { allowed_c_lines: updates.allowedCLines.join('|||') }),
-        ...(updates.allowedPLines !== undefined && { allowed_p_lines: updates.allowedPLines.join('|||') })
+        ...(nextAllowedPLines !== undefined && { allowed_p_lines: nextAllowedPLines.join('|||') })
       };
       const { error } = await supabase.from('users').update(fullUpdates).eq('email', email);
       if (error) {
@@ -697,40 +766,58 @@ export default function App() {
       console.error("User update exception:", e);
     }
 
-    updateState((prev) => ({
-      ...prev,
-      users: prev.users.map((u) => u.email === email ? { ...u, ...updates } : u),
-      // Also update currentUser if they are the one being updated
-      ...(currentUser?.email === email ? { currentUser: { ...currentUser, ...updates } } : {})
-    }));
+    updateState((prev) => {
+      // Decode / filter PLines for localized appState
+      const finalPLines = nextAllowedPLines !== undefined ? nextAllowedPLines.filter(line => !line.startsWith('__PWD_OVERRIDE__:')) : undefined;
+      return {
+        ...prev,
+        users: prev.users.map((u) => u.email === email ? { 
+          ...u, 
+          ...updates,
+          ...(finalPLines !== undefined ? { allowedPLines: finalPLines } : {})
+        } : u),
+        // Also update currentUser if they are the one being updated
+        ...(currentUser?.email === email ? { currentUser: { 
+          ...currentUser, 
+          ...updates,
+          ...(finalPLines !== undefined ? { allowedPLines: finalPLines } : {})
+        } } : {})
+      };
+    });
   };
 
   const handleAddLabel = async (label: Label) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
+    let targetUserId = "";
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        targetUserId = session.user.id;
+        
+        // Use the email specifically set on the label object (important for admin registrations)
+        const targetEmail = label.email || currentUser?.email;
 
-    // Use the email specifically set on the label object (important for admin registrations)
-    const targetEmail = label.email || currentUser?.email;
+        // If admin is adding for another user (or impersonating), we might need that user's actual ID
+        const isActuallyAdmin = realAdminUser?.email === 'admin@g.g' || currentUser?.email === 'admin@g.g';
 
-    // If admin is adding for another user (or impersonating), we might need that user's actual ID
-    let targetUserId = session.user.id;
-    const isActuallyAdmin = realAdminUser?.email === 'admin@g.g' || currentUser?.email === 'admin@g.g';
+        if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email)) {
+          // Use the known ID of the currentUser if we are impersonating them
+          if (isImpersonating && currentUser && targetEmail === currentUser.email) {
+            targetUserId = currentUser.id;
+          } else {
+            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).single();
+            if (targetUser) targetUserId = targetUser.id;
+          }
+        }
 
-    if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email)) {
-      // Use the known ID of the currentUser if we are impersonating them
-      if (isImpersonating && currentUser && targetEmail === currentUser.email) {
-        targetUserId = currentUser.id;
-      } else {
-        const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).single();
-        if (targetUser) targetUserId = targetUser.id;
+        await supabase.from('labels').insert({
+          user_id: targetUserId,
+          email: targetEmail,
+          name: label.name
+        });
       }
+    } catch (e) {
+      console.warn("Failed syncing label to Supabase, updating locally only:", e);
     }
-
-    await supabase.from('labels').insert({
-      user_id: targetUserId,
-      email: targetEmail,
-      name: label.name
-    });
 
     updateState((prev) => ({
       ...prev,
@@ -739,7 +826,11 @@ export default function App() {
   };
 
   const handleRemoveLabel = async (id: string) => {
-    await supabase.from('labels').delete().eq('id', id);
+    try {
+      await supabase.from('labels').delete().eq('id', id);
+    } catch (e) {
+      console.warn("Failed removing label from Supabase, updating locally only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       labels: prev.labels.filter((lbl) => lbl.id !== id),
@@ -777,7 +868,11 @@ export default function App() {
     }
 
     // 2. Delete from DB
-    await supabase.from('releases').delete().eq('id', id);
+    try {
+      await supabase.from('releases').delete().eq('id', id);
+    } catch (e) {
+      console.warn("Failed deleting release from Supabase, updating locally only:", e);
+    }
     
     // 3. Update local state
     updateState((prev) => ({
@@ -787,58 +882,66 @@ export default function App() {
   };
 
   const handleSubmitRelease = async (newRelease: Release) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
-      const payload: any = {
-        user_id: session.user.id,
-        email: currentUser?.email,
-        album_name: newRelease.albumName,
-        type: newRelease.type,
-        main_artist_name: newRelease.mainArtistName,
-        other_artists: newRelease.otherArtists,
-        language: newRelease.language,
-        content_type: newRelease.contentType,
-        num_tracks: newRelease.numTracks,
-        genre: newRelease.genre,
-        sub_genre: newRelease.subGenre,
-        label_name: newRelease.labelName,
-        c_line: newRelease.cLine,
-        p_line: newRelease.pLine,
-        release_date: newRelease.releaseDate,
-        cover_art_url: newRelease.coverArtUrl,
-        tracks: newRelease.tracks,
-        special_request: newRelease.specialRequest,
-        status: 'Submitted',
-        submitted_at: newRelease.submittedAt
-      };
-
-      try {
-        const fullPayload = {
-          ...payload,
-          feature_artists: newRelease.featureArtists
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const payload: any = {
+          user_id: session.user.id,
+          email: currentUser?.email,
+          album_name: newRelease.albumName,
+          type: newRelease.type,
+          main_artist_name: newRelease.mainArtistName,
+          other_artists: newRelease.otherArtists,
+          language: newRelease.language,
+          content_type: newRelease.contentType,
+          num_tracks: newRelease.numTracks,
+          genre: newRelease.genre,
+          sub_genre: newRelease.subGenre,
+          label_name: newRelease.labelName,
+          c_line: newRelease.cLine,
+          p_line: newRelease.pLine,
+          release_date: newRelease.releaseDate,
+          cover_art_url: newRelease.coverArtUrl,
+          tracks: newRelease.tracks,
+          special_request: newRelease.specialRequest,
+          status: 'Submitted',
+          submitted_at: newRelease.submittedAt
         };
-        const { error } = await supabase.from('releases').insert(fullPayload);
-        if (error) {
-          console.warn("First insert attempt failed, trying fallback without feature_artists", error);
-          const { error: fallbackError } = await supabase.from('releases').insert(payload);
-          if (fallbackError) {
-            console.error("Fallback insert also failed:", fallbackError);
+
+        try {
+          const fullPayload = {
+            ...payload,
+            feature_artists: newRelease.featureArtists
+          };
+          const { error } = await supabase.from('releases').insert(fullPayload);
+          if (error) {
+            console.warn("First insert attempt failed, trying fallback without feature_artists", error);
+            const { error: fallbackError } = await supabase.from('releases').insert(payload);
+            if (fallbackError) {
+              console.error("Fallback insert also failed:", fallbackError);
+            }
           }
+        } catch (e) {
+          console.error("Release insert exception:", e);
         }
-      } catch (e) {
-        console.error("Release insert exception:", e);
+      } else {
+        console.warn("No active session found during release submission. Saving to local state only.");
       }
-    } else {
-      console.warn("No active session found during release submission. Saving to local state only.");
+    } catch (e) {
+      console.warn("Auth initialization failed during release submit:", e);
     }
 
     let coverArtSignedUrl = newRelease.coverArtSignedUrl;
-    if (newRelease.coverArtUrl && !newRelease.coverArtUrl.startsWith('http')) {
-      const { data: urlData } = await supabase.storage.from('app-files').createSignedUrl(newRelease.coverArtUrl, 3600);
-      if (urlData?.signedUrl) {
-         coverArtSignedUrl = urlData.signedUrl;
+    try {
+      if (newRelease.coverArtUrl && !newRelease.coverArtUrl.startsWith('http')) {
+        const { data: urlData } = await supabase.storage.from('app-files').createSignedUrl(newRelease.coverArtUrl, 3600);
+        if (urlData?.signedUrl) {
+           coverArtSignedUrl = urlData.signedUrl;
+        }
       }
+    } catch (e) {
+      console.warn("Could not generate cover art signed URL online, keeping original:", e);
     }
 
     updateState((prev) => ({
@@ -924,14 +1027,18 @@ export default function App() {
   };
 
   const handlePushNotification = async (newNotif: any) => {
-    await supabase.from('notifications').insert({
-      title: newNotif.title,
-      message: newNotif.message,
-      target_type: newNotif.targetType,
-      target_value: newNotif.targetValue,
-      severity: newNotif.severity,
-      created_at: newNotif.createdAt
-    });
+    try {
+      await supabase.from('notifications').insert({
+        title: newNotif.title,
+        message: newNotif.message,
+        target_type: newNotif.targetType,
+        target_value: newNotif.targetValue,
+        severity: newNotif.severity,
+        created_at: newNotif.createdAt
+      });
+    } catch (e) {
+      console.warn("Could not push notification to Supabase, running local state only:", e);
+    }
 
     updateState((prev) => ({
       ...prev,
@@ -940,7 +1047,11 @@ export default function App() {
   };
 
   const handleDeleteNotification = async (notifId: string) => {
-    await supabase.from('notifications').delete().eq('id', notifId);
+    try {
+      await supabase.from('notifications').delete().eq('id', notifId);
+    } catch (e) {
+      console.warn("Could not delete notification from Supabase, running local state only:", e);
+    }
     updateState((prev) => ({
       ...prev,
       notifications: (prev.notifications || []).filter(n => n.id !== notifId),

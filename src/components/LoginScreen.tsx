@@ -80,13 +80,41 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
     } else {
       // Login flow
       try {
-        // 1. Attempt standard sign in on Supabase first
-        const { data: authData, error: loginError } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase(),
-          password: password
-        });
+        // Find if this user has an overridden or mock password set in our loaded list
+        const matchedOverrideUser = allUsers.find(
+          u => u.email.toLowerCase() === email.toLowerCase() && u.password && u.password === password
+        );
 
-        if (!loginError && authData.user) {
+        if (matchedOverrideUser) {
+          const isApproved = matchedOverrideUser.isApproved;
+          if (!isApproved) {
+            setError('Account is pending approval. Please sign in as admin (admin@g.g / 232323) to approve your access!');
+            setLoading(false);
+            return;
+          }
+          
+          setSuccessMsg('Authenticating using admin-assigned access credentials...');
+          onLogin(matchedOverrideUser);
+          setLoading(false);
+          return;
+        }
+
+        // 1. Attempt standard sign in on Supabase first
+        let authData: any = null;
+        let loginError: any = null;
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: email.toLowerCase(),
+            password: password
+          });
+          authData = data;
+          loginError = error;
+        } catch (e: any) {
+          console.warn("Supabase auth signin failed, trying local/mock fallback:", e);
+          loginError = e;
+        }
+
+        if (!loginError && authData?.user) {
           const u = authData.user;
           const metadata = u.user_metadata || {};
           const isApproved = metadata.isApproved !== undefined ? metadata.isApproved : true;
@@ -118,32 +146,36 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
         if (found) {
           setSuccessMsg('Linking your mock session to your Supabase project credentials...');
           
-          const { error: autoSignUpError } = await supabase.auth.signUp({
-            email: found.email,
-            password: found.password || 'password',
-            options: {
-              data: {
-                artistName: found.artistName,
-                plan: found.plan,
-                isApproved: found.isApproved,
-                registeredAt: found.registeredAt
+          try {
+            const { error: autoSignUpError } = await supabase.auth.signUp({
+              email: found.email,
+              password: found.password || 'password',
+              options: {
+                data: {
+                  artistName: found.artistName,
+                  plan: found.plan,
+                  isApproved: found.isApproved,
+                  registeredAt: found.registeredAt
+                }
               }
+            });
+
+            // Attempt login again now that we synchronized Auth details
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+              email: found.email,
+              password: found.password || 'password'
+            });
+
+            if (!retryError && retryData?.user) {
+              onLogin(found);
+              setLoading(false);
+              return;
             }
-          });
-
-          // Attempt login again now that we synchronized Auth details
-          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-            email: found.email,
-            password: found.password || 'password'
-          });
-
-          if (!retryError && retryData?.user) {
-            onLogin(found);
-            setLoading(false);
-            return;
+          } catch (linkError) {
+            console.warn("Failed automatic credentials sync step with Supabase:", linkError);
           }
 
-          // Force login fallback anyway if Supabase is initializing/migrating
+          // Force login fallback anyway if Supabase is initializing/migrating or offline
           onLogin(found);
           setLoading(false);
           return;
