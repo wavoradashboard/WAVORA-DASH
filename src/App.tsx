@@ -133,10 +133,40 @@ export default function App() {
           userEmailsSeen.add(emailLower);
 
           let overridePassword = undefined;
+          let extractedPlanEndDate = undefined;
+          let extractedUpiId = undefined;
+          let extractedBankName = undefined;
+          let extractedBankAccountNo = undefined;
+          let extractedBankIfsc = undefined;
+          let extractedBankHolderName = undefined;
           const rawPLines = u.allowed_p_lines ? u.allowed_p_lines.split('|||') : [];
           const cleanPLines = rawPLines.filter((line: string) => {
             if (line.startsWith('__PWD_OVERRIDE__:')) {
               overridePassword = line.substring('__PWD_OVERRIDE__:'.length);
+              return false;
+            }
+            if (line.startsWith('__PLAN_END_DATE__:')) {
+              extractedPlanEndDate = line.substring('__PLAN_END_DATE__:'.length);
+              return false;
+            }
+            if (line.startsWith('__UPI_ID__:')) {
+              extractedUpiId = line.substring('__UPI_ID__:'.length);
+              return false;
+            }
+            if (line.startsWith('__BANK_NAME__:')) {
+              extractedBankName = line.substring('__BANK_NAME__:'.length);
+              return false;
+            }
+            if (line.startsWith('__BANK_ACC__:')) {
+              extractedBankAccountNo = line.substring('__BANK_ACC__:'.length);
+              return false;
+            }
+            if (line.startsWith('__BANK_IFSC__:')) {
+              extractedBankIfsc = line.substring('__BANK_IFSC__:'.length);
+              return false;
+            }
+            if (line.startsWith('__BANK_HOLDER__:')) {
+              extractedBankHolderName = line.substring('__BANK_HOLDER__:'.length);
               return false;
             }
             return true;
@@ -149,7 +179,13 @@ export default function App() {
             plan: u.plan,
             isApproved: u.is_approved,
             registeredAt: u.registered_at,
+            planEndDate: extractedPlanEndDate,
             password: overridePassword,
+            upiId: extractedUpiId,
+            bankName: extractedBankName,
+            bankAccountNo: extractedBankAccountNo,
+            bankIfsc: extractedBankIfsc,
+            bankHolderName: extractedBankHolderName,
             allowedCLines: u.allowed_c_lines ? u.allowed_c_lines.split('|||') : [],
             allowedPLines: cleanPLines
           });
@@ -724,35 +760,66 @@ export default function App() {
   };
 
   const handleUpdateUser = async (email: string, updates: Partial<User>) => {
-    let nextAllowedPLines = updates.allowedPLines;
-
-    if (updates.password !== undefined) {
-      // Find current user's PLines
-      const targetUser = appState.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      const currentPLines = targetUser?.allowedPLines || [];
-      
-      // Filter out any older password overrides
-      const filteredPLines = currentPLines.filter(line => !line.startsWith('__PWD_OVERRIDE__:'));
-      
-      // Append the new password override
-      if (updates.password) {
-        nextAllowedPLines = [...filteredPLines, `__PWD_OVERRIDE__:${updates.password}`];
-      } else {
-        nextAllowedPLines = filteredPLines;
-      }
+    const targetUser = appState.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    // Determine target/base PLines
+    let basePLines = updates.allowedPLines !== undefined ? updates.allowedPLines : (targetUser?.allowedPLines || []);
+    
+    // Filter out previously injected overrides
+    let filteredPLines = basePLines.filter(line => 
+      !line.startsWith('__PWD_OVERRIDE__:') && 
+      !line.startsWith('__PLAN_END_DATE__:') && 
+      !line.startsWith('__UPI_ID__:') && 
+      !line.startsWith('__BANK_NAME__:') && 
+      !line.startsWith('__BANK_ACC__:') && 
+      !line.startsWith('__BANK_IFSC__:') && 
+      !line.startsWith('__BANK_HOLDER__:')
+    );
+    
+    // Collect active values for overrides
+    const activePassword = updates.password !== undefined ? updates.password : targetUser?.password;
+    const activePlanEndDate = updates.planEndDate !== undefined ? updates.planEndDate : targetUser?.planEndDate;
+    const activeUpiId = updates.upiId !== undefined ? updates.upiId : targetUser?.upiId;
+    const activeBankName = updates.bankName !== undefined ? updates.bankName : targetUser?.bankName;
+    const activeBankAccountNo = updates.bankAccountNo !== undefined ? updates.bankAccountNo : targetUser?.bankAccountNo;
+    const activeBankIfsc = updates.bankIfsc !== undefined ? updates.bankIfsc : targetUser?.bankIfsc;
+    const activeBankHolderName = updates.bankHolderName !== undefined ? updates.bankHolderName : targetUser?.bankHolderName;
+    
+    let rawPLinesToCommit = [...filteredPLines];
+    if (activePassword) {
+      rawPLinesToCommit.push(`__PWD_OVERRIDE__:${activePassword}`);
+    }
+    if (activePlanEndDate) {
+      rawPLinesToCommit.push(`__PLAN_END_DATE__:${activePlanEndDate}`);
+    }
+    if (activeUpiId) {
+      rawPLinesToCommit.push(`__UPI_ID__:${activeUpiId}`);
+    }
+    if (activeBankName) {
+      rawPLinesToCommit.push(`__BANK_NAME__:${activeBankName}`);
+    }
+    if (activeBankAccountNo) {
+      rawPLinesToCommit.push(`__BANK_ACC__:${activeBankAccountNo}`);
+    }
+    if (activeBankIfsc) {
+      rawPLinesToCommit.push(`__BANK_IFSC__:${activeBankIfsc}`);
+    }
+    if (activeBankHolderName) {
+      rawPLinesToCommit.push(`__BANK_HOLDER__:${activeBankHolderName}`);
     }
 
     const baseUpdates: any = {
       ...(updates.artistName && { artist_name: updates.artistName }),
       ...(updates.plan && { plan: updates.plan }),
       ...(updates.isApproved !== undefined && { is_approved: updates.isApproved }),
+      ...(updates.registeredAt && { registered_at: updates.registeredAt }),
     };
 
     try {
       const fullUpdates = {
         ...baseUpdates,
         ...(updates.allowedCLines !== undefined && { allowed_c_lines: updates.allowedCLines.join('|||') }),
-        ...(nextAllowedPLines !== undefined && { allowed_p_lines: nextAllowedPLines.join('|||') })
+        allowed_p_lines: rawPLinesToCommit.join('|||')
       };
       const { error } = await supabase.from('users').update(fullUpdates).eq('email', email);
       if (error) {
@@ -767,23 +834,52 @@ export default function App() {
     }
 
     updateState((prev) => {
-      // Decode / filter PLines for localized appState
-      const finalPLines = nextAllowedPLines !== undefined ? nextAllowedPLines.filter(line => !line.startsWith('__PWD_OVERRIDE__:')) : undefined;
       return {
         ...prev,
         users: prev.users.map((u) => u.email === email ? { 
           ...u, 
           ...updates,
-          ...(finalPLines !== undefined ? { allowedPLines: finalPLines } : {})
+          allowedPLines: filteredPLines
         } : u),
         // Also update currentUser if they are the one being updated
         ...(currentUser?.email === email ? { currentUser: { 
           ...currentUser, 
           ...updates,
-          ...(finalPLines !== undefined ? { allowedPLines: finalPLines } : {})
+          allowedPLines: filteredPLines
         } } : {})
       };
     });
+  };
+
+  const handleAddPayoutRequest = async (
+    amount: number,
+    currency: 'USD' | 'INR',
+    method: 'UPI' | 'Bank',
+    details: { upiId?: string; bankName?: string; bankAccountNo?: string; bankIfsc?: string; bankHolderName?: string }
+  ) => {
+    if (!currentUser) return;
+    const newRequest = {
+      id: `pay-${Date.now()}`,
+      email: currentUser.email,
+      artistName: currentUser.artistName,
+      amount,
+      currency,
+      paymentMethod: method,
+      paymentDetails: details,
+      submittedAt: new Date().toISOString(),
+      status: 'Pending' as const
+    };
+    updateState((prev) => ({
+      ...prev,
+      payoutRequests: [newRequest, ...(prev.payoutRequests || [])]
+    }));
+  };
+
+  const handleUpdatePayoutRequest = async (id: string, status: 'Approved' | 'Rejected', feedback?: string) => {
+    updateState((prev) => ({
+      ...prev,
+      payoutRequests: (prev.payoutRequests || []).map(r => r.id === id ? { ...r, status, feedback } : r)
+    }));
   };
 
   const handleAddLabel = async (label: Label) => {
@@ -1157,6 +1253,9 @@ export default function App() {
             currentUser={currentUser}
             revenueReports={revenueReports}
             onOpenRevenueModal={() => setIsRevenueModalOpen(true)}
+            payoutRequests={appState.payoutRequests || []}
+            onAddPayoutRequest={handleAddPayoutRequest}
+            onUpdateUser={handleUpdateUser}
           />
         );
       case 'support':
@@ -1192,6 +1291,8 @@ export default function App() {
             onDownloadFile={handleDownloadFile}
             onUpdateArtist={handleUpdateArtist}
             onUpdateUser={handleUpdateUser}
+            payoutRequests={appState.payoutRequests || []}
+            onUpdatePayoutRequest={handleUpdatePayoutRequest}
           />
         );
       default:

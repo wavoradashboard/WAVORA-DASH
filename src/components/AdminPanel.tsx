@@ -25,9 +25,10 @@ import {
   Calendar,
   Hash,
   Layers,
-  Copy
+  Copy,
+  Landmark
 } from 'lucide-react';
-import { User, Release, SupportQuery, OacApplication, RevenueReport, TrackStatus, Plan, Notification, ArtistProfile } from '../types';
+import { User, Release, SupportQuery, OacApplication, RevenueReport, TrackStatus, Plan, Notification, ArtistProfile, PayoutRequest } from '../types';
 
 interface AdminPanelProps {
   currentUser: User;
@@ -50,6 +51,8 @@ interface AdminPanelProps {
   onDownloadFile: (path: string) => void;
   onUpdateArtist: (id: string, updates: Partial<ArtistProfile>) => void;
   onUpdateUser: (email: string, updates: Partial<User>) => void;
+  payoutRequests?: PayoutRequest[];
+  onUpdatePayoutRequest: (id: string, status: 'Approved' | 'Rejected', feedback?: string) => void;
 }
 
 function LegalLineManager({ 
@@ -148,9 +151,11 @@ export default function AdminPanel({
   onDeleteNotification,
   onDownloadFile,
   onUpdateArtist,
-  onUpdateUser
+  onUpdateUser,
+  payoutRequests = [],
+  onUpdatePayoutRequest
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'releases' | 'queries' | 'oac' | 'revenue' | 'notifications' | 'artists' | 'legal'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'releases' | 'queries' | 'oac' | 'revenue' | 'notifications' | 'artists' | 'legal' | 'payouts'>('users');
   const [inspectRelease, setInspectRelease] = useState<Release | null>(null);
 
   // New User Provisioning States
@@ -184,6 +189,40 @@ export default function AdminPanel({
     } catch (e) {
       console.error(e);
       alert('Failed to change user password.');
+    }
+  };
+
+  // User Account Lifecycle Edit States
+  const [editingLifecycleEmail, setEditingLifecycleEmail] = useState<string | null>(null);
+  const [editRegDateValue, setEditRegDateValue] = useState('');
+  const [editEndDateValue, setEditEndDateValue] = useState('');
+  const [lifecycleUpdateSuccessEmail, setLifecycleUpdateSuccessEmail] = useState<string | null>(null);
+
+  const handleAdminUpdateLifecycle = async (email: string) => {
+    try {
+      const updates: any = {};
+      
+      if (editRegDateValue) {
+        const regDateStr = new Date(editRegDateValue + 'T12:00:00').toISOString();
+        updates.registeredAt = regDateStr;
+      }
+      
+      if (editEndDateValue) {
+        const endDateStr = new Date(editEndDateValue + 'T12:00:00').toISOString();
+        updates.planEndDate = endDateStr;
+      } else {
+        updates.planEndDate = ''; // Indefinite
+      }
+
+      await onUpdateUser(email, updates);
+      setLifecycleUpdateSuccessEmail(email);
+      setEditingLifecycleEmail(null);
+      setTimeout(() => {
+        setLifecycleUpdateSuccessEmail(null);
+      }, 3000);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update user account dates.');
     }
   };
 
@@ -557,6 +596,7 @@ export default function AdminPanel({
           { id: 'releases', label: 'Release Ingestion Queue', count: submittedReleases.length + approvedReleases.length, icon: Disc },
           { id: 'queries', label: 'Support Helpdesk', count: pendingQueries.length, icon: HelpCircle },
           { id: 'oac', label: 'OAC Verifications', count: pendingOacs.length, icon: Award },
+          { id: 'payouts', label: 'Payout Requests', count: payoutRequests.filter(p => p.status === 'Pending').length, icon: Landmark },
           { id: 'revenue', label: 'Post Royalty Ledgers', count: 0, icon: DollarSign },
           { id: 'notifications', label: 'Broadcast Notifications', count: 0, icon: Bell },
           { id: 'legal', label: 'Authorized Tags Control', count: 0, icon: FileText },
@@ -592,7 +632,8 @@ export default function AdminPanel({
         
         {/* MEMBERS APPROVAL TAB */}
         {activeTab === 'users' && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="admin_members_section">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="admin_members_section">
             {/* Column 1 of 3: Create / Provision Artist Account */}
             <div className="md:col-span-4 bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954]">Provision Artist</h3>
@@ -786,6 +827,120 @@ export default function AdminPanel({
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+            {/* Section: Account Lifecycles & Durations (Registration & Plan End Dates) */}
+            <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] text-left space-y-4" id="member_lifecycles_section">
+              <div className="flex justify-between items-center pb-2 border-b border-[#1F1F1F]">
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#1DB954]" /> Account Lifecycles & Plan Durations
+                  </h3>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Edit user registration dates and plan expiration timelines. Leaving the end date empty means the plan is perpetual.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {activeUsers.map((user, idx) => {
+                  const isEditing = editingLifecycleEmail === user.email;
+                  const regDateFormatted = user.registeredAt ? new Date(user.registeredAt).toISOString().split('T')[0] : '';
+                  const endDateFormatted = user.planEndDate ? new Date(user.planEndDate).toISOString().split('T')[0] : '';
+
+                  return (
+                    <div 
+                      key={`lifecycle-${user.email}-${idx}`} 
+                      className="p-4 bg-black rounded-lg border border-[#1F1F1F] space-y-3 relative"
+                      id={`lifecycle_card_${user.email}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-gray-200 block text-xs truncate">{user.artistName}</span>
+                          <span className="text-[10px] text-gray-400 block font-mono mt-0.5 truncate">{user.email}</span>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              if (isEditing) {
+                                setEditingLifecycleEmail(null);
+                              } else {
+                                setEditingLifecycleEmail(user.email);
+                                setEditRegDateValue(regDateFormatted);
+                                setEditEndDateValue(endDateFormatted);
+                              }
+                            }}
+                            className="px-2.5 py-1 bg-[#121212] border border-[#1F1F1F] hover:bg-zinc-800 text-gray-300 font-bold rounded text-[10px] uppercase cursor-pointer transition"
+                            id={`btn_edit_lifecycle_${user.email}`}
+                          >
+                            {isEditing ? 'Cancel' : 'Edit Dates'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-[11px] pt-1.5 border-t border-[#1F1F1F]">
+                        <div>
+                          <span className="text-gray-500 block uppercase text-[8px] tracking-wider font-bold">REGISTRATION DATE</span>
+                          <span className="text-gray-300 font-mono">
+                            {user.registeredAt ? new Date(user.registeredAt).toLocaleDateString() : 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 block uppercase text-[8px] tracking-wider font-bold">PLAN END DATE</span>
+                          <span className="text-emerald-400 font-mono font-bold">
+                            {user.planEndDate ? new Date(user.planEndDate).toLocaleDateString() : 'Indefinite'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {lifecycleUpdateSuccessEmail === user.email && (
+                        <div className="text-[10px] text-emerald-400 font-bold pt-1">
+                          ✓ Lifecycle dates updated successfully!
+                        </div>
+                      )}
+
+                      {isEditing && (
+                        <div className="mt-3 pt-3 border-t border-[#1F1F1F] space-y-3" id={`edit_lifecycle_form_${user.email}`}>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                            <div className="space-y-1">
+                              <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest">Registration Date</label>
+                              <input
+                                type="date"
+                                value={editRegDateValue}
+                                onChange={(e) => setEditRegDateValue(e.target.value)}
+                                className="w-full bg-zinc-900 border border-[#1F1F1F] text-white rounded p-1.5 text-xs focus:outline-none focus:border-green-500"
+                                id={`reg_date_input_${user.email}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest">Plan End Date</label>
+                              <input
+                                type="date"
+                                value={editEndDateValue}
+                                onChange={(e) => setEditEndDateValue(e.target.value)}
+                                className="w-full bg-zinc-900 border border-[#1F1F1F] text-white rounded p-1.5 text-xs focus:outline-none focus:border-green-500"
+                                id={`end_date_input_${user.email}`}
+                              />
+                              <p className="text-[8px] text-gray-500">Leave blank for indefinite tier access.</p>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end pt-1">
+                            <button
+                              onClick={() => handleAdminUpdateLifecycle(user.email)}
+                              className="bg-[#1DB954] hover:bg-[#1ed760] text-black font-black px-4 py-1.5 rounded text-[10px] uppercase cursor-pointer"
+                              id={`btn_save_lifecycle_${user.email}`}
+                            >
+                              Save Dates
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1480,6 +1635,142 @@ export default function AdminPanel({
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* COMPREHENSIVE PAYOUTS MANAGEMENT TAB */}
+        {activeTab === 'payouts' && (
+          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-6" id="admin_payouts_tab_module">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1F1F1F] pb-4">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-2">
+                  <Landmark className="w-4 h-4" /> Comprehensive Payout & Withdrawal Ledger
+                </h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">Approve, reject, and write confirmation/remittance comments for members' withdrawable balance claims.</p>
+              </div>
+            </div>
+
+            {/* Overview Stats for Admins */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" id="payout_admin_overview_stats">
+              <div className="p-4 bg-[#090909] border border-[#1F1F1F] rounded-xl">
+                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Unprocessed Claims (Pending)</span>
+                <div className="text-sm font-bold text-yellow-400 font-mono mt-1">
+                  ₹{payoutRequests.filter(p => p.status === 'Pending' && p.currency === 'INR').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 1 })}
+                  <span className="text-[10px] text-gray-400 pl-2">/ ${payoutRequests.filter(p => p.status === 'Pending' && p.currency === 'USD').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 1 })}</span>
+                </div>
+              </div>
+              <div className="p-4 bg-[#090909] border border-[#1F1F1F] rounded-xl">
+                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Dispatched Settlement Claims</span>
+                <div className="text-sm font-bold text-[#1DB954] font-mono mt-1">
+                  ₹{payoutRequests.filter(p => p.status === 'Approved' && p.currency === 'INR').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 1 })}
+                  <span className="text-[10px] text-gray-400 pl-2">/ ${payoutRequests.filter(p => p.status === 'Approved' && p.currency === 'USD').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 1 })}</span>
+                </div>
+              </div>
+              <div className="p-4 bg-[#090909] border border-[#1F1F1F] rounded-xl">
+                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Declined Settlements</span>
+                <div className="text-sm font-bold text-rose-400 font-mono mt-1">
+                  ₹{payoutRequests.filter(p => p.status === 'Rejected' && p.currency === 'INR').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 1 })}
+                  <span className="text-[10px] text-gray-400 pl-2">/ ${payoutRequests.filter(p => p.status === 'Rejected' && p.currency === 'USD').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 1 })}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* List */}
+            {payoutRequests.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-8">No payout transactions found on the database.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-[#1F1F1F] text-gray-400 text-[10px] uppercase font-black tracking-widest bg-black/30">
+                      <th className="py-2.5 px-3">Filing ID / Date</th>
+                      <th className="py-2.5 px-3">Artist Profile</th>
+                      <th className="py-2.5 px-3">Amount & Currency</th>
+                      <th className="py-2.5 px-3">Payment Credentials</th>
+                      <th className="py-2.5 px-3">Workflow State</th>
+                      <th className="py-2.5 px-3">Administrative Dispatch Control</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutRequests.map((req) => (
+                      <tr key={req.id} className="border-b border-[#1F1F1F] hover:bg-black/20 group">
+                        <td className="py-4 px-3 font-mono">
+                          <span className="text-white block font-bold">{req.id}</span>
+                          <span className="text-[9px] text-gray-400 block">{new Date(req.submittedAt).toLocaleString()}</span>
+                        </td>
+                        <td className="py-4 px-3">
+                          <span className="text-white block font-bold">{req.artistName || 'Unnamed Artist'}</span>
+                          <span className="text-[9px] text-gray-400 block">{req.email}</span>
+                        </td>
+                        <td className="py-4 px-3 font-mono font-black text-white text-[13px]">
+                          {req.currency === 'INR' ? `₹${req.amount.toLocaleString()}` : `$${req.amount.toLocaleString()}`}
+                        </td>
+                        <td className="py-4 px-3">
+                          {req.paymentMethod === 'UPI' ? (
+                            <div>
+                              <span className="bg-[#1DB954]/10 text-[#1DB954] text-[9px] font-black rounded px-1.5 py-0.5 uppercase">UPI</span>
+                              <p className="text-gray-300 font-mono mt-1 pr-1 truncate text-[10px]" title={req.paymentDetails?.upiId}>{req.paymentDetails?.upiId || 'Not Configured'}</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-0.5 text-[10px]">
+                              <span className="bg-[#1DB954]/10 text-emerald-400 text-[9px] font-black rounded px-1.5 py-0.5 uppercase">Bank</span>
+                              <p className="text-white font-medium truncate mt-0.5">{req.paymentDetails?.bankName}</p>
+                              <p className="text-gray-300 font-mono truncate">Acc: {req.paymentDetails?.bankAccountNo}</p>
+                              <p className="text-gray-400 font-mono">IFSC: {req.paymentDetails?.bankIfsc}</p>
+                              <p className="text-gray-500 italic">Holder: {req.paymentDetails?.bankHolderName}</p>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-3">
+                          {req.status === 'Pending' ? (
+                            <span className="text-yellow-400 font-black tracking-wide uppercase text-[10px] bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">Pending</span>
+                          ) : req.status === 'Approved' ? (
+                            <span className="text-[#1DB954] font-black tracking-wide uppercase text-[10px] bg-[#1DB954]/10 px-1.5 py-0.5 rounded border border-[#1DB954]/20">Approved</span>
+                          ) : (
+                            <span className="text-rose-400 font-black tracking-wide uppercase text-[10px] bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">Declined</span>
+                          )}
+                          {req.feedback && (
+                            <p className="text-[10px] text-gray-500 italic mt-1 font-light max-w-[150px] truncate" title={req.feedback}>Remarks: {req.feedback}</p>
+                          )}
+                        </td>
+                        <td className="py-4 px-3">
+                          {req.status === 'Pending' ? (
+                            <div className="space-y-2 text-left">
+                              <input
+                                type="text"
+                                placeholder="Write Transaction ID or rejection details..."
+                                value={replyTextMap[req.id] || ''}
+                                onChange={(e) => setReplyTextMap(prev => ({ ...prev, [req.id]: e.target.value }))}
+                                className="w-full text-[10px] bg-black border border-[#1F1F1F] p-1.5 rounded text-white focus:outline-none"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdatePayoutRequest(req.id, 'Approved', replyTextMap[req.id])}
+                                  className="flex-1 py-1 bg-[#1DB954] text-black hover:bg-emerald-400 font-bold rounded text-[9px] uppercase cursor-pointer"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdatePayoutRequest(req.id, 'Rejected', replyTextMap[req.id])}
+                                  className="flex-1 py-1 bg-rose-600 text-white hover:bg-rose-550 font-bold rounded text-[9px] uppercase cursor-pointer"
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-gray-600 italic">No further actions required</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

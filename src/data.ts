@@ -1,4 +1,4 @@
-import { User, Release, ArtistProfile, Label, RevenueReport, SupportQuery, OacApplication, Notification } from './types';
+import { User, Release, ArtistProfile, Label, RevenueReport, SupportQuery, OacApplication, Notification, PayoutRequest } from './types';
 
 export interface AppState {
   users: User[];
@@ -9,6 +9,7 @@ export interface AppState {
   queries: SupportQuery[];
   oacApplications: OacApplication[];
   notifications?: Notification[]; // Backwards-compatible optional field
+  payoutRequests?: PayoutRequest[];
 }
 
 const SEED_USERS: User[] = [
@@ -19,6 +20,7 @@ const SEED_USERS: User[] = [
     plan: 'Elite',
     isApproved: true,
     registeredAt: '2026-01-01T00:00:00Z',
+    planEndDate: '2030-12-31T23:59:59Z',
   },
   {
     email: 'luna@wavora.live',
@@ -27,6 +29,8 @@ const SEED_USERS: User[] = [
     plan: 'Basic',
     isApproved: true,
     registeredAt: '2026-03-10T14:30:00Z',
+    planEndDate: '2027-03-10T14:30:00Z',
+    upiId: 'luna@ybl',
   },
   {
     email: 'vector@wavora.live',
@@ -35,6 +39,11 @@ const SEED_USERS: User[] = [
     plan: 'Pro',
     isApproved: true,
     registeredAt: '2026-04-05T09:15:00Z',
+    planEndDate: '2027-04-05T09:15:00Z',
+    bankName: 'HDFC Bank',
+    bankAccountNo: '501002344556',
+    bankIfsc: 'HDFC0000123',
+    bankHolderName: 'Vector S.',
   },
   {
     email: 'zenith@wavora.live',
@@ -43,6 +52,7 @@ const SEED_USERS: User[] = [
     plan: 'Elite',
     isApproved: false, // Pending Admin Approval
     registeredAt: '2026-06-01T11:20:00Z',
+    planEndDate: '2027-06-01T11:20:00Z',
   },
 ];
 
@@ -322,6 +332,39 @@ const SEED_NOTIFICATIONS: Notification[] = [
   }
 ];
 
+const SEED_PAYOUTS: PayoutRequest[] = [
+  {
+    id: 'pay-1',
+    email: 'luna@wavora.live',
+    artistName: 'Luna Drift',
+    amount: 500,
+    currency: 'USD',
+    paymentMethod: 'UPI',
+    paymentDetails: {
+      upiId: 'luna@ybl'
+    },
+    submittedAt: '2026-06-10T12:00:00Z',
+    status: 'Pending'
+  },
+  {
+    id: 'pay-2',
+    email: 'vector@wavora.live',
+    artistName: 'Vector Static',
+    amount: 250,
+    currency: 'USD',
+    paymentMethod: 'Bank',
+    paymentDetails: {
+      bankName: 'HDFC Bank',
+      bankAccountNo: '501002344556',
+      bankIfsc: 'HDFC0000123',
+      bankHolderName: 'Vector S.'
+    },
+    submittedAt: '2026-06-08T08:30:00Z',
+    status: 'Approved',
+    feedback: 'Payout processed on June 9, 2026.'
+  }
+];
+
 const STORAGE_KEY = 'WAVORA_STATE_V1';
 
 export function getStoredData(): AppState {
@@ -329,8 +372,16 @@ export function getStoredData(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      let needsResave = false;
       if (!parsed.notifications) {
         parsed.notifications = SEED_NOTIFICATIONS;
+        needsResave = true;
+      }
+      if (!parsed.payoutRequests) {
+        parsed.payoutRequests = SEED_PAYOUTS;
+        needsResave = true;
+      }
+      if (needsResave) {
         saveStoredData(parsed);
       }
       return parsed;
@@ -356,6 +407,7 @@ export function getStoredData(): AppState {
     queries: [],
     oacApplications: [],
     notifications: [],
+    payoutRequests: SEED_PAYOUTS,
   };
   saveStoredData(defaultState);
   return defaultState;

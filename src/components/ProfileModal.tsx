@@ -131,7 +131,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, onSavePassw
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#1F1F1F] grid grid-cols-2 gap-4 text-left font-mono">
+            <div className="pt-3 border-t border-[#1F1F1F] grid grid-cols-1 sm:grid-cols-3 gap-4 text-left font-mono">
               <div>
                 <span className="block text-[9px] text-gray-500 uppercase tracking-wider">REGISTRATION DATE</span>
                 <span className="text-xs text-gray-300">
@@ -140,6 +140,20 @@ export default function ProfileModal({ isOpen, onClose, currentUser, onSavePassw
                     month: 'long',
                     day: 'numeric',
                   })}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[9px] text-gray-500 uppercase tracking-wider">PLAN END DATE</span>
+                <span className="text-xs text-emerald-400 font-bold">
+                  {currentUser.planEndDate ? (
+                    new Date(currentUser.planEndDate).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  ) : (
+                    'Indefinite'
+                  )}
                 </span>
               </div>
               <div>

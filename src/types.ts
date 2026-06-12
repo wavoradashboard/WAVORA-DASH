@@ -10,8 +10,14 @@ export interface User {
   plan: Plan;
   isApproved: boolean;
   registeredAt: string;
+  planEndDate?: string;
   allowedCLines?: string[];
   allowedPLines?: string[];
+  upiId?: string;
+  bankName?: string;
+  bankAccountNo?: string;
+  bankIfsc?: string;
+  bankHolderName?: string;
 }
 
 export interface ArtistProfile {
@@ -114,5 +120,24 @@ export interface Notification {
   targetValue?: string; // specific plan ('Basic' | 'Pro' | 'Elite') or artist email
   severity: 'Info' | 'Warning' | 'Success' | 'Critical';
   createdAt: string;
+}
+
+export interface PayoutRequest {
+  id: string;
+  email: string;
+  artistName: string;
+  amount: number;
+  currency: 'USD' | 'INR';
+  paymentMethod: 'UPI' | 'Bank';
+  paymentDetails: {
+    upiId?: string;
+    bankName?: string;
+    bankAccountNo?: string;
+    bankIfsc?: string;
+    bankHolderName?: string;
+  };
+  submittedAt: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  feedback?: string;
 }
 
