@@ -54,7 +54,7 @@ export default function App() {
   // Fetch all Supabase data
   const loadSupabaseData = async (userEmail: string, userId: string) => {
     try {
-      const isAdmin = userEmail === 'admin@g.g';
+      const isAdmin = userEmail.toLowerCase() === 'admin@g.g';
 
       // Build scoped queries to enforce data privacy at the DB level
       const usersQuery = supabase.from('users').select('*');
@@ -78,14 +78,14 @@ export default function App() {
       }
 
       const [
-        { data: usersData },
-        { data: releasesData },
-        { data: artistsData },
-        { data: labelsData },
-        { data: revenueData },
-        { data: queriesData },
-        { data: oacData },
-        { data: notifData }
+        { data: usersData, error: usersErr },
+        { data: releasesData, error: releasesErr },
+        { data: artistsData, error: artistsErr },
+        { data: labelsData, error: labelsErr },
+        { data: revenueData, error: revenueErr },
+        { data: queriesData, error: queriesErr },
+        { data: oacData, error: oacErr },
+        { data: notifData, error: notifErr }
       ] = await Promise.all([
         usersQuery,
         releasesQuery,
@@ -96,6 +96,15 @@ export default function App() {
         oacQuery,
         notifQuery
       ]);
+
+      if (usersErr) console.error("Error loading users:", usersErr);
+      if (releasesErr) console.error("Error loading releases:", releasesErr);
+      if (artistsErr) console.error("Error loading artists:", artistsErr);
+      if (labelsErr) console.error("Error loading labels:", labelsErr);
+      if (revenueErr) console.error("Error loading revenue reports:", revenueErr);
+      if (queriesErr) console.error("Error loading support queries:", queriesErr);
+      if (oacErr) console.error("Error loading OAC applications:", oacErr);
+      if (notifErr) console.error("Error loading notifications:", notifErr);
 
       // Batch resolve signed URLs for private files
       const storagePathsToResolve: string[] = [];
@@ -135,6 +144,22 @@ export default function App() {
         }
       });
 
+      // Augment uniqueUsers with current session user if they don't have a profile in the users table yet
+      const loggedInEmailLower = userEmail.toLowerCase();
+      const hasLoggedInUser = uniqueUsers.some(u => u.email.toLowerCase() === loggedInEmailLower);
+      if (!hasLoggedInUser && !isAdmin) {
+        uniqueUsers.push({
+          id: userId,
+          email: userEmail,
+          artistName: currentUser?.artistName || userEmail.split('@')[0],
+          plan: currentUser?.plan || 'Basic',
+          isApproved: currentUser?.isApproved !== undefined ? currentUser.isApproved : true,
+          registeredAt: currentUser?.registeredAt || new Date().toISOString(),
+          allowedCLines: currentUser?.allowedCLines || [],
+          allowedPLines: currentUser?.allowedPLines || []
+        });
+      }
+
       setAppState({
         users: uniqueUsers,
         releases: (releasesData || [])
@@ -142,8 +167,8 @@ export default function App() {
             ...r,
             albumName: r.album_name,
             mainArtistName: r.main_artist_name,
-            featureArtists: r.feature_artists || [],
-            otherArtists: r.other_artists || [],
+            featureArtists: r.feature_artists || r.featureArtists || [],
+            otherArtists: r.other_artists || r.otherArtists || [],
             contentType: r.content_type,
             numTracks: r.num_tracks,
             subGenre: r.sub_genre,
@@ -164,7 +189,9 @@ export default function App() {
             name: a.name,
             spotifyLink: a.spotify_link,
             appleMusicLink: a.apple_music_link,
-            instagramLink: a.instagram_link
+            instagramLink: a.instagram_link,
+            defaultCLine: a.default_c_line,
+            defaultPLine: a.default_p_line
           })),
         labels: labelsData || [],
         revenueReports: revenueData || [],
@@ -180,15 +207,15 @@ export default function App() {
           })),
         oacApplications: (oacData || [])
           .map(o => ({
-          id: o.id,
-          email: o.email,
-          artistName: o.artist_name,
-          spotifyLink: o.spotify_link,
-          youtubeLink: o.youtube_link,
-          fullName: o.full_name,
-          status: o.status,
-          submittedAt: o.submitted_at
-        })),
+            id: o.id,
+            email: o.email,
+            artistName: o.artist_name,
+            spotifyLink: o.spotify_link,
+            youtubeLink: o.youtube_link,
+            fullName: o.full_name,
+            status: o.status,
+            submittedAt: o.submitted_at
+          })),
         notifications: notifData || []
       });
     } catch (e) {
@@ -541,35 +568,58 @@ export default function App() {
   // Artist Actions
   const handleAddArtist = async (profile: ArtistProfile) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    // Use the email specifically set on the artist object (important for admin registrations)
-    const targetEmail = profile.email || currentUser?.email;
-
-    // If admin is adding for another user (or impersonating), look up their ID
-    let targetUserId = session.user.id;
-    const isActuallyAdmin = realAdminUser?.email === 'admin@g.g' || currentUser?.email === 'admin@g.g';
     
-    if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email)) {
-      // Use the known ID of the currentUser if we are impersonating them
-      if (isImpersonating && currentUser && targetEmail === currentUser.email) {
-        targetUserId = currentUser.id;
-      } else {
-        const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).single();
-        if (targetUser) targetUserId = targetUser.id;
-      }
-    }
+    if (session?.user) {
+      // Use the email specifically set on the artist object (important for admin registrations)
+      const targetEmail = profile.email || currentUser?.email;
 
-    await supabase.from('artists').insert({
-      user_id: targetUserId,
-      email: targetEmail,
-      name: profile.name,
-      spotify_link: profile.spotifyLink,
-      apple_music_link: profile.appleMusicLink,
-      instagram_link: profile.instagramLink,
-      default_c_line: profile.defaultCLine,
-      default_p_line: profile.defaultPLine
-    });
+      // If admin is adding for another user (or impersonating), look up their ID
+      let targetUserId = session.user.id;
+      const isActuallyAdmin = realAdminUser?.email === 'admin@g.g' || currentUser?.email === 'admin@g.g';
+      
+      if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email)) {
+        // Use the known ID of the currentUser if we are impersonating them
+        if (isImpersonating && currentUser && targetEmail === currentUser.email) {
+          targetUserId = currentUser.id;
+        } else {
+          try {
+            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).single();
+            if (targetUser) targetUserId = targetUser.id;
+          } catch (e) {
+            console.error("Error looking up target user id:", e);
+          }
+        }
+      }
+
+      const payload: any = {
+        user_id: targetUserId,
+        email: targetEmail,
+        name: profile.name,
+        spotify_link: profile.spotifyLink,
+        apple_music_link: profile.appleMusicLink,
+        instagram_link: profile.instagramLink,
+      };
+
+      try {
+        const fullPayload = {
+          ...payload,
+          default_c_line: profile.defaultCLine,
+          default_p_line: profile.defaultPLine
+        };
+        const { error } = await supabase.from('artists').insert(fullPayload);
+        if (error) {
+          console.warn("Inserting artist custom lines failed, falling back without default lines:", error);
+          const { error: fallbackError } = await supabase.from('artists').insert(payload);
+          if (fallbackError) {
+            console.error("Artist fallback insert failed too:", fallbackError);
+          }
+        }
+      } catch (e) {
+        console.error("Artist insertion exception:", e);
+      }
+    } else {
+      console.warn("No active session found. Saving artist to local state only.");
+    }
 
     updateState((prev) => ({
       ...prev,
@@ -578,7 +628,11 @@ export default function App() {
   };
 
   const handleRemoveArtist = async (id: string) => {
-    await supabase.from('artists').delete().eq('id', id);
+    try {
+      await supabase.from('artists').delete().eq('id', id);
+    } catch (e) {
+      console.error("Artist deletion error:", e);
+    }
     updateState((prev) => ({
       ...prev,
       artists: prev.artists.filter((art) => art.id !== id),
@@ -586,14 +640,30 @@ export default function App() {
   };
 
   const handleUpdateArtist = async (id: string, updates: Partial<ArtistProfile>) => {
-    await supabase.from('artists').update({
+    const baseUpdates: any = {
       ...(updates.name && { name: updates.name }),
       ...(updates.spotifyLink && { spotify_link: updates.spotifyLink }),
       ...(updates.appleMusicLink && { apple_music_link: updates.appleMusicLink }),
       ...(updates.instagramLink && { instagram_link: updates.instagramLink }),
-      ...(updates.defaultCLine !== undefined && { default_c_line: updates.defaultCLine }),
-      ...(updates.defaultPLine !== undefined && { default_p_line: updates.defaultPLine })
-    }).eq('id', id);
+    };
+
+    try {
+      const fullUpdates = {
+        ...baseUpdates,
+        ...(updates.defaultCLine !== undefined && { default_c_line: updates.defaultCLine }),
+        ...(updates.defaultPLine !== undefined && { default_p_line: updates.defaultPLine })
+      };
+      const { error } = await supabase.from('artists').update(fullUpdates).eq('id', id);
+      if (error) {
+        console.warn("Updating artist custom lines failed, trying fallback without default lines:", error);
+        const { error: fallbackError } = await supabase.from('artists').update(baseUpdates).eq('id', id);
+        if (fallbackError) {
+          console.error("Artist update fallback failed too:", fallbackError);
+        }
+      }
+    } catch (e) {
+      console.error("Artist update exception:", e);
+    }
 
     updateState((prev) => ({
       ...prev,
@@ -602,13 +672,29 @@ export default function App() {
   };
 
   const handleUpdateUser = async (email: string, updates: Partial<User>) => {
-    await supabase.from('users').update({
+    const baseUpdates: any = {
       ...(updates.artistName && { artist_name: updates.artistName }),
       ...(updates.plan && { plan: updates.plan }),
       ...(updates.isApproved !== undefined && { is_approved: updates.isApproved }),
-      ...(updates.allowedCLines !== undefined && { allowed_c_lines: updates.allowedCLines.join('|||') }),
-      ...(updates.allowedPLines !== undefined && { allowed_p_lines: updates.allowedPLines.join('|||') })
-    }).eq('email', email);
+    };
+
+    try {
+      const fullUpdates = {
+        ...baseUpdates,
+        ...(updates.allowedCLines !== undefined && { allowed_c_lines: updates.allowedCLines.join('|||') }),
+        ...(updates.allowedPLines !== undefined && { allowed_p_lines: updates.allowedPLines.join('|||') })
+      };
+      const { error } = await supabase.from('users').update(fullUpdates).eq('email', email);
+      if (error) {
+        console.warn("Updating user allowed lines failed, trying fallback without them:", error);
+        const { error: fallbackError } = await supabase.from('users').update(baseUpdates).eq('email', email);
+        if (fallbackError) {
+          console.error("User update fallback failed too:", fallbackError);
+        }
+      }
+    } catch (e) {
+      console.error("User update exception:", e);
+    }
 
     updateState((prev) => ({
       ...prev,
@@ -701,31 +787,50 @@ export default function App() {
 
   const handleSubmitRelease = async (newRelease: Release) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
+    
+    if (session?.user) {
+      const payload: any = {
+        user_id: session.user.id,
+        email: currentUser?.email,
+        album_name: newRelease.albumName,
+        type: newRelease.type,
+        main_artist_name: newRelease.mainArtistName,
+        other_artists: newRelease.otherArtists,
+        language: newRelease.language,
+        content_type: newRelease.contentType,
+        num_tracks: newRelease.numTracks,
+        genre: newRelease.genre,
+        sub_genre: newRelease.subGenre,
+        label_name: newRelease.labelName,
+        c_line: newRelease.cLine,
+        p_line: newRelease.pLine,
+        release_date: newRelease.releaseDate,
+        cover_art_url: newRelease.coverArtUrl,
+        tracks: newRelease.tracks,
+        special_request: newRelease.specialRequest,
+        status: 'Submitted',
+        submitted_at: newRelease.submittedAt
+      };
 
-    await supabase.from('releases').insert({
-      user_id: session.user.id,
-      email: currentUser?.email,
-      album_name: newRelease.albumName,
-      type: newRelease.type,
-      main_artist_name: newRelease.mainArtistName,
-      feature_artists: newRelease.featureArtists,
-      other_artists: newRelease.otherArtists,
-      language: newRelease.language,
-      content_type: newRelease.contentType,
-      num_tracks: newRelease.numTracks,
-      genre: newRelease.genre,
-      sub_genre: newRelease.subGenre,
-      label_name: newRelease.labelName,
-      c_line: newRelease.cLine,
-      p_line: newRelease.pLine,
-      release_date: newRelease.releaseDate,
-      cover_art_url: newRelease.coverArtUrl,
-      tracks: newRelease.tracks,
-      special_request: newRelease.specialRequest,
-      status: 'Submitted',
-      submitted_at: newRelease.submittedAt
-    });
+      try {
+        const fullPayload = {
+          ...payload,
+          feature_artists: newRelease.featureArtists
+        };
+        const { error } = await supabase.from('releases').insert(fullPayload);
+        if (error) {
+          console.warn("First insert attempt failed, trying fallback without feature_artists", error);
+          const { error: fallbackError } = await supabase.from('releases').insert(payload);
+          if (fallbackError) {
+            console.error("Fallback insert also failed:", fallbackError);
+          }
+        }
+      } catch (e) {
+        console.error("Release insert exception:", e);
+      }
+    } else {
+      console.warn("No active session found during release submission. Saving to local state only.");
+    }
 
     let coverArtSignedUrl = newRelease.coverArtSignedUrl;
     if (newRelease.coverArtUrl && !newRelease.coverArtUrl.startsWith('http')) {
@@ -744,7 +849,6 @@ export default function App() {
   const handleSubmitSupportQuery = async (queryText: string) => {
     if (!currentUser) return;
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
 
     const newQuery: SupportQuery = {
       id: `q-${Date.now()}`,
@@ -755,14 +859,22 @@ export default function App() {
       status: 'Pending',
     };
 
-    await supabase.from('support_queries').insert({
-      user_id: session.user.id,
-      email: currentUser.email,
-      artist_name: currentUser.artistName,
-      query_text: queryText,
-      status: 'Pending',
-      submitted_at: newQuery.submittedAt
-    });
+    if (session?.user) {
+      try {
+        await supabase.from('support_queries').insert({
+          user_id: session.user.id,
+          email: currentUser.email,
+          artist_name: currentUser.artistName,
+          query_text: queryText,
+          status: 'Pending',
+          submitted_at: newQuery.submittedAt
+        });
+      } catch (e) {
+        console.error("Support query insert error:", e);
+      }
+    } else {
+      console.warn("No active session found. Saving support query to local state only.");
+    }
 
     updateState((prev) => ({
       ...prev,
@@ -773,7 +885,6 @@ export default function App() {
   const handleSubmitOacApplication = async (youtubeLink: string, spotifyLink: string, fullName: string) => {
     if (!currentUser) return;
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
 
     const newOac: OacApplication = {
       id: `oac-${Date.now()}`,
@@ -786,16 +897,24 @@ export default function App() {
       status: 'Pending',
     };
 
-    await supabase.from('oac_applications').insert({
-      user_id: session.user.id,
-      email: currentUser.email,
-      artist_name: currentUser.artistName,
-      spotify_link: spotifyLink,
-      youtube_link: youtubeLink,
-      full_name: fullName,
-      status: 'Pending',
-      submitted_at: newOac.submittedAt
-    });
+    if (session?.user) {
+      try {
+        await supabase.from('oac_applications').insert({
+          user_id: session.user.id,
+          email: currentUser.email,
+          artist_name: currentUser.artistName,
+          spotify_link: spotifyLink,
+          youtube_link: youtubeLink,
+          full_name: fullName,
+          status: 'Pending',
+          submitted_at: newOac.submittedAt
+        });
+      } catch (e) {
+        console.error("OAC application insert error:", e);
+      }
+    } else {
+      console.warn("No active session found. Saving OAC application to local state only.");
+    }
 
     updateState((prev) => ({
       ...prev,
