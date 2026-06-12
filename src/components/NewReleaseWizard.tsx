@@ -51,6 +51,39 @@ export const GENRE_DATA: Record<string, string[]> = {
   "World": ["Afrobeat", "Flamenco", "Celtic Folk", "K-Pop (World)", "Rai", "Reggae (World)", "Middle Eastern", "Carnatic"]
 };
 
+export const LANGUAGES_LIST = [
+  "English",
+  "Spanish",
+  "Portuguese",
+  "Hindi",
+  "Punjabi",
+  "Korean",
+  "Japanese",
+  "French",
+  "German",
+  "Italian",
+  "Mandarin",
+  "Cantonese",
+  "Turkish",
+  "Russian",
+  "Arabic",
+  "Dutch",
+  "Swedish",
+  "Polish",
+  "Vietnamese",
+  "Thai",
+  "Indonesian",
+  "Swahili",
+  "Greek",
+  "Tagalog",
+  "Tamil",
+  "Telugu",
+  "Bengali",
+  "Marathi",
+  "Latin",
+  "Instrumental (No Lyrics)"
+];
+
 interface NewReleaseWizardProps {
   currentUser: User;
   managedArtists: ArtistProfile[];
@@ -696,14 +729,36 @@ export default function NewReleaseWizard({
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Language</label>
-                <input
-                  type="text"
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  placeholder="English"
-                  id="w_language"
-                />
+                <select
+                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                  value={LANGUAGES_LIST.includes(language) ? language : "Custom"}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "Custom") {
+                      setLanguage('');
+                    } else {
+                      setLanguage(val);
+                    }
+                  }}
+                  id="w_language_select"
+                >
+                  {LANGUAGES_LIST.map((lang) => (
+                    <option key={lang} value={lang}>{lang}</option>
+                  ))}
+                  <option value="Custom">Other (Type Custom...)</option>
+                </select>
+
+                {!LANGUAGES_LIST.includes(language) && (
+                  <input
+                    type="text"
+                    className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500 mt-1.5"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    placeholder="Type custom language..."
+                    id="w_language"
+                    required
+                  />
+                )}
               </div>
 
               <div className="space-y-1">
@@ -1151,23 +1206,37 @@ export default function NewReleaseWizard({
                   </div>
 
                   {/* Explicit Tag check */}
-                  <div className="flex items-center justify-between p-2.5 bg-slate-950/45 rounded-lg border border-slate-800">
+                  <div className="flex flex-col gap-3 p-3.5 bg-slate-950/45 rounded-lg border border-slate-800">
                     <div>
                       <span className="text-xs font-bold text-gray-200 block">Explicit Parental Advisory Tagging</span>
-                      <p className="text-[10px] text-gray-400">Strictly flag if the vocals contain strong profanity/references.</p>
+                      <p className="text-[10px] text-gray-400">Strictly flag if the vocals contain strong profanity, drug references, or offensive content.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleTrackFieldChange(idx, 'explicitContent', !track.explicitContent)}
-                      className={`cursor-pointer px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full border transition ${
-                        track.explicitContent 
-                          ? 'bg-red-950/40 text-red-400 border-red-500/20' 
-                          : 'bg-slate-800 text-gray-400 border-slate-700'
-                      }`}
-                      id={`w_track_${idx}_explicit`}
-                    >
-                      {track.explicitContent ? '⚠️ Yes (Explicit)' : 'No (Clean/Inst)'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleTrackFieldChange(idx, 'explicitContent', true)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-lg border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
+                          track.explicitContent
+                            ? 'bg-red-950/50 text-red-400 border-red-500/40 shadow-lg shadow-red-950/30'
+                            : 'bg-[#121c2c]/40 text-slate-400 border-slate-800 hover:border-slate-700'
+                        }`}
+                        id={`w_track_${idx}_explicit_yes`}
+                      >
+                        ⚠️ Yes (Explicit)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTrackFieldChange(idx, 'explicitContent', false)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-lg border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
+                          !track.explicitContent
+                            ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/40 shadow-lg shadow-emerald-950/30'
+                            : 'bg-[#121c2c]/40 text-slate-400 border-slate-800 hover:border-slate-700'
+                        }`}
+                        id={`w_track_${idx}_explicit_no`}
+                      >
+                        ✓ No (Clean/Instrumental)
+                      </button>
+                    </div>
                   </div>
 
                   {/* Audio Upload Element */}

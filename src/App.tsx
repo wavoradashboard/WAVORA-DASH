@@ -180,6 +180,7 @@ export default function App() {
             coverArtUrl: r.cover_art_url,
             coverArtSignedUrl: (r.cover_art_url && !r.cover_art_url.startsWith('http')) ? signedUrlMap[r.cover_art_url] : undefined,
             submittedAt: r.submitted_at,
+            specialRequest: r.special_request || r.specialRequest,
             tracks: r.tracks || []
           })),
         artists: (artistsData || [])
