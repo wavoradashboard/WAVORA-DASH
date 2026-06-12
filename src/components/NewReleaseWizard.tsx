@@ -103,20 +103,16 @@ export default function NewReleaseWizard({
   useEffect(() => {
     if (currentUser.allowedCLines && currentUser.allowedCLines.length > 0) {
       setCLine(currentUser.allowedCLines[0]);
-    } else if (isBasic) {
-      setCLine(`© ${new Date().getFullYear()} Wavora Live`);
     } else {
-      setCLine(`© ${new Date().getFullYear()} ${primaryArtists[0] || currentUser.artistName}`);
+      setCLine(`© ${new Date().getFullYear()} Wavora Live`);
     }
 
     if (currentUser.allowedPLines && currentUser.allowedPLines.length > 0) {
       setPLine(currentUser.allowedPLines[0]);
-    } else if (isBasic) {
-      setPLine(`℗ ${new Date().getFullYear()} Wavora Live`);
     } else {
-      setPLine(`℗ ${new Date().getFullYear()} ${primaryArtists[0] || currentUser.artistName} Records`);
+      setPLine(`℗ ${new Date().getFullYear()} Wavora Live`);
     }
-  }, [currentUser.allowedCLines, currentUser.allowedPLines, isBasic, primaryArtists, currentUser.artistName]);
+  }, [currentUser.allowedCLines, currentUser.allowedPLines]);
 
   // Artwork file info
   const [coverArtFile, setCoverArtFile] = useState<File | null>(null);
@@ -336,9 +332,7 @@ export default function NewReleaseWizard({
     if (!albumName.trim()) return 'Album/Single Name is required';
     if (!releaseDate) return 'Official Release Date is required';
     if (!coverArtUrl) return 'You must upload or select a Cover Art image';
-    if (isElite && managedLabels.length > 0 && !selectedLabel) {
-      return 'Please choose a Publishing Label';
-    }
+    // Allow empty string to default to 'Wavora Live' as the publishing label
     return '';
   };
 
@@ -395,9 +389,9 @@ export default function NewReleaseWizard({
       numTracks,
       genre,
       subGenre,
-      labelName: isElite ? (selectedLabel || 'Wavora Live') : 'Wavora Live',
-      cLine: (isAdmin || !isBasic) ? (cLine || `© ${new Date().getFullYear()} ${primaryArtists.join(', ')}`) : `© ${new Date().getFullYear()} Wavora Live`,
-      pLine: (isAdmin || !isBasic) ? (pLine || `℗ ${new Date().getFullYear()} ${primaryArtists.join(', ')} Records`) : `℗ ${new Date().getFullYear()} Wavora Live`,
+      labelName: selectedLabel || 'Wavora Live',
+      cLine: cLine || `© ${new Date().getFullYear()} Wavora Live`,
+      pLine: pLine || `℗ ${new Date().getFullYear()} Wavora Live`,
       releaseDate,
       coverArtUrl: coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop',
       tracks: trackList,
@@ -733,28 +727,21 @@ export default function NewReleaseWizard({
               <span className="text-[10px] font-bold text-indigo-400 block uppercase tracking-wider">Plan Authorized Delivery Tags</span>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Elite view of Labels */}
-                {isElite ? (
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Publishing Label</label>
-                    <select
-                      className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
-                      value={selectedLabel}
-                      onChange={(e) => setSelectedLabel(e.target.value)}
-                      id="w_labelName"
-                    >
-                      <option value="">Wavora Live (Default)</option>
-                      {filteredLabels.map((lbl) => (
-                        lbl.name !== 'Wavora Live' && <option key={lbl.id} value={lbl.name}>{lbl.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="text-gray-500 text-xs flex items-center gap-2 py-2 border-dashed border border-slate-800 rounded p-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>Standard delivery via <span className="text-white font-bold">Wavora Live</span> imprint. (Custom labels require Elite)</span>
-                  </div>
-                )}
+                {/* Publishing Label Selection */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Publishing Label</label>
+                  <select
+                    className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                    value={selectedLabel}
+                    onChange={(e) => setSelectedLabel(e.target.value)}
+                    id="w_labelName"
+                  >
+                    <option value="">Wavora Live (Default)</option>
+                    {filteredLabels.map((lbl) => (
+                      lbl.name !== 'Wavora Live' && <option key={lbl.id} value={lbl.name}>{lbl.name}</option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Ingestion Release Date</label>
@@ -793,9 +780,6 @@ export default function NewReleaseWizard({
                         {currentUser.allowedCLines?.map((line, i) => (
                           <option key={`cline-${i}`} value={line}>{line}</option>
                         ))}
-                        {!isBasic && (!currentUser.allowedCLines || currentUser.allowedCLines.length === 0) && (
-                           <option value={`© ${new Date().getFullYear()} ${primaryArtists[0] || currentUser.artistName}`}>{`© ${new Date().getFullYear()} ${primaryArtists[0] || currentUser.artistName}`}</option>
-                        )}
                       </select>
                     )}
                   </div>
@@ -821,9 +805,6 @@ export default function NewReleaseWizard({
                         {currentUser.allowedPLines?.map((line, i) => (
                           <option key={`pline-${i}`} value={line}>{line}</option>
                         ))}
-                        {!isBasic && (!currentUser.allowedPLines || currentUser.allowedPLines.length === 0) && (
-                           <option value={`℗ ${new Date().getFullYear()} ${primaryArtists[0] || currentUser.artistName} Records`}>{`℗ ${new Date().getFullYear()} ${primaryArtists[0] || currentUser.artistName} Records`}</option>
-                        )}
                       </select>
                     )}
                   </div>
