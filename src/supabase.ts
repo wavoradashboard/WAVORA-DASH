@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://piqzvuooqdrobqqewgtx.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_3N-9cM8hyEkVV2sPaDqm0g_eA2PkYR9';
+const getEnvValue = (value: any, fallback: string): string => {
+  if (typeof value === 'string' && value.trim() !== '') {
+    return value;
+  }
+  return fallback;
+};
+
+const SUPABASE_URL = getEnvValue(import.meta.env.VITE_SUPABASE_URL, 'https://piqzvuooqdrobqqewgtx.supabase.co');
+const SUPABASE_ANON_KEY = getEnvValue(import.meta.env.VITE_SUPABASE_ANON_KEY, 'sb_publishable_3N-9cM8hyEkVV2sPaDqm0g_eA2PkYR9');
 
 // Main client used for standard authentication (login, logout, active user sessions)
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
