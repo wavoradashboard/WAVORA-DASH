@@ -156,7 +156,7 @@ export default function NewReleaseWizard({
   const [primaryArtists, setPrimaryArtists] = useState<string[]>([currentUser.artistName]);
   const [selectedPrimaryToAdd, setSelectedPrimaryToAdd] = useState('');
   const [language, setLanguage] = useState('');
-  const [contentType, setContentType] = useState<'Original' | 'Licensed' | 'AI' | ''>('');
+  const [contentType, setContentType] = useState<'Original' | 'Non-Exclusive' | 'AI Music' | 'Licensed' | 'AI' | ''>('');
   const [numTracks, setNumTracks] = useState(1);
   const [genre, setGenre] = useState('');
   const [subGenre, setSubGenre] = useState('');
@@ -164,6 +164,31 @@ export default function NewReleaseWizard({
   const [cLine, setCLine] = useState(`© ${new Date().getFullYear()} Wavora Live`);
   const [pLine, setPLine] = useState(`℗ ${new Date().getFullYear()} Wavora Live`);
   const [releaseDate, setReleaseDate] = useState('');
+  const [upc, setUpc] = useState('');
+
+  const getMinReleaseDate = (): Date => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysToAdd = isElite ? 1 : isPro ? 3 : 5;
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + daysToAdd);
+    return minDate;
+  };
+
+  const getMinReleaseDateString = (): string => {
+    const minDate = getMinReleaseDate();
+    const year = minDate.getFullYear();
+    const month = String(minDate.getMonth() + 1).padStart(2, '0');
+    const day = String(minDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Set default release date based on plan
+  useEffect(() => {
+    if (!releaseDate) {
+      setReleaseDate(getMinReleaseDateString());
+    }
+  }, [isElite, isPro, releaseDate]);
 
   // Update C & P defaults based on allowed dashboard overrides
   useEffect(() => {
@@ -216,6 +241,7 @@ export default function NewReleaseWizard({
             composer: '',
             isrc: '',
             explicitContent: false,
+            contentId: 'No',
             lyrics: '',
             googleDriveLink: '',
           });
@@ -409,6 +435,16 @@ export default function NewReleaseWizard({
   const validateStep1 = () => {
     if (!albumName.trim()) return 'Album/Single Name is required';
     if (!releaseDate) return 'Official Release Date is required';
+
+    // Check release date minimum constraints based on tier
+    const selectedDate = new Date(releaseDate + 'T00:00:00');
+    const minAllowedDate = getMinReleaseDate();
+    if (selectedDate < minAllowedDate) {
+      const days = isElite ? '1 day' : isPro ? '3 days' : '5 days';
+      const tier = isElite ? 'Elite' : isPro ? 'Pro' : 'Basic';
+      return `Release date must be at least ${days} from today for the ${tier} plan (Minimum allowed date: ${getMinReleaseDateString()})`;
+    }
+
     if (!coverArtUrl) return 'You must upload or select a Cover Art image';
     if (!language) return 'Metadata Language is required';
     if (!contentType) return 'Origination (Content Type) is required';
@@ -474,6 +510,8 @@ export default function NewReleaseWizard({
       genre,
       subGenre,
       labelName: selectedLabel || 'Wavora Live',
+      upc: upc || '',
+      contentId: trackList[0]?.contentId || 'No',
       cLine: cLine || `© ${new Date().getFullYear()} Wavora Live`,
       pLine: pLine || `℗ ${new Date().getFullYear()} Wavora Live`,
       releaseDate,
@@ -768,8 +806,8 @@ export default function NewReleaseWizard({
                 >
                   <option value="" disabled>Select...</option>
                   <option value="Original">Original</option>
-                  <option value="Licensed">Cover</option>
-                  <option value="AI">AI Voice</option>
+                  <option value="Non-Exclusive">Non-Exclusive</option>
+                  {isElite && <option value="AI Music">AI Music</option>}
                 </select>
               </div>
 
@@ -811,7 +849,7 @@ export default function NewReleaseWizard({
             <div className="h-[1px] bg-slate-800/50" />
 
             <div className="p-5 bg-black/20 rounded-3xl border border-slate-800/50 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Number of Tracks</label>
                   <input
@@ -843,15 +881,34 @@ export default function NewReleaseWizard({
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Release Date</label>
                   <input
                     type="date"
+                    min={getMinReleaseDateString()}
                     className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1]"
                     value={releaseDate}
                     onChange={(e) => setReleaseDate(e.target.value)}
+                  />
+                  <p className="text-[9px] text-[#6366F1] font-semibold">
+                    Min. {isElite ? '1 day' : isPro ? '3 days' : '5 days'} from today ({isElite ? 'Elite' : isPro ? 'Pro' : 'Basic'} tier)
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">UPC Code</label>
+                    <span className="text-[9px] text-[#6366F1] font-bold uppercase tracking-wider">Optional</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. 190296767228"
+                    className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1]"
+                    value={upc}
+                    onChange={(e) => setUpc(e.target.value.replace(/[^0-9]/g, ''))}
+                    id="w_upc"
                   />
                 </div>
               </div>
 
             {/* Pro and Elite C & P options */}
-            {(!isBasic || isAppAdmin || (currentUser.allowedCLines && currentUser.allowedCLines.length > 0) || (currentUser.allowedPLines && currentUser.allowedPLines.length > 0)) ? (
+            {!isBasic && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">C Line (© Publisher Tag)</label>
@@ -899,11 +956,6 @@ export default function NewReleaseWizard({
                     </select>
                   )}
                 </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-[11px] text-gray-500 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-[#6366F1]" />
-                <span>C Line & P Line metadata options are restricted on the Basic tier. Standard publisher tags will be generated automatically.</span>
               </div>
             )}
             </div>
@@ -1107,43 +1159,6 @@ export default function NewReleaseWizard({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Other Artist(s)</label>
-                      <div className="flex flex-wrap gap-1 mb-1">
-                        {(track.otherArtists || []).map((artist, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1a2333] border border-slate-700/60 rounded text-[9px] font-semibold text-white">
-                            {artist}
-                            <button 
-                              type="button" 
-                              onClick={() => {
-                                handleTrackFieldChange(idx, 'otherArtists', (track.otherArtists || []).filter(a => a !== artist));
-                              }}
-                              className="text-gray-400 hover:text-red-400"
-                            >
-                              <X className="w-2.5 h-2.5" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (!val) return;
-                          const current = track.otherArtists || [];
-                          if (!current.includes(val)) {
-                            handleTrackFieldChange(idx, 'otherArtists', [...current, val]);
-                          }
-                          e.target.value = '';
-                        }}
-                      >
-                        <option value="">+ Add Other Artist</option>
-                        {managedArtists.map(ma => (
-                          <option key={ma.id} value={ma.name}>{ma.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Track Genre (Main)</label>
                       <select
                         className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
@@ -1256,6 +1271,40 @@ export default function NewReleaseWizard({
                         id={`w_track_${idx}_explicit_no`}
                       >
                         ✓ No (Clean/Instrumental)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Track-level Content ID Check */}
+                  <div className="flex flex-col gap-3 p-3.5 bg-slate-950/45 rounded-xl border border-slate-800">
+                    <div>
+                      <span className="text-xs font-bold text-gray-200 block">Content ID (YouTube / Meta)</span>
+                      <p className="text-[10px] text-gray-400 font-medium">Enable copy-protection & fingerprinting matching systems for this specific track audio recording.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleTrackFieldChange(idx, 'contentId', 'Yes')}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
+                          track.contentId === 'Yes'
+                            ? 'bg-[#6366F1] text-black border-[#6366F1] shadow-2xl shadow-[#6366F1]/10 font-black'
+                            : 'bg-[#121c2c]/40 text-slate-400 border-slate-800 hover:border-slate-700 font-bold'
+                        }`}
+                        id={`w_track_${idx}_content_id_yes`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTrackFieldChange(idx, 'contentId', 'No')}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
+                          track.contentId === 'No' || !track.contentId
+                            ? 'bg-[#6366F1] text-black border-[#6366F1] shadow-2xl shadow-[#6366F1]/10 font-black'
+                            : 'bg-[#121c2c]/40 text-slate-400 border-slate-800 hover:border-slate-700 font-bold'
+                        }`}
+                        id={`w_track_${idx}_content_id_no`}
+                      >
+                        No
                       </button>
                     </div>
                   </div>
@@ -1408,7 +1457,7 @@ export default function NewReleaseWizard({
               </div>
 
               {/* Subgenre & Dates */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs border-b border-slate-800/80 pb-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs border-b border-slate-800/80 pb-4">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase block font-bold">Release Date</span>
                   <span className="text-gray-300 font-medium">{new Date(releaseDate).toLocaleDateString()}</span>
@@ -1416,6 +1465,10 @@ export default function NewReleaseWizard({
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase block font-bold">Main Genre</span>
                   <span className="text-gray-300 font-medium">{genre} / {subGenre || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block font-bold">UPC Code</span>
+                  <span className="text-emerald-400 font-mono font-medium">{upc || 'Not Provided (System)'}</span>
                 </div>
                 {isElite && (
                   <div>
@@ -1452,6 +1505,9 @@ export default function NewReleaseWizard({
                         </span>
                         {t.explicitContent && (
                           <span className="text-[8px] bg-red-900/30 text-red-400 font-bold uppercase inline-block sm:block mt-2 sm:mt-1 px-1 rounded">Parental advisory</span>
+                        )}
+                        {t.contentId === 'Yes' && (
+                          <span className="text-[8px] bg-green-950 text-green-400 font-bold uppercase inline-block sm:block mt-1 px-1 rounded font-mono">Content ID: Yes</span>
                         )}
                       </div>
                     </div>

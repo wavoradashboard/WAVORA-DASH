@@ -68,6 +68,8 @@ CREATE TABLE public.releases (
     genre TEXT NOT NULL,
     sub_genre TEXT NOT NULL,
     label_name TEXT,
+    upc TEXT,
+    content_id TEXT DEFAULT 'No',
     c_line TEXT,
     p_line TEXT,
     release_date TEXT NOT NULL,

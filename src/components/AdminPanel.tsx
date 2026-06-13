@@ -1935,6 +1935,13 @@ export default function AdminPanel({
                     </div>
 
                     <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1">
+                      <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Content ID (YouTube/Meta)</div>
+                      <div className={`font-bold flex items-center gap-1 ${inspectRelease.contentId === 'Yes' ? 'text-green-400' : 'text-slate-400'}`}>
+                        {inspectRelease.contentId || 'No'}
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Publishing Language</div>
                       <div className="font-bold text-white flex items-center gap-1">
                         <Globe className="w-3.5 h-3.5 text-gray-400" />
@@ -1956,6 +1963,19 @@ export default function AdminPanel({
                       >
                         <Copy className="w-3 h-3" />
                       </button>
+                    </div>
+
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
+                      <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Universal Product Code (UPC)</div>
+                      <div className="font-bold text-emerald-400 font-mono text-xs">{inspectRelease.upc || 'N/A (System)'}</div>
+                      {inspectRelease.upc && (
+                        <button 
+                          onClick={() => handleCopy(inspectRelease.upc, 'UPC Code')}
+                          className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-550 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
 
                     <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
@@ -2111,6 +2131,11 @@ export default function AdminPanel({
                         <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Language Match</span>
                           <span className="text-white font-semibold text-[11px]">{track.language || inspectRelease.language || 'English'}</span>
+                        </div>
+
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left">
+                          <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Content ID (YouTube/Meta)</span>
+                          <span className={`font-semibold text-[11px] ${track.contentId === 'Yes' ? 'text-green-400 font-bold' : 'text-slate-400'}`}>{track.contentId || 'No'}</span>
                         </div>
                       </div>
 

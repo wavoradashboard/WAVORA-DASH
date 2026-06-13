@@ -51,6 +51,7 @@ export interface ReleaseTrack {
   composer: string;
   isrc?: string;
   explicitContent: boolean;
+  contentId?: 'Yes' | 'No';
   lyrics?: string;
   audioFileName?: string;
   googleDriveLink?: string;
@@ -65,11 +66,13 @@ export interface Release {
   featureArtists: string[];
   otherArtists: string[];
   language: string;
-  contentType: 'Original' | 'Licensed' | 'AI' | '';
+  contentType: 'Original' | 'Non-Exclusive' | 'AI Music' | 'Licensed' | 'AI' | '';
   numTracks: number;
   genre: string;
   subGenre: string;
   labelName?: string;
+  upc?: string;
+  contentId?: 'Yes' | 'No';
   cLine?: string;
   pLine?: string;
   releaseDate: string;

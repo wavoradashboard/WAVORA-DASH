@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS public.releases (
   genre text,
   sub_genre text,
   label_name text,
+  upc text,
+  content_id text DEFAULT 'No',
   c_line text,
   p_line text,
   release_date text,
