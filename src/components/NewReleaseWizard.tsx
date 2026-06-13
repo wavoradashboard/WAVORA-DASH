@@ -90,6 +90,8 @@ interface NewReleaseWizardProps {
   managedLabels: Label[];
   onSubmitRelease: (release: Release) => void;
   setCurrentTab: (tab: string) => void;
+  editingRelease?: Release | null;
+  onCancelEdit?: () => void;
 }
 
 export default function NewReleaseWizard({
@@ -98,6 +100,8 @@ export default function NewReleaseWizard({
   managedLabels,
   onSubmitRelease,
   setCurrentTab,
+  editingRelease,
+  onCancelEdit,
 }: NewReleaseWizardProps) {
   const isAppAdmin = currentUser.email === 'admin@g.g' || currentUser.email === 'wavoradashboard@gmail.com';
   const filteredArtists = managedArtists.filter(art => art.email === currentUser.email);
@@ -161,8 +165,8 @@ export default function NewReleaseWizard({
   const [genre, setGenre] = useState('');
   const [subGenre, setSubGenre] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
-  const [cLine, setCLine] = useState(`© ${new Date().getFullYear()} Wavora Live`);
-  const [pLine, setPLine] = useState(`℗ ${new Date().getFullYear()} Wavora Live`);
+  const [cLine, setCLine] = useState('© Wavora Live');
+  const [pLine, setPLine] = useState('℗ Wavora Live');
   const [releaseDate, setReleaseDate] = useState('');
   const [upc, setUpc] = useState('');
 
@@ -190,24 +194,12 @@ export default function NewReleaseWizard({
     }
   }, [isElite, isPro, releaseDate]);
 
-  // Update C & P defaults based on allowed dashboard overrides
+  // Synchronize C Line and P Line with the selected Publishing Label
   useEffect(() => {
-    if (currentUser.allowedCLines && currentUser.allowedCLines.length > 0) {
-      if (!cLine || cLine.includes('Wavora Live')) {
-        setCLine(currentUser.allowedCLines[0]);
-      }
-    } else if (!cLine || cLine.includes('Wavora Live')) {
-      setCLine(`© ${new Date().getFullYear()} Wavora Live`);
-    }
-
-    if (currentUser.allowedPLines && currentUser.allowedPLines.length > 0) {
-      if (!pLine || pLine.includes('Wavora Live')) {
-        setPLine(currentUser.allowedPLines[0]);
-      }
-    } else if (!pLine || pLine.includes('Wavora Live')) {
-      setPLine(`℗ ${new Date().getFullYear()} Wavora Live`);
-    }
-  }, [currentUser.allowedCLines, currentUser.allowedPLines]);
+    const label = selectedLabel || 'Wavora Live';
+    setCLine(`© ${label}`);
+    setPLine(`℗ ${label}`);
+  }, [selectedLabel]);
 
   // Artwork file info
   const [coverArtFile, setCoverArtFile] = useState<File | null>(null);
@@ -219,6 +211,34 @@ export default function NewReleaseWizard({
 
   // Step 3 parameter
   const [specialRequest, setSpecialRequest] = useState('');
+
+  // Populate data if editing an existing release
+  useEffect(() => {
+    if (editingRelease) {
+      setAlbumName(editingRelease.albumName);
+      setReleaseType(editingRelease.type);
+      setFeatureArtists(editingRelease.featureArtists);
+      setOtherArtists(editingRelease.otherArtists || []);
+      
+      const primaryNames = editingRelease.mainArtistName.split(',').map(n => n.trim()).filter(Boolean);
+      setPrimaryArtists(primaryNames.length > 0 ? primaryNames : [currentUser.artistName]);
+      
+      setLanguage(editingRelease.language);
+      setContentType(editingRelease.contentType);
+      setNumTracks(editingRelease.numTracks);
+      setGenre(editingRelease.genre);
+      setSubGenre(editingRelease.subGenre);
+      setSelectedLabel(editingRelease.labelName || '');
+      setCLine(editingRelease.cLine || `© ${editingRelease.labelName || 'Wavora Live'}`);
+      setPLine(editingRelease.pLine || `℗ ${editingRelease.labelName || 'Wavora Live'}`);
+      setReleaseDate(editingRelease.releaseDate);
+      setUpc(editingRelease.upc || '');
+      setCoverArtUrl(editingRelease.coverArtUrl);
+      setCoverArtPreview(editingRelease.coverArtSignedUrl || editingRelease.coverArtUrl);
+      setTrackList(editingRelease.tracks);
+      setSpecialRequest(editingRelease.specialRequest || '');
+    }
+  }, [editingRelease, currentUser.artistName]);
 
   // Sync trackList length with numTracks and primaryArtists
   useEffect(() => {
@@ -497,8 +517,8 @@ export default function NewReleaseWizard({
   const handleFinalSubmit = () => {
     const isAdmin = isAppAdmin;
     const newRelease: Release = {
-      id: `rel-${Date.now()}`,
-      email: currentUser.email,
+      id: editingRelease?.id || `rel-${Date.now()}`,
+      email: editingRelease?.email || currentUser.email,
       albumName,
       type: releaseType,
       mainArtistName: primaryArtists.join(', '),
@@ -512,14 +532,14 @@ export default function NewReleaseWizard({
       labelName: selectedLabel || 'Wavora Live',
       upc: upc || '',
       contentId: trackList[0]?.contentId || 'No',
-      cLine: cLine || `© ${new Date().getFullYear()} Wavora Live`,
-      pLine: pLine || `℗ ${new Date().getFullYear()} Wavora Live`,
+      cLine: cLine || '© Wavora Live',
+      pLine: pLine || '℗ Wavora Live',
       releaseDate,
       coverArtUrl: coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop',
       tracks: trackList,
       specialRequest,
       status: 'Submitted',
-      submittedAt: new Date().toISOString(),
+      submittedAt: editingRelease ? editingRelease.submittedAt : new Date().toISOString(),
     };
 
     onSubmitRelease(newRelease);
@@ -531,7 +551,9 @@ export default function NewReleaseWizard({
       {/* Step Indicator Header */}
       <div className="flex justify-between items-start pb-4 border-b border-slate-800" id="wizard_header">
         <div>
-          <h2 className="text-xl font-black text-white uppercase tracking-tighter">New Digital Release Pipeline</h2>
+            <h2 className="text-xl font-black text-white uppercase tracking-tighter">
+              {editingRelease ? 'Edit & Resubmit Release' : 'New Digital Release Pipeline'}
+            </h2>
           <span className="text-xs text-slate-400 font-medium">Step {step} of 4 • {
             step === 1 ? 'Release Metadata & Cover Art' :
             step === 2 ? 'Track Metadata & Assets' :
@@ -541,6 +563,15 @@ export default function NewReleaseWizard({
         </div>
 
         <div className="flex items-center gap-3">
+          {editingRelease && onCancelEdit && (
+            <button
+              onClick={onCancelEdit}
+              className="text-xs px-4 py-2 font-bold text-slate-400 hover:text-white transition"
+              id="wizard_cancel_edit_button"
+            >
+              Cancel Edit
+            </button>
+          )}
           <div className="text-right hidden sm:block">
             <span className="text-[9px] block text-gray-500 font-bold uppercase tracking-widest">Plan Eligibility</span>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black text-[#6366F1] bg-[#6366F1]/10 border border-[#6366F1]/30">
@@ -911,50 +942,28 @@ export default function NewReleaseWizard({
             {!isBasic && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">C Line (© Publisher Tag)</label>
-                  {isAppAdmin ? (
-                    <input
-                      type="text"
-                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
-                      placeholder={`e.g. © ${new Date().getFullYear()} Wavora Live`}
-                      value={cLine}
-                      onChange={(e) => setCLine(e.target.value)}
-                    />
-                  ) : (
-                    <select
-                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
-                      value={cLine}
-                      onChange={(e) => setCLine(e.target.value)}
-                    >
-                      <option value={`© ${new Date().getFullYear()} Wavora Live`}>© {new Date().getFullYear()} Wavora Live</option>
-                      {currentUser.allowedCLines?.map((line, i) => (
-                        <option key={`cline-${i}`} value={line}>{line}</option>
-                      ))}
-                    </select>
-                  )}
+                  <div className="flex justify-between items-center">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">C Line (© Publisher Tag)</label>
+                    <span className="text-[8px] bg-emerald-500/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">Synced with Label</span>
+                  </div>
+                  <input
+                    type="text"
+                    disabled
+                    className="w-full bg-[#111726]/50 border border-slate-800/80 rounded-xl py-2 px-3 text-sm text-slate-450 cursor-not-allowed font-medium select-none text-slate-400"
+                    value={cLine}
+                  />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">P Line (℗ Phonographic Sound Tag)</label>
-                  {isAppAdmin ? (
-                    <input
-                      type="text"
-                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
-                      placeholder={`e.g. ℗ ${new Date().getFullYear()} Wavora Live`}
-                      value={pLine}
-                      onChange={(e) => setPLine(e.target.value)}
-                    />
-                  ) : (
-                    <select
-                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
-                      value={pLine}
-                      onChange={(e) => setPLine(e.target.value)}
-                    >
-                      <option value={`℗ ${new Date().getFullYear()} Wavora Live`}>℗ {new Date().getFullYear()} Wavora Live</option>
-                      {currentUser.allowedPLines?.map((line, i) => (
-                        <option key={`pline-${i}`} value={line}>{line}</option>
-                      ))}
-                    </select>
-                  )}
+                  <div className="flex justify-between items-center">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">P Line (℗ Phonographic Sound Tag)</label>
+                    <span className="text-[8px] bg-emerald-500/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">Synced with Label</span>
+                  </div>
+                  <input
+                    type="text"
+                    disabled
+                    className="w-full bg-[#111726]/50 border border-slate-800/80 rounded-xl py-2 px-3 text-sm text-slate-450 cursor-not-allowed font-medium select-none text-slate-400"
+                    value={pLine}
+                  />
                 </div>
               </div>
             )}

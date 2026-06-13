@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Play, Disc, ArrowUpRight, DollarSign, Wallet, CheckCircle, TrendingUp, Music } from 'lucide-react';
+import { Play, Disc, ArrowUpRight, DollarSign, Wallet, CheckCircle, Music } from 'lucide-react';
 import { User, Release, RevenueReport, Notification } from '../types';
 import NotificationsWidget from './NotificationsWidget';
 
@@ -228,7 +228,7 @@ export default function DashboardHome({
       {/* Grid: Recent Releases and Streaming Analysis */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="home_secondary_grid">
         {/* Recent Submissions */}
-        <div className="md:col-span-8 p-6 bg-white/2 rounded-3xl border border-white/10 flex flex-col justify-between" id="recent_releases_section">
+        <div className="md:col-span-12 p-6 bg-white/2 rounded-3xl border border-white/10 flex flex-col justify-between" id="recent_releases_section">
           <div>
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-300">Catalog Registry Preview</h3>
@@ -258,31 +258,31 @@ export default function DashboardHome({
                     key={rel.id} 
                     className="p-3 bg-black rounded-xl border border-white/10 flex items-center justify-between gap-3 text-xs hover:border-[#2F2F2F] transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <img 
                         src={rel.coverArtSignedUrl || rel.coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop'} 
                         alt="" 
                         className="w-10 h-10 rounded object-cover flex-shrink-0 border border-white/10"
                         referrerPolicy="no-referrer"
                       />
-                      <div>
-                        <h4 className="font-extrabold text-white truncate max-w-[200px] uppercase tracking-tight">{rel.albumName}</h4>
-                        <div className="text-[10px] text-gray-500 flex items-center gap-1.5 font-mono">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-extrabold text-white truncate max-w-[150px] sm:max-w-xs md:max-w-md uppercase tracking-tight">{rel.albumName}</h4>
+                        <div className="text-[10px] text-gray-500 flex flex-wrap items-center gap-1.5 font-mono">
                           <span>{rel.type}</span>
                           <span>•</span>
                           <span>{rel.tracks.length} track(s)</span>
                           {rel.labelName && (
                             <>
                               <span>•</span>
-                              <span className="text-amber-500">{rel.labelName}</span>
+                              <span className="text-amber-500 truncate max-w-[100px]">{rel.labelName}</span>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                    <div className="text-right flex-shrink-0 flex flex-col items-end justify-center min-w-[90px]">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider whitespace-nowrap ${
                         rel.status === 'Live' ? 'bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/20' :
                         rel.status === 'Approved' ? 'bg-blue-950/40 text-blue-400 border border-blue-500/20' :
                         rel.status === 'Rejected' ? 'bg-red-950/40 text-red-500 border border-red-500/20' :
@@ -290,7 +290,7 @@ export default function DashboardHome({
                       }`}>
                         {rel.status}
                       </span>
-                      <div className="text-[9px] text-gray-500 mt-1 font-mono">
+                      <div className="text-[9px] text-gray-500 mt-1 font-mono whitespace-nowrap">
                         {new Date(rel.submittedAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -298,54 +298,6 @@ export default function DashboardHome({
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Analytics Sandbox */}
-        <div className="md:col-span-4 p-6 bg-white/2 rounded-3xl border border-white/10 flex flex-col justify-between" id="streaming_analytics_section">
-          <div>
-            <div className="flex items-center gap-2 mb-1 border-b border-white/10 pb-3">
-              <TrendingUp className="w-4 h-4 text-[#6366F1]" />
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-300">Cross-Platform Audiences</h3>
-            </div>
-            <p className="text-[11px] text-gray-400 mb-6 leading-relaxed">Aggregate digital listeners across major streaming platforms verified by partner engines.</p>
-          </div>
-
-          <div className="space-y-4" id="analytics_metrics">
-            <div>
-              <div className="flex justify-between text-xs mb-1.5 text-gray-350 font-mono">
-                <span className="font-bold text-[10px] uppercase">Spotify Listeners</span>
-                <span>84,120 listeners (62%)</span>
-              </div>
-              <div className="w-full bg-black rounded-full h-1.5 border border-white/10">
-                <div className="bg-[#6366F1] h-1.5 rounded-full" style={{ width: '62%' }}></div>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs mb-1.5 text-gray-350 font-mono">
-                <span className="font-bold text-[10px] uppercase">Apple Premium Plays</span>
-                <span>38,500 listeners (28%)</span>
-              </div>
-              <div className="w-full bg-black rounded-full h-1.5 border border-white/10">
-                <div className="bg-[#6366F1]/60 h-1.5 rounded-full" style={{ width: '28%' }}></div>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs mb-1.5 text-gray-350 font-mono">
-                <span className="font-bold text-[10px] uppercase">YouTube Stream Captures</span>
-                <span>13,200 listeners (10%)</span>
-              </div>
-              <div className="w-full bg-black rounded-full h-1.5 border border-white/10">
-                <div className="bg-[#6366F1]/30 h-1.5 rounded-full" style={{ width: '10%' }}></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-4 border-t border-white/10 text-[9px] uppercase tracking-wider text-gray-500 font-mono flex items-center justify-between">
-            <span>Updates hourly</span>
-            <span className="text-[#6366F1] font-bold hover:underline cursor-pointer" onClick={() => setCurrentTab('revenue')}>Full Revenue Reports →</span>
           </div>
         </div>
       </div>

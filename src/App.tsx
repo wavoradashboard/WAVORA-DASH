@@ -50,6 +50,7 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isRevenueModalOpen, setIsRevenueModalOpen] = useState<boolean>(false);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
+  const [editingRelease, setEditingRelease] = useState<Release | null>(null);
 
   // Fetch all Supabase data
   const loadSupabaseData = async (userEmail: string, userId: string) => {
@@ -1106,12 +1107,24 @@ export default function App() {
     }));
   };
 
+  const handleEditRelease = (release: Release) => {
+    setEditingRelease(release);
+    setCurrentTab('new-release');
+  };
+
+  useEffect(() => {
+    if (currentTab !== 'new-release') {
+      setEditingRelease(null);
+    }
+  }, [currentTab]);
+
   const handleSubmitRelease = async (newRelease: Release) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
         const payload: any = {
+          id: newRelease.id,
           user_id: session.user.id,
           email: currentUser?.email,
           album_name: newRelease.albumName,
@@ -1141,7 +1154,7 @@ export default function App() {
             ...payload,
             feature_artists: newRelease.featureArtists
           };
-          const { error } = await supabase.from('releases').insert(fullPayload);
+          const { error } = await supabase.from('releases').upsert(fullPayload);
           if (error) {
             console.warn("First insert attempt failed, trying fallback serialize within other_artists", error);
             const fallbackPayload = {
@@ -1151,7 +1164,7 @@ export default function App() {
                 serialized_feature: newRelease.featureArtists
               }
             };
-            const { error: fallbackError } = await supabase.from('releases').insert(fallbackPayload);
+            const { error: fallbackError } = await supabase.from('releases').upsert(fallbackPayload);
             if (fallbackError) {
               console.error("Fallback insert also failed:", fallbackError);
             }
@@ -1178,10 +1191,19 @@ export default function App() {
       console.warn("Could not generate cover art signed URL online, keeping original:", e);
     }
 
-    updateState((prev) => ({
-      ...prev,
-      releases: [{...newRelease, coverArtSignedUrl}, ...prev.releases],
-    }));
+    updateState((prev) => {
+      const existingIdx = prev.releases.findIndex(r => r.id === newRelease.id);
+      const newArray = [...prev.releases];
+      if (existingIdx !== -1) {
+        newArray[existingIdx] = { ...newRelease, coverArtSignedUrl };
+      } else {
+        newArray.unshift({ ...newRelease, coverArtSignedUrl });
+      }
+      return {
+        ...prev,
+        releases: newArray,
+      };
+    });
   };
 
   const handleSubmitSupportQuery = async (queryText: string) => {
@@ -1353,6 +1375,11 @@ export default function App() {
             managedLabels={labels}
             onSubmitRelease={handleSubmitRelease}
             setCurrentTab={setCurrentTab}
+            editingRelease={editingRelease}
+            onCancelEdit={() => {
+              setEditingRelease(null);
+              setCurrentTab('catalogue');
+            }}
           />
         );
       case 'manage-artists':
@@ -1383,6 +1410,7 @@ export default function App() {
             currentUser={currentUser}
             releases={releases}
             onDeleteRelease={handleDeleteRelease}
+            onEditRelease={handleEditRelease}
           />
         );
       case 'revenue':

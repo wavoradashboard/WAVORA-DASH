@@ -2004,9 +2004,9 @@ export default function AdminPanel({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
                   <div className="p-2.5 bg-[#090909] rounded border border-white/10/60 relative group">
                     <span className="text-[#999999] uppercase text-[9px] block mb-0.5">Composition Phonographic Copyright (℗ Line)</span>
-                    <span className="text-white font-semibold">{inspectRelease.pLine || `℗ ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`}</span>
+                    <span className="text-white font-semibold">{inspectRelease.pLine || `℗ ${inspectRelease.mainArtistName}`}</span>
                     <button 
-                      onClick={() => handleCopy(inspectRelease.pLine || `℗ ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`, 'P Line')}
+                      onClick={() => handleCopy(inspectRelease.pLine || `℗ ${inspectRelease.mainArtistName}`, 'P Line')}
                       className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                     >
                       <Copy className="w-3 h-3" />
@@ -2014,9 +2014,9 @@ export default function AdminPanel({
                   </div>
                   <div className="p-2.5 bg-[#090909] rounded border border-white/10/60 relative group">
                     <span className="text-[#999999] uppercase text-[9px] block mb-0.5">Authorial/Structural Publishing Copyright (© Line)</span>
-                    <span className="text-white font-semibold">{inspectRelease.cLine || `© ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`}</span>
+                    <span className="text-white font-semibold">{inspectRelease.cLine || `© ${inspectRelease.mainArtistName}`}</span>
                     <button 
-                      onClick={() => handleCopy(inspectRelease.cLine || `© ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`, 'C Line')}
+                      onClick={() => handleCopy(inspectRelease.cLine || `© ${inspectRelease.mainArtistName}`, 'C Line')}
                       className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                     >
                       <Copy className="w-3 h-3" />

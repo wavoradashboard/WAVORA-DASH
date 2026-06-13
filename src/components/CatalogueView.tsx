@@ -7,12 +7,14 @@ interface CatalogueViewProps {
   currentUser: User;
   releases: Release[];
   onDeleteRelease: (id: string) => void;
+  onEditRelease?: (release: Release) => void;
 }
 
 export default function CatalogueView({
   currentUser,
   releases,
   onDeleteRelease,
+  onEditRelease,
 }: CatalogueViewProps) {
   const [activeTab, setActiveTab] = useState<TrackStatus>('Submitted');
   const [expandedRelease, setExpandedRelease] = useState<string | null>(null);
@@ -271,16 +273,28 @@ export default function CatalogueView({
                         <div className="flex justify-between items-center pt-3 border-t border-slate-900/60">
                           <span className="text-[10px] text-slate-500">Submitted at: {new Date(rel.submittedAt).toLocaleString()}</span>
                           
-                          {(rel.status === 'Submitted' || rel.status === 'Rejected') && (
-                            <button
-                              type="button"
-                              onClick={() => onDeleteRelease(rel.id)}
-                              className="px-3 py-1 bg-red-950/20 hover:bg-red-950/60 text-red-400 font-bold rounded text-[10px] tracking-wide transition flex items-center gap-1 cursor-pointer"
-                              id={`btn_delete_release_${rel.id}`}
-                            >
-                              <Trash2 className="w-3 h-3" /> Recall Submission
-                            </button>
-                          )}
+                          <div className="flex gap-2">
+                            {rel.status === 'Rejected' && onEditRelease && (
+                              <button
+                                type="button"
+                                onClick={() => onEditRelease(rel)}
+                                className="px-3 py-1 bg-amber-950/20 hover:bg-amber-950/60 text-amber-400 font-bold rounded text-[10px] tracking-wide transition flex items-center gap-1 cursor-pointer"
+                                id={`btn_edit_release_${rel.id}`}
+                              >
+                                Edit & Resubmit
+                              </button>
+                            )}
+                            {(rel.status === 'Submitted' || rel.status === 'Rejected') && (
+                              <button
+                                type="button"
+                                onClick={() => onDeleteRelease(rel.id)}
+                                className="px-3 py-1 bg-red-950/20 hover:bg-red-950/60 text-red-400 font-bold rounded text-[10px] tracking-wide transition flex items-center gap-1 cursor-pointer"
+                                id={`btn_delete_release_${rel.id}`}
+                              >
+                                <Trash2 className="w-3 h-3" /> Recall Submission
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </motion.div>
