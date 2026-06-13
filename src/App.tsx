@@ -231,8 +231,32 @@ export default function App() {
             ...r,
             albumName: r.album_name,
             mainArtistName: r.main_artist_name,
-            featureArtists: r.feature_artists || r.featureArtists || [],
-            otherArtists: r.other_artists || r.otherArtists || [],
+            featureArtists: (() => {
+              if (r.feature_artists && Array.isArray(r.feature_artists)) {
+                return r.feature_artists;
+              }
+              if (r.other_artists && typeof r.other_artists === 'object' && !Array.isArray(r.other_artists)) {
+                const nestedFeature = (r.other_artists as any).serialized_feature || (r.other_artists as any).feature;
+                if (nestedFeature && Array.isArray(nestedFeature)) {
+                  return nestedFeature;
+                }
+              }
+              return r.featureArtists || [];
+            })(),
+            otherArtists: (() => {
+              if (r.other_artists) {
+                if (Array.isArray(r.other_artists)) {
+                  return r.other_artists;
+                }
+                if (typeof r.other_artists === 'object') {
+                  const nestedOther = (r.other_artists as any).serialized_other || (r.other_artists as any).other;
+                  if (nestedOther && Array.isArray(nestedOther)) {
+                    return nestedOther;
+                  }
+                }
+              }
+              return r.otherArtists || [];
+            })(),
             contentType: r.content_type,
             numTracks: r.num_tracks,
             subGenre: r.sub_genre,
@@ -300,6 +324,14 @@ export default function App() {
           : prev.payoutRequests,
         notifications: notifData || prev.notifications
       }));
+
+      // Find the logged-in user in uniqueUsers and set as currentUser so they have the latest database overrides
+      const currentLoggedInEmail = userEmail.toLowerCase();
+      const matchEmail = (isImpersonating && currentUser) ? currentUser.email.toLowerCase() : currentLoggedInEmail;
+      const updatedUser = uniqueUsers.find(u => u.email.toLowerCase() === matchEmail);
+      if (updatedUser) {
+        setCurrentUser(updatedUser);
+      }
     } catch (e) {
       console.error('Data load error:', e);
     }
@@ -1107,8 +1139,15 @@ export default function App() {
           };
           const { error } = await supabase.from('releases').insert(fullPayload);
           if (error) {
-            console.warn("First insert attempt failed, trying fallback without feature_artists", error);
-            const { error: fallbackError } = await supabase.from('releases').insert(payload);
+            console.warn("First insert attempt failed, trying fallback serialize within other_artists", error);
+            const fallbackPayload = {
+              ...payload,
+              other_artists: {
+                serialized_other: newRelease.otherArtists,
+                serialized_feature: newRelease.featureArtists
+              }
+            };
+            const { error: fallbackError } = await supabase.from('releases').insert(fallbackPayload);
             if (fallbackError) {
               console.error("Fallback insert also failed:", fallbackError);
             }
