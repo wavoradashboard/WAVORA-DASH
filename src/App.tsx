@@ -666,7 +666,7 @@ export default function App() {
       } else {
         // Insert brand new report block
         const newReport: RevenueReport = {
-          id: `rev-${Date.now()}`,
+          id: crypto.randomUUID(),
           email,
           month,
           amount,
@@ -948,7 +948,7 @@ export default function App() {
   ) => {
     if (!currentUser) return;
     const newRequest: PayoutRequest = {
-      id: `pay-${Date.now()}`,
+      id: crypto.randomUUID(),
       email: currentUser.email,
       artistName: currentUser.artistName,
       amount,
@@ -1154,9 +1154,18 @@ export default function App() {
             ...payload,
             feature_artists: newRelease.featureArtists
           };
-          const { error } = await supabase.from('releases').upsert(fullPayload);
-          if (error) {
-            console.warn("First insert attempt failed, trying fallback serialize within other_artists", error);
+          
+          let firstError = null;
+          if (editingRelease) {
+            const { error } = await supabase.from('releases').update(fullPayload).eq('id', newRelease.id);
+            firstError = error;
+          } else {
+            const { error } = await supabase.from('releases').insert(fullPayload);
+            firstError = error;
+          }
+
+          if (firstError) {
+            console.warn("First attempt failed, trying fallback serialize within other_artists", firstError);
             const fallbackPayload = {
               ...payload,
               other_artists: {
@@ -1164,13 +1173,24 @@ export default function App() {
                 serialized_feature: newRelease.featureArtists
               }
             };
-            const { error: fallbackError } = await supabase.from('releases').upsert(fallbackPayload);
+            
+            let fallbackError = null;
+            if (editingRelease) {
+               const { error } = await supabase.from('releases').update(fallbackPayload).eq('id', newRelease.id);
+               fallbackError = error;
+            } else {
+               const { error } = await supabase.from('releases').insert(fallbackPayload);
+               fallbackError = error;
+            }
+
             if (fallbackError) {
-              console.error("Fallback insert also failed:", fallbackError);
+              console.error("Fallback operation also failed:", fallbackError);
+              alert("Failed to save release to database. Error: " + fallbackError.message);
             }
           }
-        } catch (e) {
-          console.error("Release insert exception:", e);
+        } catch (e: any) {
+          console.error("Release database exception:", e);
+          alert("Exception while saving release: " + e.message);
         }
       } else {
         console.warn("No active session found during release submission. Saving to local state only.");
@@ -1211,7 +1231,7 @@ export default function App() {
     const { data: { session } } = await supabase.auth.getSession();
 
     const newQuery: SupportQuery = {
-      id: `q-${Date.now()}`,
+      id: crypto.randomUUID(),
       email: currentUser.email,
       artistName: currentUser.artistName,
       queryText,
@@ -1247,7 +1267,7 @@ export default function App() {
     const { data: { session } } = await supabase.auth.getSession();
 
     const newOac: OacApplication = {
-      id: `oac-${Date.now()}`,
+      id: crypto.randomUUID(),
       email: currentUser.email,
       artistName: currentUser.artistName,
       spotifyLink,

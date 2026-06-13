@@ -517,7 +517,7 @@ export default function NewReleaseWizard({
   const handleFinalSubmit = () => {
     const isAdmin = isAppAdmin;
     const newRelease: Release = {
-      id: editingRelease?.id || `rel-${Date.now()}`,
+      id: editingRelease?.id || crypto.randomUUID(),
       email: editingRelease?.email || currentUser.email,
       albumName,
       type: releaseType,
