@@ -200,23 +200,23 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
 
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[#0A0A0A]" id="login_container">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-transparent" id="login_container">
       {/* Background aesthetics */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#121212,transparent_60%)] opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.05),transparent_60%)] opacity-30 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,#1c1c1c,transparent_65%)] opacity-20 pointer-events-none" />
-      <div className="absolute top-[20%] left-[10%] w-72 h-72 bg-[#1DB954]/5 blur-3xl ambient-bg-glow pointer-events-none rounded-full" />
+      <div className="absolute top-[20%] left-[10%] w-72 h-72 bg-[#6366F1]/5 blur-3xl ambient-bg-glow pointer-events-none rounded-full" />
       <div className="absolute bottom-[20%] right-[10%] w-96 h-96 bg-gray-900/10 blur-3xl ambient-bg-glow pointer-events-none rounded-full" />
 
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10 animate-fade-in" id="login_card_grid">
         {/* Left column: Brand/Promo info */}
         <div className="md:col-span-5 text-left space-y-6" id="brand_info_col">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1DB954]/10 border border-[#1DB954]/20 text-xs text-[#1DB954] font-mono tracking-widest">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6366F1]/10 border border-[#6366F1]/20 text-xs text-[#6366F1] font-mono tracking-widest">
             <AudioLines className="w-3.5 h-3.5" />
             VIBRANT WEB-DISTRIBUTION
           </div>
           
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-white leading-tight" id="main_logo_wavora">
-            Wavora <span className="text-[#1DB954]">Live</span>
+            Wavora <span className="text-[#6366F1]">Live</span>
           </h1>
 
           <p className="text-gray-400 text-xs leading-relaxed max-w-sm">
@@ -225,7 +225,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
 
           <div className="space-y-4 pt-2" id="features_benefits">
             <div className="flex items-start gap-3">
-              <div className="p-1 rounded bg-[#1DB954]/10 text-[#1DB954] mt-1">
+              <div className="p-1 rounded bg-[#6366F1]/10 text-[#6366F1] mt-1">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
@@ -235,7 +235,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="p-1 rounded bg-[#1DB954]/10 text-[#1DB954] mt-1">
+              <div className="p-1 rounded bg-[#6366F1]/10 text-[#6366F1] mt-1">
                 <Building2 className="w-4 h-4" />
               </div>
               <div>
@@ -253,25 +253,25 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#121212] border border-[#1F1F1F] rounded-2xl p-6 md:p-8 shadow-2xl"
+            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl"
             id="login_animated_box"
           >
             {/* Header branding */}
-            <div className="flex items-center gap-2 mb-6 border-b border-[#1F1F1F] pb-4" id="login_tabs">
-              <LogIn className="w-5 h-5 text-[#1DB954]" />
-              <h2 className="text-sm font-black uppercase tracking-widest text-[#1db954]">Sign In to Wavora Live</h2>
+            <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4" id="login_tabs">
+              <LogIn className="w-5 h-5 text-[#6366F1]" />
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#6366F1]">Sign In to Wavora Live</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4" id="auth_form">
               {error && (
-                <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-lg text-xs text-red-400 flex items-start gap-2" id="login_err">
+                <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2" id="login_err">
                   <span className="font-bold flex-shrink-0">⚠️ Error:</span>
                   <span>{error}</span>
                 </div>
               )}
 
               {successMsg && (
-                <div className="p-3 bg-[#1DB954]/10 border border-[#1DB954]/20 rounded-lg text-xs text-[#1DB954] flex items-start gap-2" id="login_success">
+                <div className="p-3 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-xl text-xs text-[#6366F1] flex items-start gap-2" id="login_success">
                   <span className="font-bold flex-shrink-0">✓ Success:</span>
                   <span>{successMsg}</span>
                 </div>
@@ -284,7 +284,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-xs font-mono">@</span>
                     <input
                       type="text"
-                      className="w-full bg-black border border-[#1F1F1F] rounded-lg py-2.5 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-[#1DB954] transition"
+                      className="w-full bg-black border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-[#6366F1] transition"
                       placeholder="e.g. DJ Eclipse"
                       value={artistName}
                       onChange={(e) => setArtistName(e.target.value)}
@@ -302,7 +302,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                   </div>
                   <input
                     type="email"
-                    className="w-full bg-black border border-[#1F1F1F] rounded-lg py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-[#1DB954] transition"
+                    className="w-full bg-black border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-[#6366F1] transition"
                     placeholder="e.g. artist@wavora.live"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -319,7 +319,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                   </div>
                   <input
                     type="password"
-                    className="w-full bg-black border border-[#1F1F1F] rounded-lg py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-[#1DB954] transition"
+                    className="w-full bg-black border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-[#6366F1] transition"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -341,10 +341,10 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                         type="button"
                         key={pObj.name}
                         onClick={() => setPlan(pObj.name)}
-                        className={`p-3 rounded-lg border text-left flex flex-col justify-between transition cursor-pointer h-24 ${
+                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition cursor-pointer h-24 ${
                           plan === pObj.name 
-                            ? 'bg-[#1DB954]/10 border-[#1DB954] text-[#1DB954]' 
-                            : 'bg-black border-[#1F1F1F] text-gray-400 hover:border-[#2F2F2F]'
+                            ? 'bg-[#6366F1]/10 border-[#6366F1] text-[#6366F1]' 
+                            : 'bg-black border-white/10 text-gray-400 hover:border-[#2F2F2F]'
                         }`}
                         id={`plan_select_${pObj.name}`}
                       >
@@ -356,7 +356,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                             {pObj.desc}
                           </span>
                         </div>
-                        <span className="text-[8px] font-black uppercase tracking-wider block text-right text-[#1DB954] mt-1">
+                        <span className="text-[8px] font-black uppercase tracking-wider block text-right text-[#6366F1] mt-1">
                           {pObj.name === 'Elite' ? '💎 Elite' : pObj.name === 'Pro' ? '⚡ Pro' : '🎵 Basic'}
                         </span>
                       </button>
@@ -368,7 +368,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full cursor-pointer mt-4 py-3 px-4 bg-white hover:bg-[#1DB954] hover:text-black text-black font-black rounded-lg text-xs uppercase tracking-tight transition duration-200 flex items-center justify-center gap-2 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
+                className="w-full cursor-pointer mt-4 py-3 px-4 bg-white hover:bg-[#6366F1] hover:text-black text-black font-black rounded-xl text-xs uppercase tracking-tight transition duration-200 flex items-center justify-center gap-2 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
                 id="btn_auth_submit"
               >
                 {loading ? (

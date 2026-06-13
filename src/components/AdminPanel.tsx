@@ -86,7 +86,7 @@ function LegalLineManager({
       <div className="space-y-1 max-h-[60px] overflow-y-auto mb-1 scrollbar-hide pr-1">
         {lines.length === 0 && <span className="text-[8px] text-gray-700 italic pl-1">No custom lines added</span>}
         {lines.map((line, i) => (
-          <div key={i} className="flex items-center gap-1.5 bg-black/60 border border-[#1F1F1F] rounded-md px-2 py-1 group">
+          <div key={i} className="flex items-center gap-1.5 bg-black/60 border border-white/10 rounded-md px-2 py-1 group">
             <span className="flex-1 text-[10px] text-gray-300 truncate leading-none">{line}</span>
             <button 
               onClick={() => handleRemove(i)}
@@ -104,7 +104,7 @@ function LegalLineManager({
           value={newLine}
           onChange={(e) => setNewLine(e.target.value)}
           placeholder="Type new line..."
-          className="flex-1 bg-black border border-[#1F1F1F] rounded-md px-2.5 py-1.5 text-[10px] text-gray-200 focus:outline-none focus:border-[#1DB954]/60 transition-all font-medium"
+          className="flex-1 bg-black border border-white/10 rounded-md px-2.5 py-1.5 text-[10px] text-gray-200 focus:outline-none focus:border-[#6366F1]/60 transition-all font-medium"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -114,7 +114,7 @@ function LegalLineManager({
         />
         <button 
           onClick={handleAdd}
-          className="p-1.5 bg-[#1DB954] text-black hover:bg-[#1ed760] rounded-md transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
+          className="p-1.5 bg-[#6366F1] text-black hover:bg-[#818CF8] rounded-md transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
           title="Add to list"
         >
           <Plus size={14} strokeWidth={3} />
@@ -369,13 +369,13 @@ export default function AdminPanel({
 
   const renderReleaseCard = (rel: Release, isApprovedStage: boolean) => {
     return (
-      <div key={rel.id} className={`p-5 bg-black rounded-xl border ${isApprovedStage ? 'border-blue-500/20 border-l-4 border-l-blue-500' : 'border-[#1F1F1F] border-l-4 border-l-amber-500'} space-y-4`}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#1F1F1F]">
+      <div key={rel.id} className={`p-5 bg-black rounded-2xl border ${isApprovedStage ? 'border-blue-500/20 border-l-4 border-l-blue-500' : 'border-white/10 border-l-4 border-l-amber-500'} space-y-4`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <img 
               src={rel.coverArtSignedUrl || rel.coverArtUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&auto=format&fit=crop'} 
               alt="" 
-              className="w-16 h-16 rounded object-cover border border-[#1F1F1F]"
+              className="w-16 h-16 rounded object-cover border border-white/10"
               referrerPolicy="no-referrer"
             />
             <div>
@@ -388,7 +388,7 @@ export default function AdminPanel({
                 <h4 className="text-base font-black text-white mt-1 uppercase tracking-tight">{rel.albumName}</h4>
                 <button 
                   onClick={() => handleCopy(rel.albumName, 'Album Name')}
-                  className="p-1 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
+                  className="p-1 hover:text-[#6366F1] text-gray-500 transition cursor-pointer"
                   title="Copy Album Name"
                 >
                   <Copy className="w-3 h-3" />
@@ -398,7 +398,7 @@ export default function AdminPanel({
                 Main Artist: <span className="text-white font-semibold">{rel.mainArtistName}</span>
                 <button 
                   onClick={() => handleCopy(rel.mainArtistName, 'Artist Name')}
-                  className="inline-block ml-1 p-0.5 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
+                  className="inline-block ml-1 p-0.5 hover:text-[#6366F1] text-gray-500 transition cursor-pointer"
                   title="Copy Artist Name"
                 >
                   <Copy className="w-2.5 h-2.5" />
@@ -426,11 +426,11 @@ export default function AdminPanel({
         </div>
 
         {/* Tracks table */}
-        <div className="bg-[#0A0A0A] p-3 rounded-lg border border-[#1F1F1F]">
+        <div className="bg-black/20 p-3 rounded-xl border border-white/10 overflow-x-auto scrollbar-hide">
           <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block mb-1">Supplied Audio Metadata Assets ({rel.tracks.length})</span>
-          <table className="w-full text-left text-[11px] text-gray-300">
+          <table className="w-full text-left text-[11px] text-gray-300 min-w-[600px]">
             <thead>
-              <tr className="border-b border-[#1F1F1F] text-gray-500">
+              <tr className="border-b border-white/10 text-gray-500">
                 <th className="py-1"># Title</th>
                 <th className="py-1">Producer / Composer</th>
                 <th className="py-1">ISRC</th>
@@ -440,13 +440,13 @@ export default function AdminPanel({
             </thead>
             <tbody>
               {rel.tracks.map((track, i) => (
-                <tr key={track.id} className="border-b border-[#1F1F1F]/60">
+                <tr key={track.id} className="border-b border-white/10/60">
                   <td className="py-2.5 font-bold text-gray-200">
                     <div className="flex items-center gap-1.5">
                       {i+1}. {track.trackName}
                       <button 
                         onClick={() => handleCopy(track.trackName, 'Track Name')}
-                        className="p-0.5 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
+                        className="p-0.5 hover:text-[#6366F1] text-gray-500 transition cursor-pointer"
                       >
                         <Copy className="w-2.5 h-2.5" />
                       </button>
@@ -466,7 +466,7 @@ export default function AdminPanel({
                       {track.isrc && (
                         <button 
                           onClick={() => handleCopy(track.isrc!, 'ISRC')}
-                          className="p-0.5 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
+                          className="p-0.5 hover:text-[#6366F1] text-gray-500 transition cursor-pointer"
                         >
                           <Copy className="w-2.5 h-2.5" />
                         </button>
@@ -477,7 +477,7 @@ export default function AdminPanel({
                     {(track.explicitContent || (track as any).explicit_content) ? (
                       <span className="px-2 py-0.5 text-[9px] bg-red-950 text-red-500 border border-red-500/20 font-bold rounded">⚠️ YES</span>
                     ) : (
-                      <span className="px-2 py-0.5 text-[9px] bg-emerald-950 text-emerald-400 border border-[#10b981]/25 font-bold rounded">✓ NO</span>
+                      <span className="px-2 py-0.5 text-[9px] bg-indigo-950 text-indigo-400 border border-[#10b981]/25 font-bold rounded">✓ NO</span>
                     )}
                   </td>
                   <td className="py-2.5 text-[10px] text-blue-400 underline truncate max-w-[120px]">
@@ -514,7 +514,7 @@ export default function AdminPanel({
             <input
               type="text"
               placeholder="e.g. Artwork exceeds 3000px and matches digital store rules. Release approved."
-              className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded p-2 text-xs text-white outline-none focus:border-[#1DB954]"
+              className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-white outline-none focus:border-[#6366F1]"
               value={releaseFeedbackMap[rel.id] || ''}
               onChange={(e) => {
                 const v = e.target.value;
@@ -527,7 +527,7 @@ export default function AdminPanel({
             <button
               type="button"
               onClick={() => setInspectRelease(rel)}
-              className="mr-auto px-4 py-2 bg-[#121212] hover:bg-[#1E1E1E] text-gray-300 hover:text-[#1DB954] border border-[#2A2A2A] hover:border-[#1DB954]/30 font-bold rounded-lg text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition"
+              className="mr-auto px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-[#6366F1] border border-[#2A2A2A] hover:border-[#6366F1]/30 font-bold rounded-xl text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition"
               id={`btn_inspect_release_card_${rel.id}`}
               title="Inspect Complete Metadata & Asset Details"
             >
@@ -536,7 +536,7 @@ export default function AdminPanel({
 
             <button
               onClick={() => onUpdateReleaseStatus(rel.id, 'Live', releaseFeedbackMap[rel.id])}
-              className="px-4 py-2 bg-[#1DB954] text-black hover:bg-emerald-400 font-bold rounded-lg text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition animate-pulse"
+              className="px-4 py-2 bg-[#6366F1] text-black hover:bg-indigo-400 font-bold rounded-xl text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition animate-pulse"
               id={`btn_approve_release_live_${rel.id}`}
             >
               <UserCheck className="w-4 h-4" /> Ship Live to DSPs
@@ -545,7 +545,7 @@ export default function AdminPanel({
             {!isApprovedStage && (
               <button
                 onClick={() => onUpdateReleaseStatus(rel.id, 'Approved', releaseFeedbackMap[rel.id])}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition"
                 id={`btn_approve_release_app_${rel.id}`}
               >
                 <Check className="w-4 h-4" /> Pre-Approve Metadata
@@ -560,7 +560,7 @@ export default function AdminPanel({
                 }
                 onUpdateReleaseStatus(rel.id, 'Rejected', releaseFeedbackMap[rel.id]);
               }}
-              className="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition"
+              className="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-400 rounded-xl text-xs uppercase tracking-tight flex items-center gap-1.5 cursor-pointer transition"
               id={`btn_reject_release_${rel.id}`}
             >
               <X className="w-4 h-4" /> Issue Rejection Notice
@@ -574,23 +574,23 @@ export default function AdminPanel({
   return (
     <div className="space-y-6" id="admin_panel_root">
       {/* Header Info */}
-      <div className="p-6 bg-[#121212] rounded-2xl border border-[#1F1F1F] flex flex-col md:flex-row md:items-center justify-between gap-4" id="admin_header_card">
+      <div className="p-6 bg-white/5 rounded-3xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4" id="admin_header_card">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck className="w-5 h-5 text-[#1DB954]" />
+            <ShieldCheck className="w-5 h-5 text-[#6366F1]" />
             <h2 className="text-xl font-black text-white uppercase tracking-tighter">System Administration Suite</h2>
           </div>
           <p className="text-xs text-gray-400 max-w-xl">
             Authorize new members, review submitted WAV files/artwork metadata, verify Spotify/YouTube OAC credentials, and sign official royalty balance accounts.
           </p>
         </div>
-        <div className="px-3 py-1 bg-[#1DB954]/10 border border-[#1DB954]/20 rounded-full text-xs text-[#1DB954] font-bold">
+        <div className="px-3 py-1 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-full text-xs text-[#6366F1] font-bold">
           Role: Master Admin
         </div>
       </div>
 
       {/* Admin Tabs */}
-      <div className="flex flex-wrap gap-2 p-1 bg-[#0A0A0A] border border-[#1F1F1F] rounded-xl overflow-x-auto" id="admin_tabs_row">
+      <div className="flex flex-wrap gap-2 p-1 bg-black/20 border border-white/10 rounded-2xl overflow-x-auto" id="admin_tabs_row">
         {[
           { id: 'users', label: 'Member Access Requests', count: pendingUsers.length, icon: Users },
           { id: 'releases', label: 'Release Ingestion Queue', count: submittedReleases.length + approvedReleases.length, icon: Disc },
@@ -608,17 +608,17 @@ export default function AdminPanel({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`py-2 px-4 text-xs font-bold tracking-tight uppercase flex items-center gap-2 rounded-lg cursor-pointer transition ${
+              className={`py-2 px-4 text-xs font-bold tracking-tight uppercase flex items-center gap-2 rounded-xl cursor-pointer transition ${
                 isActive 
-                  ? 'bg-[#1DB954] text-black shadow' 
-                  : 'text-gray-400 hover:text-white hover:bg-[#121212]'
+                  ? 'bg-[#6366F1] text-black shadow' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
               id={`admin_tab_trigger_${tab.id}`}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
               {tab.count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${isActive ? 'bg-black text-[#1DB954]' : 'bg-[#1DB954]/20 text-[#1DB954]'}`}>
+                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${isActive ? 'bg-black text-[#6366F1]' : 'bg-[#6366F1]/20 text-[#6366F1]'}`}>
                   {tab.count}
                 </span>
               )}
@@ -635,8 +635,8 @@ export default function AdminPanel({
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="admin_members_section">
             {/* Column 1 of 3: Create / Provision Artist Account */}
-            <div className="md:col-span-4 bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954]">Provision Artist</h3>
+            <div className="md:col-span-4 bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1]">Provision Artist</h3>
               <p className="text-[11px] text-gray-400">Directly generate, configure, and approve a secure artist account.</p>
 
               <form onSubmit={handleCreateUserSubmit} className="space-y-4 pt-2 text-left">
@@ -645,7 +645,7 @@ export default function AdminPanel({
                   <input
                     type="text"
                     placeholder="e.g. Lunar Melody"
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={createArtistName}
                     onChange={(e) => setCreateArtistName(e.target.value)}
                     id="admin_create_user_name"
@@ -657,7 +657,7 @@ export default function AdminPanel({
                   <input
                     type="email"
                     placeholder="e.g. artist@wavora.live"
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={createEmail}
                     onChange={(e) => setCreateEmail(e.target.value)}
                     id="admin_create_user_email"
@@ -669,7 +669,7 @@ export default function AdminPanel({
                   <input
                     type="password"
                     placeholder="e.g. securePass123"
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={createPassword}
                     onChange={(e) => setCreatePassword(e.target.value)}
                     id="admin_create_user_password"
@@ -679,7 +679,7 @@ export default function AdminPanel({
                 <div className="space-y-1">
                   <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest">Distribution tier</label>
                   <select
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={createPlan}
                     onChange={(e) => setCreatePlan(e.target.value as Plan)}
                     id="admin_create_user_plan"
@@ -697,7 +697,7 @@ export default function AdminPanel({
                 )}
 
                 {createSuccess && (
-                  <div className="p-2 text-[10px] text-emerald-400 bg-emerald-900/20 border border-emerald-500/20 rounded font-mono" id="admin_create_user_succ">
+                  <div className="p-2 text-[10px] text-indigo-400 bg-indigo-900/20 border border-indigo-500/20 rounded font-mono" id="admin_create_user_succ">
                     ✓ {createSuccess}
                   </div>
                 )}
@@ -705,7 +705,7 @@ export default function AdminPanel({
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="w-full py-2.5 px-4 bg-[#1DB954] hover:bg-[#1ed760] disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-black font-black rounded text-[11px] uppercase tracking-wide cursor-pointer transition duration-150 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-black font-black rounded text-[11px] uppercase tracking-wide cursor-pointer transition duration-150 flex items-center justify-center gap-2"
                   id="admin_btn_create_user"
                 >
                   {createLoading ? (
@@ -724,15 +724,15 @@ export default function AdminPanel({
             </div>
 
             {/* Column 2 of 3: Pending approvals */}
-            <div className="md:col-span-4 bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4">
+            <div className="md:col-span-4 bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500">Pending Approvals ({pendingUsers.length})</h3>
               
               {pendingUsers.length === 0 ? (
-                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-lg">No pending external registrations.</p>
+                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-xl">No pending external registrations.</p>
               ) : (
                 <div className="space-y-3">
                   {pendingUsers.map((user, idx) => (
-                    <div key={`${user.email}-p-${idx}`} className="p-4 bg-black rounded-xl border border-[#1F1F1F] flex flex-col justify-between gap-3 text-xs text-left">
+                    <div key={`${user.email}-p-${idx}`} className="p-4 bg-black rounded-2xl border border-white/10 flex flex-col justify-between gap-3 text-xs text-left">
                       <div>
                         <div className="font-bold text-white text-sm">{user.artistName}</div>
                         <div className="text-gray-400 font-mono text-[11px] mt-0.5 truncate">{user.email}</div>
@@ -744,14 +744,14 @@ export default function AdminPanel({
                       <div className="flex gap-2">
                         <button
                           onClick={() => onApproveUser(user.email)}
-                          className="flex-1 py-1.5 bg-[#1DB954] text-black hover:bg-emerald-400 font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition text-[11px]"
+                          className="flex-1 py-1.5 bg-[#6366F1] text-black hover:bg-indigo-400 font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer transition text-[11px]"
                           id={`btn_approve_user_${user.email}`}
                         >
                           <Check className="w-3.5 h-3.5" /> Approve
                         </button>
                         <button
                           onClick={() => onRejectUser(user.email)}
-                          className="flex-1 py-1.5 bg-red-955 text-red-400 border border-red-500/20 hover:bg-red-900 hover:text-white font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition text-[11px]"
+                          className="flex-1 py-1.5 bg-red-955 text-red-400 border border-red-500/20 hover:bg-red-900 hover:text-white font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer transition text-[11px]"
                         >
                           <X className="w-3.5 h-3.5" /> Deny
                         </button>
@@ -763,22 +763,22 @@ export default function AdminPanel({
             </div>
 
             {/* Column 3 of 3: Active Members listing with Impersonate */}
-            <div className="md:col-span-4 bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4">
+            <div className="md:col-span-4 bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Active Members Pool ({activeUsers.length})</h3>
               
               <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1">
                 {activeUsers.map((user, idx) => (
-                  <div key={`${user.email}-a-${idx}`} className="p-3 bg-black rounded-lg border border-[#1F1F1F] flex flex-col gap-2 text-xs text-left" id={`active_member_card_${user.email}`}>
+                  <div key={`${user.email}-a-${idx}`} className="p-3 bg-black rounded-xl border border-white/10 flex flex-col gap-2 text-xs text-left" id={`active_member_card_${user.email}`}>
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1 pr-2">
                         <span className="font-bold text-gray-200 block truncate">{user.artistName}</span>
                         <span className="text-[10px] text-gray-400 block truncate">{user.email}</span>
                         <span className="text-[9px] bg-slate-850 border border-slate-800 text-slate-300 font-semibold px-1 rounded inline-block mt-1">{user.plan} Tier</span>
                         {user.password && (
-                          <span className="text-[10px] text-emerald-400 font-medium font-mono block mt-1.5 bg-emerald-950/30 border border-emerald-500/10 px-1.5 py-0.5 rounded w-fit">🔑 Active Pass: <span className="font-extrabold">{user.password}</span></span>
+                          <span className="text-[10px] text-indigo-400 font-medium font-mono block mt-1.5 bg-indigo-950/30 border border-indigo-500/10 px-1.5 py-0.5 rounded w-fit">🔑 Active Pass: <span className="font-extrabold">{user.password}</span></span>
                         )}
                         {passwordChangeSuccessEmail === user.email && (
-                          <span className="text-[10px] text-emerald-400 font-extrabold block mt-1.5">✓ Credentials updated successfully!</span>
+                          <span className="text-[10px] text-indigo-400 font-extrabold block mt-1.5">✓ Credentials updated successfully!</span>
                         )}
                       </div>
                       <div className="flex flex-col gap-1.5 flex-shrink-0 items-end">
@@ -813,12 +813,12 @@ export default function AdminPanel({
                           value={newPasswordValue}
                           onChange={(e) => setNewPasswordValue(e.target.value)}
                           placeholder="Type new password"
-                          className="flex-1 bg-zinc-905 border border-zinc-800 text-white rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-green-500"
+                          className="flex-1 bg-zinc-905 border border-zinc-800 text-white rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-violet-500"
                           id={`input_new_pass_${user.email}`}
                         />
                         <button
                           onClick={() => handleAdminChangePassword(user.email)}
-                          className="bg-[#1DB954] hover:bg-[#1ed760] text-black font-black px-3 py-1.5 rounded text-[10px] uppercase cursor-pointer"
+                          className="bg-[#6366F1] hover:bg-[#818CF8] text-black font-black px-3 py-1.5 rounded text-[10px] uppercase cursor-pointer"
                           id={`btn_save_pass_${user.email}`}
                         >
                           Save
@@ -832,11 +832,11 @@ export default function AdminPanel({
           </div>
 
             {/* Section: Account Lifecycles & Durations (Registration & Plan End Dates) */}
-            <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] text-left space-y-4" id="member_lifecycles_section">
-              <div className="flex justify-between items-center pb-2 border-b border-[#1F1F1F]">
+            <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 text-left space-y-4" id="member_lifecycles_section">
+              <div className="flex justify-between items-center pb-2 border-b border-white/10">
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#1DB954]" /> Account Lifecycles & Plan Durations
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1] flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#6366F1]" /> Account Lifecycles & Plan Durations
                   </h3>
                   <p className="text-[11px] text-gray-400 mt-1">
                     Edit user registration dates and plan expiration timelines. Leaving the end date empty means the plan is perpetual.
@@ -853,7 +853,7 @@ export default function AdminPanel({
                   return (
                     <div 
                       key={`lifecycle-${user.email}-${idx}`} 
-                      className="p-4 bg-black rounded-lg border border-[#1F1F1F] space-y-3 relative"
+                      className="p-4 bg-black rounded-xl border border-white/10 space-y-3 relative"
                       id={`lifecycle_card_${user.email}`}
                     >
                       <div className="flex justify-between items-start">
@@ -872,7 +872,7 @@ export default function AdminPanel({
                                 setEditEndDateValue(endDateFormatted);
                               }
                             }}
-                            className="px-2.5 py-1 bg-[#121212] border border-[#1F1F1F] hover:bg-zinc-800 text-gray-300 font-bold rounded text-[10px] uppercase cursor-pointer transition"
+                            className="px-2.5 py-1 bg-white/5 backdrop-blur-md border border-white/10 hover:bg-zinc-800 text-gray-300 font-bold rounded text-[10px] uppercase cursor-pointer transition"
                             id={`btn_edit_lifecycle_${user.email}`}
                           >
                             {isEditing ? 'Cancel' : 'Edit Dates'}
@@ -880,7 +880,7 @@ export default function AdminPanel({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-[11px] pt-1.5 border-t border-[#1F1F1F]">
+                      <div className="grid grid-cols-2 gap-4 text-[11px] pt-1.5 border-t border-white/10">
                         <div>
                           <span className="text-gray-500 block uppercase text-[8px] tracking-wider font-bold">REGISTRATION DATE</span>
                           <span className="text-gray-300 font-mono">
@@ -889,20 +889,20 @@ export default function AdminPanel({
                         </div>
                         <div>
                           <span className="text-gray-500 block uppercase text-[8px] tracking-wider font-bold">PLAN END DATE</span>
-                          <span className="text-emerald-400 font-mono font-bold">
+                          <span className="text-indigo-400 font-mono font-bold">
                             {user.planEndDate ? new Date(user.planEndDate).toLocaleDateString() : 'Indefinite'}
                           </span>
                         </div>
                       </div>
 
                       {lifecycleUpdateSuccessEmail === user.email && (
-                        <div className="text-[10px] text-emerald-400 font-bold pt-1">
+                        <div className="text-[10px] text-indigo-400 font-bold pt-1">
                           ✓ Lifecycle dates updated successfully!
                         </div>
                       )}
 
                       {isEditing && (
-                        <div className="mt-3 pt-3 border-t border-[#1F1F1F] space-y-3" id={`edit_lifecycle_form_${user.email}`}>
+                        <div className="mt-3 pt-3 border-t border-white/10 space-y-3" id={`edit_lifecycle_form_${user.email}`}>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                             <div className="space-y-1">
                               <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest">Registration Date</label>
@@ -910,7 +910,7 @@ export default function AdminPanel({
                                 type="date"
                                 value={editRegDateValue}
                                 onChange={(e) => setEditRegDateValue(e.target.value)}
-                                className="w-full bg-zinc-900 border border-[#1F1F1F] text-white rounded p-1.5 text-xs focus:outline-none focus:border-green-500"
+                                className="w-full bg-zinc-900 border border-white/10 text-white rounded p-1.5 text-xs focus:outline-none focus:border-violet-500"
                                 id={`reg_date_input_${user.email}`}
                               />
                             </div>
@@ -920,7 +920,7 @@ export default function AdminPanel({
                                 type="date"
                                 value={editEndDateValue}
                                 onChange={(e) => setEditEndDateValue(e.target.value)}
-                                className="w-full bg-zinc-900 border border-[#1F1F1F] text-white rounded p-1.5 text-xs focus:outline-none focus:border-green-500"
+                                className="w-full bg-zinc-900 border border-white/10 text-white rounded p-1.5 text-xs focus:outline-none focus:border-violet-500"
                                 id={`end_date_input_${user.email}`}
                               />
                               <p className="text-[8px] text-gray-500">Leave blank for indefinite tier access.</p>
@@ -930,7 +930,7 @@ export default function AdminPanel({
                           <div className="flex justify-end pt-1">
                             <button
                               onClick={() => handleAdminUpdateLifecycle(user.email)}
-                              className="bg-[#1DB954] hover:bg-[#1ed760] text-black font-black px-4 py-1.5 rounded text-[10px] uppercase cursor-pointer"
+                              className="bg-[#6366F1] hover:bg-[#818CF8] text-black font-black px-4 py-1.5 rounded text-[10px] uppercase cursor-pointer"
                               id={`btn_save_lifecycle_${user.email}`}
                             >
                               Save Dates
@@ -951,8 +951,8 @@ export default function AdminPanel({
           <div className="space-y-6" id="admin_releases_section">
             
             {/* Stage 1: Awaiting Metadata Audit */}
-            <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F]">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-[#1F1F1F] text-left">
+            <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-white/10 text-left">
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse inline-block" />
@@ -963,7 +963,7 @@ export default function AdminPanel({
               </div>
 
               {submittedReleases.length === 0 ? (
-                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-lg">No pending submissions awaiting Stage 1 metadata audit.</p>
+                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-xl">No pending submissions awaiting Stage 1 metadata audit.</p>
               ) : (
                 <div className="space-y-4">
                   {submittedReleases.map(rel => renderReleaseCard(rel, false))}
@@ -972,8 +972,8 @@ export default function AdminPanel({
             </div>
 
             {/* Stage 2: Pre-Approved Ingestions */}
-            <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F]">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-[#1F1F1F] text-left">
+            <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-white/10 text-left">
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-widest text-blue-400 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse inline-block" />
@@ -984,7 +984,7 @@ export default function AdminPanel({
               </div>
 
               {approvedReleases.length === 0 ? (
-                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-lg">No pre-approved releases awaiting active delivery.</p>
+                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-xl">No pre-approved releases awaiting active delivery.</p>
               ) : (
                 <div className="space-y-4">
                   {approvedReleases.map(rel => renderReleaseCard(rel, true))}
@@ -993,21 +993,21 @@ export default function AdminPanel({
             </div>
 
             {/* Historical Audit Trail */}
-            <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F]">
+            <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10">
               <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">Ingestion Audit Log Archive ({processedReleases.length})</h3>
               
               <div className="space-y-3">
                 {processedReleases.map(rel => (
-                  <div key={rel.id} className="p-3 bg-black rounded-xl border border-[#1F1F1F] flex items-center justify-between text-xs">
+                  <div key={rel.id} className="p-3 bg-black rounded-2xl border border-white/10 flex items-center justify-between text-xs">
                     <div>
                       <span className="font-bold text-white mb-0.5 block truncate max-w-[200px]">{rel.albumName} - {rel.mainArtistName}</span>
                       <span className="text-[10px] text-gray-500">Shipped: {new Date(rel.submittedAt).toLocaleDateString()}</span>
-                      {rel.feedback && <p className="text-[10px] text-[#1DB954] mt-1 bg-[#1DB954]/5 p-1 rounded font-mono">Feedback: "{rel.feedback}"</p>}
+                      {rel.feedback && <p className="text-[10px] text-[#6366F1] mt-1 bg-[#6366F1]/5 p-1 rounded font-mono">Feedback: "{rel.feedback}"</p>}
                     </div>
 
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold uppercase ${
-                        rel.status === 'Live' ? 'bg-emerald-900/20 text-[#1DB954] border border-[#1DB954]/20' :
+                        rel.status === 'Live' ? 'bg-indigo-900/20 text-[#6366F1] border border-[#6366F1]/20' :
                         rel.status === 'Approved' ? 'bg-blue-900/20 text-blue-400 border border-blue-500/20' :
                         'bg-red-950 text-red-400 border border-red-500/10'
                       }`}>
@@ -1015,7 +1015,7 @@ export default function AdminPanel({
                       </span>
                       <button
                         onClick={() => setInspectRelease(rel)}
-                        className="p-1 px-2 bg-[#121212] hover:bg-[#1E1E1E] hover:text-[#1DB954] text-gray-400 border border-[#2A2A2A] rounded text-[10px] font-bold cursor-pointer transition flex items-center gap-1"
+                        className="p-1 px-2 bg-white/5 backdrop-blur-md hover:bg-white/10 backdrop-blur-md hover:text-[#6366F1] text-gray-400 border border-[#2A2A2A] rounded text-[10px] font-bold cursor-pointer transition flex items-center gap-1"
                         id={`btn_inspect_audit_${rel.id}`}
                       >
                         <Eye className="w-3 h-3" /> Inspect Track
@@ -1030,10 +1030,10 @@ export default function AdminPanel({
 
         {/* AUTHORIZED TAGS CONTROL TAB */}
         {activeTab === 'legal' && (
-          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-6" id="admin_legal_section">
-            <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#1F1F1F]">
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-6" id="admin_legal_section">
+            <div className="flex items-center justify-between gap-4 pb-4 border-b border-white/10">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1] flex items-center gap-2">
                    <FileText size={18} /> Authorized Legal Tags Management
                 </h3>
                 <p className="text-[11px] text-gray-400 mt-1">Assign custom C Line and P Line overrides to specific dashboards. These will be the ONLY options available to the user in the wizard.</p>
@@ -1042,18 +1042,18 @@ export default function AdminPanel({
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {activeUsers.length === 0 ? (
-                <div className="lg:col-span-2 py-12 text-center bg-black/40 border border-dashed border-[#1F1F1F] rounded-xl">
+                <div className="lg:col-span-2 py-12 text-center bg-black/40 border border-dashed border-white/10 rounded-2xl">
                   <span className="text-xs text-gray-500">No active dashboards found to manage.</span>
                 </div>
               ) : (
                 activeUsers.map((user, idx) => (
-                  <div key={`legal-user-${user.email}-${idx}`} className="p-5 bg-black rounded-xl border border-[#1F1F1F] hover:border-[#1DB954]/20 transition-all flex flex-col gap-4 shadow-2xl">
-                    <div className="flex items-center justify-between pb-3 border-b border-[#1F1F1F]/40">
+                  <div key={`legal-user-${user.email}-${idx}`} className="p-5 bg-black rounded-2xl border border-white/10 hover:border-[#6366F1]/20 transition-all flex flex-col gap-4 shadow-2xl">
+                    <div className="flex items-center justify-between pb-3 border-b border-white/10/40">
                       <div className="min-w-0">
                         <span className="font-black text-gray-100 block text-sm tracking-tight truncate">{user.artistName}</span>
                         <span className="text-[10px] text-gray-500 block font-mono truncate">{user.email}</span>
                       </div>
-                      <div className="px-2 py-1 bg-[#1DB954]/10 border border-[#1DB954]/20 rounded text-[9px] text-[#1DB954] font-black uppercase">
+                      <div className="px-2 py-1 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded text-[9px] text-[#6366F1] font-black uppercase">
                         {user.plan}
                       </div>
                     </div>
@@ -1082,16 +1082,16 @@ export default function AdminPanel({
         )}
 
         {activeTab === 'queries' && (
-          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4" id="admin_queries_section">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954]">Active Support Inquiries ({pendingQueries.length})</h3>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-4" id="admin_queries_section">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1]">Active Support Inquiries ({pendingQueries.length})</h3>
 
             {pendingQueries.length === 0 ? (
-              <p className="text-xs text-gray-500 py-10 text-center bg-black/40 rounded-lg">No active support desks waiting for response. Superb!</p>
+              <p className="text-xs text-gray-500 py-10 text-center bg-black/40 rounded-xl">No active support desks waiting for response. Superb!</p>
             ) : (
               <div className="space-y-4">
                 {pendingQueries.map(q => (
-                  <div key={q.id} className="p-4 bg-black rounded-xl border border-[#1F1F1F] space-y-3 text-xs">
-                    <div className="flex justify-between border-b border-[#1F1F1F] pb-2">
+                  <div key={q.id} className="p-4 bg-black rounded-2xl border border-white/10 space-y-3 text-xs">
+                    <div className="flex justify-between border-b border-white/10 pb-2">
                       <div>
                         <span className="font-bold text-gray-200 block text-sm">{q.artistName}</span>
                         <span className="text-[10px] text-gray-500 tracking-wider font-mono">{q.email}</span>
@@ -1099,7 +1099,7 @@ export default function AdminPanel({
                       <span className="text-[10px] text-gray-400">{new Date(q.submittedAt).toLocaleString()}</span>
                     </div>
 
-                    <p className="text-gray-300 italic p-3 bg-[#121212] rounded border border-[#1F1F1F]">
+                    <p className="text-gray-300 italic p-3 bg-white/5 backdrop-blur-md rounded border border-white/10">
                       "{q.queryText}"
                     </p>
 
@@ -1108,7 +1108,7 @@ export default function AdminPanel({
                       <textarea
                         rows={2}
                         placeholder="e.g. Hi there! Royalties are securely processed on the 10th of each month. Your account is on schedule."
-                        className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded p-2 text-xs text-white outline-none focus:border-[#1DB954] resize-none"
+                        className="w-full bg-black/20 border border-white/10 rounded p-2 text-xs text-white outline-none focus:border-[#6366F1] resize-none"
                         value={replyTextMap[q.id] || ''}
                         onChange={(e) => {
                           const v = e.target.value;
@@ -1120,7 +1120,7 @@ export default function AdminPanel({
                           if (!replyTextMap[q.id]?.trim()) return;
                           onReplySupportQuery(q.id, replyTextMap[q.id].trim());
                         }}
-                        className="px-3.5 py-1.5 bg-[#1DB954] text-black hover:bg-emerald-400 font-bold rounded text-xs uppercase tracking-tight flex items-center gap-1 cursor-pointer transition"
+                        className="px-3.5 py-1.5 bg-[#6366F1] text-black hover:bg-indigo-400 font-bold rounded text-xs uppercase tracking-tight flex items-center gap-1 cursor-pointer transition"
                         id={`btn_reply_query_${q.id}`}
                       >
                         <Send className="w-3.5 h-3.5" /> Dispatch Reply to Member Portal
@@ -1135,15 +1135,15 @@ export default function AdminPanel({
 
         {/* OFFICIAL ARTIST CHANNEL VERIFICATIONS */}
         {activeTab === 'oac' && (
-          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4" id="admin_oac_section">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954]">Official Artist Channel (OAC) Requests ({pendingOacs.length})</h3>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-4" id="admin_oac_section">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1]">Official Artist Channel (OAC) Requests ({pendingOacs.length})</h3>
 
             {pendingOacs.length === 0 ? (
-              <p className="text-xs text-gray-500 py-10 text-center bg-black/40 rounded-lg">No OAC requests are pending. Everyone is fully verified.</p>
+              <p className="text-xs text-gray-500 py-10 text-center bg-black/40 rounded-xl">No OAC requests are pending. Everyone is fully verified.</p>
             ) : (
               <div className="space-y-4">
                 {pendingOacs.map(app => (
-                  <div key={app.id} className="p-4 bg-black rounded-xl border border-[#1F1F1F] space-y-3 text-xs">
+                  <div key={app.id} className="p-4 bg-black rounded-2xl border border-white/10 space-y-3 text-xs">
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="font-bold text-sm text-white block">{app.artistName}</span>
@@ -1152,7 +1152,7 @@ export default function AdminPanel({
                       <span className="text-[10px] text-gray-400">Req: {new Date(app.submittedAt).toLocaleDateString()}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-[#121212] rounded border border-[#1F1F1F]">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-white/5 backdrop-blur-md rounded border border-white/10">
                       <div>
                         <span className="text-[9px] uppercase font-bold text-gray-500 block tracking-wider mb-0.5">Spotify URL Profile</span>
                         <a href={app.spotifyLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate block text-[11px] font-mono">{app.spotifyLink}</a>
@@ -1166,7 +1166,7 @@ export default function AdminPanel({
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => onUpdateOacStatus(app.id, 'Approved')}
-                        className="px-3.5 py-1.5 bg-[#1DB954] text-black hover:bg-emerald-400 font-bold rounded text-xs uppercase tracking-tight flex items-center gap-1 cursor-pointer transition"
+                        className="px-3.5 py-1.5 bg-[#6366F1] text-black hover:bg-indigo-400 font-bold rounded text-xs uppercase tracking-tight flex items-center gap-1 cursor-pointer transition"
                         id={`btn_approve_oac_${app.id}`}
                       >
                         <Check className="w-3.5 h-3.5" /> Confirm OAC Verification
@@ -1187,14 +1187,14 @@ export default function AdminPanel({
 
         {/* POST REVENUE LEDGER TAB */}
         {activeTab === 'revenue' && (
-          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4" id="admin_revenue_section">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954]">Post Royalties & Monthly Revenue Statements</h3>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-4" id="admin_revenue_section">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1]">Post Royalties & Monthly Revenue Statements</h3>
             <p className="text-xs text-gray-400 max-w-lg">
               Populate active monthly royalty blocks that feed directly into artist wallets and statement dashboards. Keep the numeric figures clean.
             </p>
 
             {revSuccess && (
-              <div className="p-3 bg-[#1DB954]/10 border border-[#1DB954]/20 rounded-lg text-xs text-[#1DB954] font-bold">
+              <div className="p-3 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-xl text-xs text-[#6366F1] font-bold">
                  ✓ {revSuccess}
               </div>
             )}
@@ -1204,7 +1204,7 @@ export default function AdminPanel({
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select Destination Artist</label>
                   <select
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={revEmail}
                     onChange={(e) => {
                       setRevEmail(e.target.value);
@@ -1224,7 +1224,7 @@ export default function AdminPanel({
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Statement Month / Year</label>
                   <select
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={revMonth}
                     onChange={(e) => setRevMonth(e.target.value)}
                   >
@@ -1241,7 +1241,7 @@ export default function AdminPanel({
                   <div className="space-y-1">
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Select Release Metadata</label>
                     <select
-                      className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                      className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                       value={revRelease}
                       onChange={(e) => setRevRelease(e.target.value)}
                       id="admin_rev_release_select"
@@ -1258,13 +1258,13 @@ export default function AdminPanel({
 
                   <div className="space-y-1">
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Currency Mode</label>
-                    <div className="flex bg-black border border-[#1F1F1F] p-1 rounded" id="admin_rev_currency_selector">
+                    <div className="flex bg-black border border-white/10 p-1 rounded" id="admin_rev_currency_selector">
                       <button
                         type="button"
                         onClick={() => setRevCurrency('INR')}
                         className={`flex-1 py-1 text-center text-[11px] font-bold rounded transition cursor-pointer ${
                           revCurrency === 'INR'
-                            ? 'bg-[#1DB954] text-black'
+                            ? 'bg-[#6366F1] text-black'
                             : 'text-gray-400 hover:text-white'
                         }`}
                         id="btn_toggle_currency_inr"
@@ -1276,7 +1276,7 @@ export default function AdminPanel({
                         onClick={() => setRevCurrency('USD')}
                         className={`flex-1 py-1 text-center text-[11px] font-bold rounded transition cursor-pointer ${
                           revCurrency === 'USD'
-                            ? 'bg-[#1DB954] text-black'
+                            ? 'bg-[#6366F1] text-black'
                             : 'text-gray-400 hover:text-white'
                         }`}
                         id="btn_toggle_currency_usd"
@@ -1294,7 +1294,7 @@ export default function AdminPanel({
                       type="number"
                       step="0.01"
                       placeholder={revCurrency === 'INR' ? 'e.g. 25000.00' : 'e.g. 520.45'}
-                      className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                      className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                       value={revAmount}
                       onChange={(e) => setRevAmount(e.target.value)}
                       id="admin_rev_amount_input"
@@ -1306,10 +1306,10 @@ export default function AdminPanel({
               <button
                 type="submit"
                 disabled={!revEmail}
-                className={`w-full py-2.5 px-4 font-black rounded-lg text-xs uppercase tracking-tight flex items-center justify-center gap-1.5 transition ${
+                className={`w-full py-2.5 px-4 font-black rounded-xl text-xs uppercase tracking-tight flex items-center justify-center gap-1.5 transition ${
                   revEmail 
-                    ? 'bg-[#1DB954] text-black hover:bg-emerald-400 cursor-pointer' 
-                    : 'bg-[#121212] text-gray-500 border border-[#1F1F1F] cursor-not-allowed'
+                    ? 'bg-[#6366F1] text-black hover:bg-indigo-400 cursor-pointer' 
+                    : 'bg-white/5 backdrop-blur-md text-gray-500 border border-white/10 cursor-not-allowed'
                 }`}
                 id="btn_admin_payout_submit"
               >
@@ -1323,9 +1323,9 @@ export default function AdminPanel({
         {activeTab === 'notifications' && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="admin_notifications_workspace">
             {/* Column 1 of 2: Constructor Form */}
-            <div className="md:col-span-5 bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-4">
+            <div className="md:col-span-5 bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-4">
               <div className="space-y-1">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-1.5">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1] flex items-center gap-1.5">
                   <Bell className="w-4 h-4 animate-bounce" /> Broadcast Push Engine
                 </h3>
                 <p className="text-[11px] text-gray-400">
@@ -1334,7 +1334,7 @@ export default function AdminPanel({
               </div>
 
               {notifSuccess && (
-                <div className="p-3 bg-[#1DB954]/10 border border-[#1DB954]/20 rounded-lg text-xs text-[#1DB954] font-bold">
+                <div className="p-3 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-xl text-xs text-[#6366F1] font-bold">
                   ✓ {notifSuccess}
                 </div>
               )}
@@ -1353,9 +1353,9 @@ export default function AdminPanel({
                           notifSeverity === sev
                             ? sev === 'Critical' ? 'bg-red-500 text-black border-red-500 font-black' :
                               sev === 'Warning' ? 'bg-amber-500 text-black border-amber-500 font-black' :
-                              sev === 'Success' ? 'bg-emerald-500 text-black border-emerald-500 font-black' :
-                              'bg-[#1DB954] text-black border-[#1DB954] font-black'
-                            : 'bg-black text-gray-405 border-[#1F1F1F] hover:border-gray-700'
+                              sev === 'Success' ? 'bg-indigo-500 text-black border-indigo-500 font-black' :
+                              'bg-[#6366F1] text-black border-[#6366F1] font-black'
+                            : 'bg-black text-gray-405 border-white/10 hover:border-gray-700'
                         }`}
                       >
                         {sev}
@@ -1368,7 +1368,7 @@ export default function AdminPanel({
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target Audience</label>
                   <select
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={notifTargetType}
                     onChange={(e) => {
                       const val = e.target.value as any;
@@ -1388,7 +1388,7 @@ export default function AdminPanel({
                   <div className="space-y-1 animate-fade-in">
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target subscription plan</label>
                     <select
-                      className="w-full bg-black border border-[#1F1F1F] rounded p-2 text-xs text-white outline-none focus:border-[#1DB954]"
+                      className="w-full bg-black border border-white/10 rounded p-2 text-xs text-white outline-none focus:border-[#6366F1]"
                       value={notifTargetValue}
                       onChange={(e) => setNotifTargetValue(e.target.value)}
                       id="admin_notif_target_plan"
@@ -1406,7 +1406,7 @@ export default function AdminPanel({
                   <div className="space-y-1 animate-fade-in">
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target Artist email</label>
                     <select
-                      className="w-full bg-black border border-[#1F1F1F] rounded p-2 text-xs text-white outline-none focus:border-[#1DB954]"
+                      className="w-full bg-black border border-white/10 rounded p-2 text-xs text-white outline-none focus:border-[#6366F1]"
                       value={notifTargetValue}
                       onChange={(e) => setNotifTargetValue(e.target.value)}
                       id="admin_notif_target_artist"
@@ -1428,7 +1428,7 @@ export default function AdminPanel({
                   <input
                     type="text"
                     placeholder="e.g. Critical Pipeline Outage resolved"
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954]"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1]"
                     value={notifTitle}
                     onChange={(e) => setNotifTitle(e.target.value)}
                     id="admin_notif_title_input"
@@ -1443,7 +1443,7 @@ export default function AdminPanel({
                   <textarea
                     rows={4}
                     placeholder="Provide explanatory description details, links or direct instructions here..."
-                    className="w-full bg-black border border-[#1F1F1F] rounded p-2.5 text-xs text-white outline-none focus:border-[#1DB954] resize-none"
+                    className="w-full bg-black border border-white/10 rounded p-2.5 text-xs text-white outline-none focus:border-[#6366F1] resize-none"
                     value={notifMessage}
                     onChange={(e) => setNotifMessage(e.target.value)}
                     id="admin_notif_message_input"
@@ -1457,7 +1457,7 @@ export default function AdminPanel({
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-[#1DB954] hover:bg-emerald-400 hover:text-black text-black font-extrabold text-xs uppercase tracking-tight rounded-lg flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
+                  className="w-full py-2.5 bg-[#6366F1] hover:bg-indigo-400 hover:text-black text-black font-extrabold text-xs uppercase tracking-tight rounded-xl flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
                   id="btn_admin_notif_submit"
                 >
                   <Send className="w-3.5 h-3.5 fill-current" /> Dispatch Broadcast Signal
@@ -1466,9 +1466,9 @@ export default function AdminPanel({
             </div>
 
             {/* Column 2 of 2: Active Dispatched Broadcasts */}
-            <div className="md:col-span-7 bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] flex flex-col justify-between">
+            <div className="md:col-span-7 bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 flex flex-col justify-between">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] mb-3 border-b border-[#1F1F1F] pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1] mb-3 border-b border-white/10 pb-3">
                   Broadcasts Ledger ({notifications.length})
                 </h3>
 
@@ -1482,14 +1482,14 @@ export default function AdminPanel({
                     {notifications.map((notif) => (
                       <div 
                         key={notif.id} 
-                        className="p-3.5 bg-black rounded-xl border border-[#1F1F1F] flex flex-col sm:flex-row items-start justify-between gap-3 text-xs text-left"
+                        className="p-3.5 bg-black rounded-2xl border border-white/10 flex flex-col sm:flex-row items-start justify-between gap-3 text-xs text-left"
                       >
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
                               notif.severity === 'Critical' ? 'bg-red-950 text-red-400 border border-red-500/10' :
                               notif.severity === 'Warning' ? 'bg-amber-950 text-amber-500 border border-amber-500/10' :
-                              notif.severity === 'Success' ? 'bg-emerald-950 text-[#1DB954] border border-[#1DB954]/10' :
+                              notif.severity === 'Success' ? 'bg-indigo-950 text-[#6366F1] border border-[#6366F1]/10' :
                               'bg-indigo-950 text-indigo-400 border border-indigo-500/10'
                             }`}>
                               {notif.severity}
@@ -1516,7 +1516,7 @@ export default function AdminPanel({
                               setNotifSuccess(`Broadcast Deleted: System notice dismissed from all client terminals.`);
                             }
                           }}
-                          className="p-1.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-lg transition self-end sm:self-start cursor-pointer"
+                          className="p-1.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-xl transition self-end sm:self-start cursor-pointer"
                           title="Delete / Recall Broadast"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1527,7 +1527,7 @@ export default function AdminPanel({
                 )}
               </div>
 
-              <div className="text-[9px] uppercase tracking-wider text-gray-650 mt-4 border-t border-[#1F1F1F] pt-3 text-right">
+              <div className="text-[9px] uppercase tracking-wider text-gray-650 mt-4 border-t border-white/10 pt-3 text-right">
                 All changes reflect instantly inside active artist browser dashboards.
               </div>
             </div>
@@ -1536,10 +1536,10 @@ export default function AdminPanel({
 
         {/* MANAGED ARTISTS DATABASE TAB */}
         {activeTab === 'artists' && (
-          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-6" id="admin_artists_section">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1F1F1F] pb-4">
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-6" id="admin_artists_section">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1] flex items-center gap-2">
                   <Globe className="w-4 h-4" /> Global Managed Artists Registry ({artists.length})
                 </h3>
                 <p className="text-[11px] text-gray-400 mt-0.5">Comprehensive database of all artists registered across every member profile with verified platform links.</p>
@@ -1548,24 +1548,24 @@ export default function AdminPanel({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {artists.length === 0 ? (
-                <div className="col-span-full py-20 text-center bg-black/40 rounded-xl border border-[#1F1F1F]/60">
+                <div className="col-span-full py-20 text-center bg-black/40 rounded-2xl border border-white/10/60">
                    <Users className="w-10 h-10 mx-auto text-gray-700 mb-2" />
                    <p className="text-xs text-gray-500">Global registry is currently empty.</p>
                 </div>
               ) : (
                 artists.map(artist => (
-                  <div key={artist.id} className="bg-black/60 p-4 rounded-xl border border-[#1F1F1F] hover:border-[#1DB954]/20 transition-all group">
+                  <div key={artist.id} className="bg-black/60 p-4 rounded-2xl border border-white/10 hover:border-[#6366F1]/20 transition-all group">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="text-sm font-black text-white uppercase tracking-tight group-hover:text-[#1DB954] transition-colors">{artist.name}</h4>
+                        <h4 className="text-sm font-black text-white uppercase tracking-tight group-hover:text-[#6366F1] transition-colors">{artist.name}</h4>
                         <p className="text-[10px] text-gray-500 font-mono mt-0.5">{artist.email}</p>
                       </div>
-                      <div className="w-8 h-8 rounded-lg bg-indigo-900/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-900/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
                          <span className="text-[10px] font-bold">{artist.name.charAt(0).toUpperCase()}</span>
                       </div>
                     </div>
 
-                    <div className="space-y-3 py-3 border-y border-[#1F1F1F]/60 my-2">
+                    <div className="space-y-3 py-3 border-y border-white/10/60 my-2">
                       <div className="flex items-center justify-between text-[10px]">
                         <span className="text-gray-500 uppercase tracking-widest font-bold">Platform Connectivity:</span>
                       </div>
@@ -1573,7 +1573,7 @@ export default function AdminPanel({
                          {artist.spotifyLink && artist.spotifyLink !== 'NONE' ? (
                            <div className="flex items-center gap-1">
                              <a href={artist.spotifyLink} target="_blank" rel="noopener noreferrer" 
-                                className="px-2 py-1 bg-[#1DB954]/10 text-[#1DB954] border border-[#1DB954]/20 rounded text-[9px] font-bold hover:bg-[#1DB954] hover:text-black transition">
+                                className="px-2 py-1 bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/20 rounded text-[9px] font-bold hover:bg-[#6366F1] hover:text-black transition">
                                Spotify
                              </a>
                              <button 
@@ -1606,12 +1606,12 @@ export default function AdminPanel({
                            </div>
                          ) : <span className="px-2 py-1 bg-red-900/10 text-red-500/60 border border-red-900/20 rounded text-[9px] font-bold italic">No Apple ID</span>}
 
-                         {artist.instagramLink ? (
+                         {artist.instagramLink && artist.instagramLink !== 'NONE' ? (
                            <a href={artist.instagramLink} target="_blank" rel="noopener noreferrer" 
                               className="px-2 py-1 bg-purple-900/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold hover:bg-purple-500 hover:text-white transition">
                              Instagram
                            </a>
-                         ) : <span className="px-2 py-1 bg-gray-900/40 text-gray-650 border border-gray-800/40 rounded text-[9px] font-bold">No Instagram</span>}
+                         ) : null}
                       </div>
 
                     </div>
@@ -1625,7 +1625,7 @@ export default function AdminPanel({
                             if (user) onImpersonateUser(user);
                             else alert('Error: Root User Profile not found in directory for this artist.');
                           }}
-                          className="p-1 px-2.5 bg-white text-black text-[9px] font-black rounded uppercase tracking-tighter hover:bg-emerald-400 transition cursor-pointer"
+                          className="p-1 px-2.5 bg-white text-black text-[9px] font-black rounded uppercase tracking-tighter hover:bg-indigo-400 transition cursor-pointer"
                         >
                           Access Profile
                         </button>
@@ -1640,11 +1640,11 @@ export default function AdminPanel({
 
         {/* COMPREHENSIVE PAYOUTS MANAGEMENT TAB */}
         {activeTab === 'payouts' && (
-          <div className="bg-[#121212] p-6 rounded-2xl border border-[#1F1F1F] space-y-6" id="admin_payouts_tab_module">
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-6" id="admin_payouts_tab_module">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1F1F1F] pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1DB954] flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1] flex items-center gap-2">
                   <Landmark className="w-4 h-4" /> Comprehensive Payout & Withdrawal Ledger
                 </h3>
                 <p className="text-[11px] text-gray-400 mt-0.5">Approve, reject, and write confirmation/remittance comments for members' withdrawable balance claims.</p>
@@ -1653,21 +1653,21 @@ export default function AdminPanel({
 
             {/* Overview Stats for Admins */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" id="payout_admin_overview_stats">
-              <div className="p-4 bg-[#090909] border border-[#1F1F1F] rounded-xl">
+              <div className="p-4 bg-[#090909] border border-white/10 rounded-2xl">
                 <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Unprocessed Claims (Pending)</span>
                 <div className="text-sm font-bold text-yellow-400 font-mono mt-1">
                   ₹{payoutRequests.filter(p => p.status === 'Pending' && p.currency === 'INR').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 1 })}
                   <span className="text-[10px] text-gray-400 pl-2">/ ${payoutRequests.filter(p => p.status === 'Pending' && p.currency === 'USD').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 1 })}</span>
                 </div>
               </div>
-              <div className="p-4 bg-[#090909] border border-[#1F1F1F] rounded-xl">
+              <div className="p-4 bg-[#090909] border border-white/10 rounded-2xl">
                 <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Dispatched Settlement Claims</span>
-                <div className="text-sm font-bold text-[#1DB954] font-mono mt-1">
+                <div className="text-sm font-bold text-[#6366F1] font-mono mt-1">
                   ₹{payoutRequests.filter(p => p.status === 'Approved' && p.currency === 'INR').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 1 })}
                   <span className="text-[10px] text-gray-400 pl-2">/ ${payoutRequests.filter(p => p.status === 'Approved' && p.currency === 'USD').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 1 })}</span>
                 </div>
               </div>
-              <div className="p-4 bg-[#090909] border border-[#1F1F1F] rounded-xl">
+              <div className="p-4 bg-[#090909] border border-white/10 rounded-2xl">
                 <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Declined Settlements</span>
                 <div className="text-sm font-bold text-rose-400 font-mono mt-1">
                   ₹{payoutRequests.filter(p => p.status === 'Rejected' && p.currency === 'INR').reduce((sum, p) => sum + p.amount, 0).toLocaleString('en-IN', { minimumFractionDigits: 1 })}
@@ -1683,7 +1683,7 @@ export default function AdminPanel({
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-[#1F1F1F] text-gray-400 text-[10px] uppercase font-black tracking-widest bg-black/30">
+                    <tr className="border-b border-white/10 text-gray-400 text-[10px] uppercase font-black tracking-widest bg-black/30">
                       <th className="py-2.5 px-3">Filing ID / Date</th>
                       <th className="py-2.5 px-3">Artist Profile</th>
                       <th className="py-2.5 px-3">Amount & Currency</th>
@@ -1694,7 +1694,7 @@ export default function AdminPanel({
                   </thead>
                   <tbody>
                     {payoutRequests.map((req) => (
-                      <tr key={req.id} className="border-b border-[#1F1F1F] hover:bg-black/20 group">
+                      <tr key={req.id} className="border-b border-white/10 hover:bg-black/20 group">
                         <td className="py-4 px-3 font-mono">
                           <span className="text-white block font-bold">{req.id}</span>
                           <span className="text-[9px] text-gray-400 block">{new Date(req.submittedAt).toLocaleString()}</span>
@@ -1709,12 +1709,12 @@ export default function AdminPanel({
                         <td className="py-4 px-3">
                           {req.paymentMethod === 'UPI' ? (
                             <div>
-                              <span className="bg-[#1DB954]/10 text-[#1DB954] text-[9px] font-black rounded px-1.5 py-0.5 uppercase">UPI</span>
+                              <span className="bg-[#6366F1]/10 text-[#6366F1] text-[9px] font-black rounded px-1.5 py-0.5 uppercase">UPI</span>
                               <p className="text-gray-300 font-mono mt-1 pr-1 truncate text-[10px]" title={req.paymentDetails?.upiId}>{req.paymentDetails?.upiId || 'Not Configured'}</p>
                             </div>
                           ) : (
                             <div className="space-y-0.5 text-[10px]">
-                              <span className="bg-[#1DB954]/10 text-emerald-400 text-[9px] font-black rounded px-1.5 py-0.5 uppercase">Bank</span>
+                              <span className="bg-[#6366F1]/10 text-indigo-400 text-[9px] font-black rounded px-1.5 py-0.5 uppercase">Bank</span>
                               <p className="text-white font-medium truncate mt-0.5">{req.paymentDetails?.bankName}</p>
                               <p className="text-gray-300 font-mono truncate">Acc: {req.paymentDetails?.bankAccountNo}</p>
                               <p className="text-gray-400 font-mono">IFSC: {req.paymentDetails?.bankIfsc}</p>
@@ -1726,7 +1726,7 @@ export default function AdminPanel({
                           {req.status === 'Pending' ? (
                             <span className="text-yellow-400 font-black tracking-wide uppercase text-[10px] bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">Pending</span>
                           ) : req.status === 'Approved' ? (
-                            <span className="text-[#1DB954] font-black tracking-wide uppercase text-[10px] bg-[#1DB954]/10 px-1.5 py-0.5 rounded border border-[#1DB954]/20">Approved</span>
+                            <span className="text-[#6366F1] font-black tracking-wide uppercase text-[10px] bg-[#6366F1]/10 px-1.5 py-0.5 rounded border border-[#6366F1]/20">Approved</span>
                           ) : (
                             <span className="text-rose-400 font-black tracking-wide uppercase text-[10px] bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">Declined</span>
                           )}
@@ -1742,13 +1742,13 @@ export default function AdminPanel({
                                 placeholder="Write Transaction ID or rejection details..."
                                 value={replyTextMap[req.id] || ''}
                                 onChange={(e) => setReplyTextMap(prev => ({ ...prev, [req.id]: e.target.value }))}
-                                className="w-full text-[10px] bg-black border border-[#1F1F1F] p-1.5 rounded text-white focus:outline-none"
+                                className="w-full text-[10px] bg-black border border-white/10 p-1.5 rounded text-white focus:outline-none"
                               />
                               <div className="flex gap-2">
                                 <button
                                   type="button"
                                   onClick={() => onUpdatePayoutRequest(req.id, 'Approved', replyTextMap[req.id])}
-                                  className="flex-1 py-1 bg-[#1DB954] text-black hover:bg-emerald-400 font-bold rounded text-[9px] uppercase cursor-pointer"
+                                  className="flex-1 py-1 bg-[#6366F1] text-black hover:bg-indigo-400 font-bold rounded text-[9px] uppercase cursor-pointer"
                                 >
                                   Approve
                                 </button>
@@ -1778,40 +1778,47 @@ export default function AdminPanel({
 
       {/* FULL METADATA SPECS DETAILED INSPECTOR MODAL */}
       {inspectRelease && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto" id="metadata_specs_inspector_overlay">
-          <div className="bg-[#0D0D0D] border border-[#2E2E2E] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-2 sm:p-4" id="metadata_specs_inspector_overlay">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-[#0a0f1d] border border-slate-800 rounded-3xl w-full max-w-5xl flex flex-col h-full max-h-[96vh] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden" 
+            id="metadata_specs_inspector_modal"
+          >
             {/* Modal Header */}
-            <div className="p-4 bg-black border-b border-[#1F1F1F] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Disc className="w-5 h-5 text-[#1DB954]" />
+            <div className="p-4 bg-[#0a0f1d] border-b border-white/5 flex items-center justify-between z-20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#6366F1]/10 rounded-xl flex items-center justify-center">
+                  <Disc className="w-6 h-6 text-[#6366F1]" />
+                </div>
                 <div className="text-left">
-                  <h3 className="text-sm font-black text-white uppercase tracking-tight">Digital Asset Complete Specifications</h3>
-                  <p className="text-[10px] text-gray-400">Deep inspection mode for Release ID: <span className="font-mono text-amber-400">{inspectRelease.id}</span></p>
+                  <h3 className="text-sm font-black text-white uppercase tracking-tight">Full Asset Specifications Audit</h3>
+                  <p className="text-[10px] text-gray-400 font-mono">Deep Ingestion Mode • <span className="text-amber-500 font-bold">{inspectRelease.id}</span></p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectRelease(null)}
-                className="p-1 px-3 bg-[#1F1F1F] hover:bg-red-950 hover:text-red-400 text-gray-400 border border-[#2E2E2E] rounded-md text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                className="p-2 sm:px-4 sm:py-2 bg-slate-900 hover:bg-red-500/10 text-gray-400 hover:text-red-400 border border-slate-800 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer uppercase tracking-tighter"
                 id="btn_close_inspector_modal"
               >
-                <X className="w-4 h-4" /> Close Inspection
+                <X className="w-4 h-4" /> <span className="hidden sm:inline">Abort Inspection</span>
               </button>
             </div>
 
             {/* Modal Content Scroll Area */}
-            <div className="p-6 overflow-y-auto space-y-6 text-left">
+            <div className="flex-1 p-4 sm:p-8 overflow-y-auto space-y-8 text-left scrollbar-thin scrollbar-thumb-slate-800">
               
               {/* Parent Release Profile Section (Grid of specs) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Visual Cover Art Indicator */}
-                <div className="bg-black p-4 rounded-xl border border-[#1F1F1F] flex flex-col items-center justify-center space-y-3">
+                <div className="bg-black p-4 rounded-2xl border border-white/10 flex flex-col items-center justify-center space-y-3">
                   <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Cover Art Assets</span>
                   <img 
                     src={inspectRelease.coverArtSignedUrl || inspectRelease.coverArtUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&auto=format&fit=crop'} 
                     alt="Cover Art" 
-                    className="w-44 h-44 rounded-lg object-cover border border-[#2E2E2E] shadow-md animate-pulse"
+                    className="w-44 h-44 rounded-xl object-cover border border-[#2E2E2E] shadow-md animate-pulse"
                     referrerPolicy="no-referrer"
                   />
                   <div className="flex flex-col gap-2 w-full mt-2">
@@ -1830,12 +1837,12 @@ export default function AdminPanel({
                 {/* Technical Distribution Fields */}
                 <div className="md:col-span-2 space-y-4">
                   <div>
-                    <span className="text-xs font-bold text-[#1DB954] bg-[#1DB954]/10 border border-[#1DB954]/20 px-2 py-0.5 rounded uppercase tracking-wider">{inspectRelease.type} Release</span>
+                    <span className="text-xs font-bold text-[#6366F1] bg-[#6366F1]/10 border border-[#6366F1]/20 px-2 py-0.5 rounded uppercase tracking-wider">{inspectRelease.type} Release</span>
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-black text-white mt-1 uppercase tracking-tight">{inspectRelease.albumName}</h2>
                       <button 
                         onClick={() => handleCopy(inspectRelease.albumName, 'Album Name')}
-                        className="p-1 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
+                        className="p-1 hover:text-[#6366F1] text-gray-500 transition cursor-pointer"
                         title="Copy Album Name"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -1845,7 +1852,7 @@ export default function AdminPanel({
                       Registrant Artist Email: <span className="text-indigo-400 font-bold">{inspectRelease.email}</span>
                       <button 
                         onClick={() => handleCopy(inspectRelease.email, 'Email')}
-                        className="inline-block ml-1 p-0.5 hover:text-[#1DB954] text-gray-500 transition cursor-pointer"
+                        className="inline-block ml-1 p-0.5 hover:text-[#6366F1] text-gray-500 transition cursor-pointer"
                         title="Copy Email"
                       >
                         <Copy className="w-2.5 h-2.5" />
@@ -1854,19 +1861,19 @@ export default function AdminPanel({
                   </div>
 
                   <div className="grid grid-cols-2 gap-3.5 text-xs">
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1 relative group">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Principal Release Artist</div>
                       <div className="font-bold text-white text-[13px]">{inspectRelease.mainArtistName}</div>
                       <button 
                         onClick={() => handleCopy(inspectRelease.mainArtistName, 'Artist Name')}
-                        className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                        className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                         title="Copy Artist Name"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1 relative group">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Feature Artists</div>
                       <div className="font-bold text-gray-300">
                         {inspectRelease.featureArtists && inspectRelease.featureArtists.length > 0
@@ -1876,14 +1883,14 @@ export default function AdminPanel({
                       {inspectRelease.featureArtists && inspectRelease.featureArtists.length > 0 && (
                         <button 
                           onClick={() => handleCopy(inspectRelease.featureArtists!.join(', '), 'Feature Artists')}
-                          className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                          className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                         >
                           <Copy className="w-3 h-3" />
                         </button>
                       )}
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1 relative group">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Other Artists</div>
                       <div className="font-bold text-gray-300">
                         {inspectRelease.otherArtists && inspectRelease.otherArtists.length > 0
@@ -1893,24 +1900,24 @@ export default function AdminPanel({
                       {inspectRelease.otherArtists && inspectRelease.otherArtists.length > 0 && (
                         <button 
                           onClick={() => handleCopy(inspectRelease.otherArtists!.join(', '), 'Other Artists')}
-                          className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                          className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                         >
                           <Copy className="w-3 h-3" />
                         </button>
                       )}
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Primary Store Genre</div>
-                      <div className="font-bold text-emerald-400">{inspectRelease.genre}</div>
+                      <div className="font-bold text-indigo-400">{inspectRelease.genre}</div>
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Ingress Sub-Genre</div>
                       <div className="font-bold text-teal-400">{inspectRelease.subGenre || 'N/A'}</div>
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Publishing Language</div>
                       <div className="font-bold text-white flex items-center gap-1">
                         <Globe className="w-3.5 h-3.5 text-gray-400" />
@@ -1918,23 +1925,23 @@ export default function AdminPanel({
                       </div>
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Content Grade Class</div>
                       <div className="font-bold text-orange-400">{inspectRelease.contentType} Ingest</div>
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1 relative group">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Legal Imprint (Label)</div>
                       <div className="font-bold text-amber-400">{inspectRelease.labelName || 'Independent Self-Release'}</div>
                       <button 
                         onClick={() => handleCopy(inspectRelease.labelName || 'Independent Self-Release', 'Label Name')}
-                        className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                        className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
                     </div>
 
-                    <div className="p-3 bg-black rounded-lg border border-[#1F1F1F] space-y-1 relative group">
+                    <div className="p-3 bg-black rounded-xl border border-white/10 space-y-1 relative group">
                       <div className="text-[9px] text-gray-550 uppercase font-black tracking-wider">Declared Ingest Date</div>
                       <div className="font-bold text-white flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
@@ -1942,7 +1949,7 @@ export default function AdminPanel({
                       </div>
                       <button 
                         onClick={() => handleCopy(inspectRelease.releaseDate, 'Release Date')}
-                        className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                        className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
@@ -1952,28 +1959,28 @@ export default function AdminPanel({
               </div>
 
               {/* Intellectual Property Declarations (C Line & P Line) */}
-              <div className="bg-black p-4 rounded-xl border border-[#1F1F1F] space-y-3">
+              <div className="bg-black p-4 rounded-2xl border border-white/10 space-y-3">
                 <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
                   Intellectual Copyright Legal Ownership (CLine & PLine)
                 </span>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-                  <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F]/60 relative group">
+                  <div className="p-2.5 bg-[#090909] rounded border border-white/10/60 relative group">
                     <span className="text-[#999999] uppercase text-[9px] block mb-0.5">Composition Phonographic Copyright (℗ Line)</span>
                     <span className="text-white font-semibold">{inspectRelease.pLine || `℗ ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`}</span>
                     <button 
                       onClick={() => handleCopy(inspectRelease.pLine || `℗ ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`, 'P Line')}
-                      className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                      className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                     >
                       <Copy className="w-3 h-3" />
                     </button>
                   </div>
-                  <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F]/60 relative group">
+                  <div className="p-2.5 bg-[#090909] rounded border border-white/10/60 relative group">
                     <span className="text-[#999999] uppercase text-[9px] block mb-0.5">Authorial/Structural Publishing Copyright (© Line)</span>
                     <span className="text-white font-semibold">{inspectRelease.cLine || `© ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`}</span>
                     <button 
                       onClick={() => handleCopy(inspectRelease.cLine || `© ${new Date(inspectRelease.submittedAt).getFullYear()} ${inspectRelease.mainArtistName}`, 'C Line')}
-                      className="absolute top-2 right-2 p-1 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                      className="absolute top-2 right-2 p-1 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                     >
                       <Copy className="w-3 h-3" />
                     </button>
@@ -1983,13 +1990,13 @@ export default function AdminPanel({
 
               {/* Technical Ingest Track assets - EVERY SINGLE PROPERTY */}
               <div className="space-y-4">
-                <span className="text-xs uppercase font-extrabold text-[#1DB954] tracking-widest block">Supplied Track Audio Masters & Lyrics Sheets ({inspectRelease.tracks.length})</span>
+                <span className="text-xs uppercase font-extrabold text-[#6366F1] tracking-widest block">Supplied Track Audio Masters & Lyrics Sheets ({inspectRelease.tracks.length})</span>
                 
                 <div className="space-y-4">
                   {inspectRelease.tracks.map((track, idx) => (
-                    <div key={track.id} className="p-5 bg-black rounded-xl border border-[#222] space-y-4 text-xs">
+                    <div key={track.id} className="p-5 bg-black rounded-2xl border border-[#222] space-y-4 text-xs">
                       {/* Track Title and Basic Info Header */}
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#1F1F1F]">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-white/10">
                         <div className="flex items-center gap-2.5">
                           <span className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center font-bold text-gray-300 font-mono text-[11px]">
                             {idx + 1}
@@ -2009,7 +2016,7 @@ export default function AdminPanel({
                           {(track.explicitContent || (track as any).explicit_content) ? (
                             <span className="px-2 py-0.5 text-[8px] bg-red-950 text-red-400 border border-red-500/20 font-extrabold rounded">⚠️ YES (EXPLICIT AUDIO)</span>
                           ) : (
-                            <span className="px-2 py-0.5 text-[8px] bg-emerald-950 text-emerald-400 border border-[#10b981]/20 font-extrabold rounded">✓ NO (CLEAN EDIT)</span>
+                            <span className="px-2 py-0.5 text-[8px] bg-indigo-950 text-indigo-400 border border-[#10b981]/20 font-extrabold rounded">✓ NO (CLEAN EDIT)</span>
                           )}
                           <span className="px-2 py-0.5 text-[8px] bg-blue-950 text-blue-400 border border-blue-500/20 font-extrabold rounded font-mono">
                             {track.audioFileName || 'Master_WAV.wav'}
@@ -2027,84 +2034,84 @@ export default function AdminPanel({
 
                       {/* Every Single Property in a Bento Grid layout for the Track */}
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F] space-y-0.5 text-left relative group">
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left relative group">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Producer Metadata</span>
                           <span className="text-white font-semibold text-[11px]">{track.producer || 'Unassigned'}</span>
                           {track.producer && (
                             <button 
                               onClick={() => handleCopy(track.producer!, 'Producer')}
-                              className="absolute top-2 right-2 p-0.5 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              className="absolute top-2 right-2 p-0.5 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                             >
                               <Copy className="w-2.5 h-2.5" />
                             </button>
                           )}
                         </div>
 
-                        <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F] space-y-0.5 text-left relative group">
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left relative group">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Lyricist Record</span>
                           <span className="text-white font-semibold text-[11px]">{track.lyricist || 'Unassigned'}</span>
                           {track.lyricist && (
                             <button 
                               onClick={() => handleCopy(track.lyricist!, 'Lyricist')}
-                              className="absolute top-2 right-2 p-0.5 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              className="absolute top-2 right-2 p-0.5 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                             >
                               <Copy className="w-2.5 h-2.5" />
                             </button>
                           )}
                         </div>
 
-                        <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F] space-y-0.5 text-left relative group">
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left relative group">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Composer Composition</span>
                           <span className="text-white font-semibold text-[11px]">{track.composer || 'Unassigned'}</span>
                           {track.composer && (
                             <button 
                               onClick={() => handleCopy(track.composer!, 'Composer')}
-                              className="absolute top-2 right-2 p-0.5 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              className="absolute top-2 right-2 p-0.5 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                             >
                               <Copy className="w-2.5 h-2.5" />
                             </button>
                           )}
                         </div>
 
-                        <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F] space-y-0.5 text-left relative group">
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left relative group">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Technical ISRC Code</span>
                           <span className="text-amber-400 font-mono font-black text-[11px]">{track.isrc || 'Awaiting Auto-Generation'}</span>
                           {track.isrc && (
                             <button 
                               onClick={() => handleCopy(track.isrc!, 'ISRC')}
-                              className="absolute top-2 right-2 p-0.5 hover:text-[#1DB954] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              className="absolute top-2 right-2 p-0.5 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                             >
                               <Copy className="w-2.5 h-2.5" />
                             </button>
                           )}
                         </div>
 
-                        <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F] space-y-0.5 text-left">
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Genre/Sub-Genre</span>
                           <span className="text-teal-400 font-semibold text-[11px]">{track.genre || inspectRelease.genre} ({track.subGenre || inspectRelease.subGenre || 'N/A'})</span>
                         </div>
 
-                        <div className="p-2.5 bg-[#090909] rounded border border-[#1F1F1F] space-y-0.5 text-left">
+                        <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Language Match</span>
                           <span className="text-white font-semibold text-[11px]">{track.language || inspectRelease.language || 'English'}</span>
                         </div>
                       </div>
 
                       {/* Lyrics Ingested Section */}
-                      <div className="bg-[#0A0A0A] p-3 rounded-lg border border-[#1F1F1F] space-y-1.5 text-left relative group">
+                      <div className="bg-black/20 p-3 rounded-xl border border-white/10 space-y-1.5 text-left relative group">
                         <div className="flex justify-between items-center">
                           <span className="text-[9px] uppercase font-black text-gray-550 tracking-wider block">Attached Lyrics Sheet</span>
                           {track.lyrics && (
                             <button 
                               onClick={() => handleCopy(track.lyrics!, 'Lyrics')}
-                              className="p-1 hover:text-[#1DB954] text-gray-500 transition cursor-pointer flex items-center gap-1 text-[9px] font-bold"
+                              className="p-1 hover:text-[#6366F1] text-gray-500 transition cursor-pointer flex items-center gap-1 text-[9px] font-bold"
                             >
                               <Copy className="w-2.5 h-2.5" /> Copy Lyrics
                             </button>
                           )}
                         </div>
                         {track.lyrics ? (
-                          <div className="bg-black p-3 rounded font-mono text-[11px] text-gray-300 whitespace-pre-wrap max-h-[160px] overflow-y-auto leading-relaxed border border-[#1F1F1F] text-left">
+                          <div className="bg-black p-3 rounded font-mono text-[11px] text-gray-300 whitespace-pre-wrap max-h-[160px] overflow-y-auto leading-relaxed border border-white/10 text-left">
                             {track.lyrics}
                           </div>
                         ) : (
@@ -2118,12 +2125,12 @@ export default function AdminPanel({
 
               {/* User / Administration feedback loop details */}
               {(inspectRelease.feedback || inspectRelease.specialRequest || (inspectRelease as any).special_request || (inspectRelease as any).special_instructions) && (
-                <div className="bg-black p-4 rounded-xl border border-[#1F1F1F] space-y-3">
+                <div className="bg-black p-4 rounded-2xl border border-white/10 space-y-3">
                   <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Revision Logs & Directives</span>
                   <div className="space-y-2 text-xs">
                     {(inspectRelease.specialRequest || (inspectRelease as any).special_request || (inspectRelease as any).special_instructions) && (
                       <div className="p-3 bg-zinc-900/40 rounded border border-zinc-850 text-left">
-                        <span className="text-[9px] text-[#1DB954] font-bold block uppercase">Artist Request Comment (Special Pitching Request):</span>
+                        <span className="text-[9px] text-[#6366F1] font-bold block uppercase">Artist Request Comment (Special Pitching Request):</span>
                         <p className="text-gray-300 italic mt-1">"{(inspectRelease.specialRequest || (inspectRelease as any).special_request || (inspectRelease as any).special_instructions)}"</p>
                       </div>
                     )}
@@ -2139,19 +2146,19 @@ export default function AdminPanel({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-black border-t border-[#1F1F1F] flex items-center justify-between">
+            <div className="p-4 bg-black border-t border-white/10 flex items-center justify-between">
               <div className="text-[10px] text-gray-500 uppercase font-mono tracking-widest">
-                Compliance Verified Status: <span className="text-[#1DB954] font-black">{inspectRelease.status}</span>
+                Compliance Verified Status: <span className="text-[#6366F1] font-black">{inspectRelease.status}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectRelease(null)}
-                className="px-5 py-2 bg-[#1DB954] text-black font-extrabold hover:bg-emerald-400 rounded-lg text-xs uppercase tracking-tight transition cursor-pointer"
+                className="px-5 py-2 bg-[#6366F1] text-black font-extrabold hover:bg-indigo-400 rounded-xl text-xs uppercase tracking-tight transition cursor-pointer"
               >
                 Close Specifications Inspector
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

@@ -65,7 +65,7 @@ export interface Release {
   featureArtists: string[];
   otherArtists: string[];
   language: string;
-  contentType: 'Original' | 'Licensed' | 'AI';
+  contentType: 'Original' | 'Licensed' | 'AI' | '';
   numTracks: number;
   genre: string;
   subGenre: string;

@@ -51,14 +51,14 @@ export default function DashboardHome({
   return (
     <div className="space-y-6 animate-fade-in" id="dashboard_home_root">
       {/* Upper header banner - Sleek Magazine Hero aesthetic */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 md:p-8 bg-[#121212] rounded-2xl border border-[#1F1F1F] relative overflow-hidden" id="home_welcome_banner">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-5 md:p-8 bg-white/2 rounded-3xl border border-white/10 relative overflow-hidden" id="home_welcome_banner">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(29,185,84,0.06),transparent_50%)] pointer-events-none" />
         <div className="relative z-10 space-y-1.5">
-          <div className="text-[10px] text-[#1DB954] font-mono tracking-widest uppercase">Digital DSP Pipeline Ingestion</div>
-          <h2 className="text-3xl font-black text-white uppercase tracking-tighter" id="home_welcome_header">
-            Welcome, <span className="text-[#1DB954]">{currentUser.artistName}</span>
+          <div className="text-[9px] md:text-[10px] text-[#6366F1] font-mono tracking-widest uppercase">Digital DSP Pipeline Ingestion</div>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-tighter" id="home_welcome_header">
+            Welcome, <span className="text-[#6366F1]">{currentUser.artistName}</span>
           </h2>
-          <p className="text-xs text-gray-400 max-w-xl leading-relaxed">
+          <p className="text-[10px] md:text-xs text-gray-400 max-w-xl leading-relaxed">
             Distribute new singles, EPs, or albums directly to global music networks. Build your custom catalog metadata, verify official copyrights, and overview your digital earnings.
           </p>
         </div>
@@ -66,10 +66,10 @@ export default function DashboardHome({
         <button
           type="button"
           onClick={() => setCurrentTab('new-release')}
-          className="relative z-10 cursor-pointer px-5 py-3 bg-white hover:bg-[#1DB954] hover:text-black text-black font-black text-xs uppercase tracking-tight rounded-lg flex items-center gap-2 transition duration-200 self-start md:self-auto"
+          className="relative z-10 cursor-pointer px-4 md:px-5 py-2.5 md:py-3 bg-white hover:bg-[#6366F1] hover:text-black text-black font-black text-[10px] md:text-xs uppercase tracking-tight rounded-xl flex items-center justify-center gap-2 transition duration-200 w-full sm:w-auto self-start md:self-auto shadow-lg"
           id="btn_home_quick_launch"
         >
-          <Play className="w-3.5 h-3.5 fill-current" /> Distribute New Track
+          <Play className="w-3 md:w-3.5 h-3 md:h-3.5 fill-current" /> Distribute New Track
         </button>
       </div>
 
@@ -80,12 +80,12 @@ export default function DashboardHome({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="home_stats_grid">
         <motion.div 
           whileHover={{ y: -2 }}
-          className="p-5 bg-[#121212] rounded-xl border border-[#1F1F1F] hover:border-[#2F2F2F] transition-all overflow-hidden"
+          className="p-5 bg-white/2 rounded-2xl border border-white/10 hover:border-[#2F2F2F] transition-all overflow-hidden"
           id="metric_total_releases"
         >
           <div className="flex items-center justify-between text-gray-400 mb-3">
             <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Total Releases</span>
-            <div className="p-1.5 rounded bg-[#1DB954]/10 text-[#1DB954]">
+            <div className="p-1.5 rounded bg-[#6366F1]/10 text-[#6366F1]">
               <Disc className="w-4 h-4" />
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function DashboardHome({
             {totalReleases}
           </div>
           <div className="text-[10px] text-gray-500 mt-2 flex items-center gap-1 font-mono uppercase truncate">
-            <span className="text-[#1DB954] font-bold">{liveReleases} Live</span>
+            <span className="text-[#6366F1] font-bold">{liveReleases} Live</span>
             <span>•</span>
             <span className="text-amber-500 font-bold">{pendingReleases} In Review</span>
           </div>
@@ -103,22 +103,22 @@ export default function DashboardHome({
           onClick={onOpenRevenueModal}
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
-          className="p-5 bg-[#121212] hover:bg-[#181818] rounded-xl border border-[#1F1F1F] hover:border-emerald-500/30 transition-all overflow-hidden cursor-pointer select-none group"
+          className="p-5 bg-white/2 hover:bg-[#181818] rounded-2xl border border-white/10 hover:border-indigo-500/30 transition-all overflow-hidden cursor-pointer select-none group"
           id="metric_total_revenue"
           title="Click to view detailed statements popup"
         >
           <div className="flex items-center justify-between text-gray-400 mb-3">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-[#1DB954] group-hover:text-[#1ed760] transition-colors flex items-center gap-1.5">
-              Artist Revenue <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 py-0.5 rounded border border-emerald-500/20 font-sans tracking-normal uppercase">View details</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-[#6366F1] group-hover:text-[#818CF8] transition-colors flex items-center gap-1.5">
+              Artist Revenue <span className="text-[8px] bg-indigo-500/10 text-indigo-400 px-1 py-0.5 rounded border border-indigo-500/20 font-sans tracking-normal uppercase">View details</span>
             </span>
-            <div className="p-1.5 rounded bg-[#1DB954]/10 text-[#1DB954] group-hover:scale-110 transition-transform">
+            <div className="p-1.5 rounded bg-[#6366F1]/10 text-[#6366F1] group-hover:scale-110 transition-transform">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           {totalINR > 0 && totalUSD > 0 ? (
             <div className="space-y-0.5 min-w-0">
               <div 
-                className="text-xl sm:text-2xl lg:text-3xl font-black text-[#1DB954] tracking-tighter truncate break-all"
+                className="text-xl sm:text-2xl lg:text-3xl font-black text-[#6366F1] tracking-tighter truncate break-all"
                 title={formatAmount(totalINR, 'INR')}
               >
                 {formatAmount(totalINR, 'INR')}
@@ -132,21 +132,21 @@ export default function DashboardHome({
             </div>
           ) : totalINR > 0 ? (
             <div 
-              className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1DB954] tracking-tighter truncate break-all"
+              className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#6366F1] tracking-tighter truncate break-all"
               title={formatAmount(totalINR, 'INR')}
             >
               {formatAmount(totalINR, 'INR')}
             </div>
           ) : (
             <div 
-              className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1DB954] tracking-tighter truncate break-all"
+              className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#6366F1] tracking-tighter truncate break-all"
               title={formatAmount(totalUSD, 'USD')}
             >
               {formatAmount(totalUSD, 'USD')}
             </div>
           )}
           <div className="text-[10px] text-gray-500 mt-2 flex items-center gap-1 font-mono uppercase truncate">
-            <span className="text-[#1DB954] font-bold flex items-center gap-0.5">
+            <span className="text-[#6366F1] font-bold flex items-center gap-0.5">
               <ArrowUpRight className="w-3.5 h-3.5" /> Direct Payout
             </span>
             <span>•</span>
@@ -156,31 +156,31 @@ export default function DashboardHome({
 
         <motion.div 
           whileHover={{ y: -2 }}
-          className="p-5 bg-[#121212] rounded-xl border border-[#1F1F1F] hover:border-[#2F2F2F] transition-all overflow-hidden"
+          className="p-5 bg-white/2 rounded-2xl border border-white/10 hover:border-[#2F2F2F] transition-all overflow-hidden"
           id="metric_streaming_share"
         >
           <div className="flex items-center justify-between text-gray-400 mb-3">
             <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Statement Block</span>
-            <div className="p-1.5 rounded bg-[#1DB954]/10 text-[#1DB954]">
+            <div className="p-1.5 rounded bg-[#6366F1]/10 text-[#6366F1]">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div className="text-base sm:text-lg lg:text-xl font-black text-white leading-tight uppercase tracking-tight truncate break-all">
             {userRevenue.length > 0 ? userRevenue[0].month : 'No Period'}
           </div>
-          <div className="text-[10px] text-[#1DB954] font-bold mt-3 hover:underline cursor-pointer uppercase tracking-wider truncate break-all" onClick={() => setCurrentTab('revenue')}>
+          <div className="text-[10px] text-[#6366F1] font-bold mt-3 hover:underline cursor-pointer uppercase tracking-wider truncate break-all" onClick={() => setCurrentTab('revenue')}>
             {userRevenue.length > 0 ? `${formatAmount(userRevenue[0].amount, userRevenue[0].currency)} reported` : 'Reviewing stats'}
           </div>
         </motion.div>
 
         <motion.div 
           whileHover={{ y: -2 }}
-          className="p-5 bg-[#121212] rounded-xl border border-[#1F1F1F] hover:border-[#2F2F2F] transition-all overflow-hidden"
+          className="p-5 bg-white/2 rounded-2xl border border-white/10 hover:border-[#2F2F2F] transition-all overflow-hidden"
           id="metric_distribution_speed"
         >
           <div className="flex items-center justify-between text-gray-400 mb-3">
             <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">System Pipeline</span>
-            <div className="p-1.5 rounded bg-[#1DB954]/10 text-[#1DB954]">
+            <div className="p-1.5 rounded bg-[#6366F1]/10 text-[#6366F1]">
               <CheckCircle className="w-4 h-4" />
             </div>
           </div>
@@ -196,13 +196,13 @@ export default function DashboardHome({
       {/* Grid: Recent Releases and Streaming Analysis */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="home_secondary_grid">
         {/* Recent Submissions */}
-        <div className="md:col-span-8 p-6 bg-[#121212] rounded-2xl border border-[#1F1F1F] flex flex-col justify-between" id="recent_releases_section">
+        <div className="md:col-span-8 p-6 bg-white/2 rounded-3xl border border-white/10 flex flex-col justify-between" id="recent_releases_section">
           <div>
-            <div className="flex items-center justify-between mb-4 border-b border-[#1F1F1F] pb-3">
+            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-300">Catalog Registry Preview</h3>
               <button 
                 onClick={() => setCurrentTab('catalogue')}
-                className="text-xs text-[#1DB954] hover:underline cursor-pointer font-bold uppercase tracking-tight"
+                className="text-xs text-[#6366F1] hover:underline cursor-pointer font-bold uppercase tracking-tight"
               >
                 View Full Catalogue
               </button>
@@ -214,7 +214,7 @@ export default function DashboardHome({
                 <p className="text-xs text-gray-300">No releases registered on your catalog registry.</p>
                 <button
                   onClick={() => setCurrentTab('new-release')}
-                  className="mx-auto block text-xs bg-white text-black font-black px-4 py-2 rounded uppercase tracking-tighter hover:bg-[#1DB954] cursor-pointer"
+                  className="mx-auto block text-xs bg-white text-black font-black px-4 py-2 rounded uppercase tracking-tighter hover:bg-[#6366F1] cursor-pointer"
                 >
                   Create New release
                 </button>
@@ -224,13 +224,13 @@ export default function DashboardHome({
                 {userReleases.slice(0, 3).map((rel) => (
                   <div 
                     key={rel.id} 
-                    className="p-3 bg-black rounded-lg border border-[#1F1F1F] flex items-center justify-between gap-3 text-xs hover:border-[#2F2F2F] transition-colors"
+                    className="p-3 bg-black rounded-xl border border-white/10 flex items-center justify-between gap-3 text-xs hover:border-[#2F2F2F] transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <img 
                         src={rel.coverArtSignedUrl || rel.coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop'} 
                         alt="" 
-                        className="w-10 h-10 rounded object-cover flex-shrink-0 border border-[#1F1F1F]"
+                        className="w-10 h-10 rounded object-cover flex-shrink-0 border border-white/10"
                         referrerPolicy="no-referrer"
                       />
                       <div>
@@ -251,7 +251,7 @@ export default function DashboardHome({
 
                     <div className="text-right">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                        rel.status === 'Live' ? 'bg-[#1DB954]/10 text-[#1DB954] border border-[#1DB954]/20' :
+                        rel.status === 'Live' ? 'bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/20' :
                         rel.status === 'Approved' ? 'bg-blue-950/40 text-blue-400 border border-blue-500/20' :
                         rel.status === 'Rejected' ? 'bg-red-950/40 text-red-500 border border-red-500/20' :
                         'bg-zinc-800 text-gray-300 border border-zinc-700'
@@ -270,10 +270,10 @@ export default function DashboardHome({
         </div>
 
         {/* Analytics Sandbox */}
-        <div className="md:col-span-4 p-6 bg-[#121212] rounded-2xl border border-[#1F1F1F] flex flex-col justify-between" id="streaming_analytics_section">
+        <div className="md:col-span-4 p-6 bg-white/2 rounded-3xl border border-white/10 flex flex-col justify-between" id="streaming_analytics_section">
           <div>
-            <div className="flex items-center gap-2 mb-1 border-b border-[#1F1F1F] pb-3">
-              <TrendingUp className="w-4 h-4 text-[#1DB954]" />
+            <div className="flex items-center gap-2 mb-1 border-b border-white/10 pb-3">
+              <TrendingUp className="w-4 h-4 text-[#6366F1]" />
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-300">Cross-Platform Audiences</h3>
             </div>
             <p className="text-[11px] text-gray-400 mb-6 leading-relaxed">Aggregate digital listeners across major streaming platforms verified by partner engines.</p>
@@ -285,8 +285,8 @@ export default function DashboardHome({
                 <span className="font-bold text-[10px] uppercase">Spotify Listeners</span>
                 <span>84,120 listeners (62%)</span>
               </div>
-              <div className="w-full bg-black rounded-full h-1.5 border border-[#1F1F1F]">
-                <div className="bg-[#1DB954] h-1.5 rounded-full" style={{ width: '62%' }}></div>
+              <div className="w-full bg-black rounded-full h-1.5 border border-white/10">
+                <div className="bg-[#6366F1] h-1.5 rounded-full" style={{ width: '62%' }}></div>
               </div>
             </div>
 
@@ -295,8 +295,8 @@ export default function DashboardHome({
                 <span className="font-bold text-[10px] uppercase">Apple Premium Plays</span>
                 <span>38,500 listeners (28%)</span>
               </div>
-              <div className="w-full bg-black rounded-full h-1.5 border border-[#1F1F1F]">
-                <div className="bg-[#1DB954]/60 h-1.5 rounded-full" style={{ width: '28%' }}></div>
+              <div className="w-full bg-black rounded-full h-1.5 border border-white/10">
+                <div className="bg-[#6366F1]/60 h-1.5 rounded-full" style={{ width: '28%' }}></div>
               </div>
             </div>
 
@@ -305,15 +305,15 @@ export default function DashboardHome({
                 <span className="font-bold text-[10px] uppercase">YouTube Stream Captures</span>
                 <span>13,200 listeners (10%)</span>
               </div>
-              <div className="w-full bg-black rounded-full h-1.5 border border-[#1F1F1F]">
-                <div className="bg-[#1DB954]/30 h-1.5 rounded-full" style={{ width: '10%' }}></div>
+              <div className="w-full bg-black rounded-full h-1.5 border border-white/10">
+                <div className="bg-[#6366F1]/30 h-1.5 rounded-full" style={{ width: '10%' }}></div>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 pt-4 border-t border-[#1F1F1F] text-[9px] uppercase tracking-wider text-gray-500 font-mono flex items-center justify-between">
+          <div className="mt-8 pt-4 border-t border-white/10 text-[9px] uppercase tracking-wider text-gray-500 font-mono flex items-center justify-between">
             <span>Updates hourly</span>
-            <span className="text-[#1DB954] font-bold hover:underline cursor-pointer" onClick={() => setCurrentTab('revenue')}>Full Revenue Reports →</span>
+            <span className="text-[#6366F1] font-bold hover:underline cursor-pointer" onClick={() => setCurrentTab('revenue')}>Full Revenue Reports →</span>
           </div>
         </div>
       </div>

@@ -55,7 +55,7 @@ export default function ManageLabels({
   return (
     <div className="space-y-6" id="manage_labels_root">
       {/* Header */}
-      <div className="p-6 bg-[#0f1424] rounded-2xl border border-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4" id="labels_reg_header">
+      <div className="p-6 bg-[#0f1424] rounded-3xl border border-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4" id="labels_reg_header">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Tags className="w-5 h-5 text-amber-500" />
@@ -73,7 +73,7 @@ export default function ManageLabels({
         {/* Left side: Add Imprint (Admin ONLY) */}
         <div className="md:col-span-4" id="labels_form_box">
           {isAdmin ? (
-            <div className="p-5 bg-slate-900 rounded-xl border border-slate-800 space-y-4">
+            <div className="p-5 bg-slate-900 rounded-2xl border border-slate-800 space-y-4">
               <span className="text-xs font-black text-amber-400 uppercase tracking-widest block">Register Global Imprint</span>
               
               <form onSubmit={handleSubmit} className="space-y-3" id="add_label_form">
@@ -86,7 +86,7 @@ export default function ManageLabels({
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assign to Profile</label>
                   <select
-                    className="w-full bg-[#151c2e] border border-slate-850 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#151c2e] border border-slate-850 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-amber-500"
                     value={targetUserEmail}
                     onChange={(e) => setTargetUserEmail(e.target.value)}
                   >
@@ -101,7 +101,7 @@ export default function ManageLabels({
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Imprint Name (Exact Display)</label>
                   <input
                     type="text"
-                    className="w-full bg-[#151c2e] border border-slate-850 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#151c2e] border border-slate-850 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-amber-500"
                     placeholder="e.g. Wavora Records"
                     value={labelName}
                     onChange={(e) => setLabelName(e.target.value)}
@@ -119,7 +119,7 @@ export default function ManageLabels({
               </form>
             </div>
           ) : (
-            <div className="p-6 bg-[#0f1424] rounded-xl border border-slate-900/50 space-y-4 text-center">
+            <div className="p-6 bg-[#0f1424] rounded-2xl border border-slate-900/50 space-y-4 text-center">
               <ShieldAlert className="w-8 h-8 text-amber-500/50 mx-auto" />
               <div className="space-y-1">
                 <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Registry Locked</h4>
@@ -137,7 +137,7 @@ export default function ManageLabels({
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" id="labels_list">
             {/* Primary System Default Label (Always Visible) */}
-            <div className="p-3 bg-indigo-950/20 rounded-lg border border-indigo-500/20 flex items-center justify-between text-xs sm:col-span-1">
+            <div className="p-3 bg-indigo-950/20 rounded-xl border border-indigo-500/20 flex items-center justify-between text-xs sm:col-span-1">
               <div className="flex items-center gap-2 truncate">
                 <Building2 className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                 <span className="font-extrabold text-indigo-200 truncate">Wavora Live</span>
@@ -149,7 +149,7 @@ export default function ManageLabels({
             {displayLabels.filter(lbl => lbl.name !== 'Wavora Live').map((lbl) => (
               <div 
                 key={lbl.id} 
-                className="p-3 bg-slate-900/80 rounded-lg border border-slate-800 flex flex-col gap-1 text-xs"
+                className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col gap-1 text-xs"
                 id={`label_card_${lbl.id}`}
               >
                 <div className="flex items-center justify-between">

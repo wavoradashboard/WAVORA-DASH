@@ -54,28 +54,29 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
     .reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" id="rev_modal_root">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/85 backdrop-blur-sm cursor-pointer" 
-        onClick={onClose} 
-        id="rev_modal_backdrop"
-      />
+    <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md overflow-y-auto p-4" id="rev_modal_overlay">
+      <div className="flex min-h-full items-center justify-center">
+        {/* Backdrop for clicks outside */}
+        <div 
+          className="fixed inset-0 cursor-pointer -z-10" 
+          onClick={onClose} 
+          id="rev_modal_backdrop"
+        />
 
-      {/* Modal Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ duration: 0.2 }}
-        className="relative z-10 w-full max-w-2xl bg-[#0F0F0F] border border-[#232323] rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
-        id="rev_modal_box"
-      >
+        {/* Modal Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          transition={{ duration: 0.2 }}
+          className="relative w-full max-w-2xl bg-[#0F0F0F] border border-[#232323] rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] my-auto"
+          id="rev_modal_box"
+        >
         {/* Header bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F1F1F] bg-[#0A0A0A]" id="rev_modal_header">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/20" id="rev_modal_header">
           <div className="flex items-center gap-2.5 text-left">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-indigo-400" />
             </div>
             <div>
               <h2 className="text-sm font-black uppercase tracking-wider text-white">All Royalty Statements</h2>
@@ -85,7 +86,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[#1C1C1C] text-gray-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-[#1C1C1C] text-gray-400 hover:text-white transition cursor-pointer"
             id="btn_close_rev_modal"
           >
             <X className="w-5 h-5" />
@@ -93,13 +94,13 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
         </div>
 
         {/* Overview Stats Quick-Ribbon */}
-        <div className="grid grid-cols-2 gap-px bg-[#1F1F1F] border-b border-[#1F1F1F]" id="rev_modal_ribbon">
+        <div className="grid grid-cols-2 gap-px bg-[rgba(255,255,255,0.1)] border-b border-white/10" id="rev_modal_ribbon">
           <div className="bg-[#141414] p-4 text-left">
-            <span className="block text-[8px] font-black text-emerald-400 uppercase tracking-widest">Aggregate USD Net</span>
+            <span className="block text-[8px] font-black text-indigo-400 uppercase tracking-widest">Aggregate USD Net</span>
             <span className="text-lg font-black text-white font-mono">{formatAmount(totalUSD, 'USD')}</span>
           </div>
           <div className="bg-[#141414] p-4 text-left">
-            <span className="block text-[8px] font-black text-[#1DB954] uppercase tracking-widest">Aggregate INR Net</span>
+            <span className="block text-[8px] font-black text-[#6366F1] uppercase tracking-widest">Aggregate INR Net</span>
             <span className="text-lg font-black text-white font-mono">{formatAmount(totalINR, 'INR')}</span>
           </div>
         </div>
@@ -112,7 +113,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
             <input
               type="text"
               placeholder="Search statements by month, ID, or release name..."
-              className="w-full bg-black border border-[#1F1F1F] rounded-xl pl-9 pr-4 py-2.5 text-xs text-white outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
+              className="w-full bg-black border border-white/10 rounded-2xl pl-9 pr-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500/50 placeholder:text-gray-600"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               id="rev_modal_search_input"
@@ -121,7 +122,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
 
           {/* List of Statements */}
           {filteredReports.length === 0 ? (
-            <div className="py-12 text-center bg-[#121212]/35 rounded-xl border border-[#1F1F1F] space-y-2" id="rev_modal_empty">
+            <div className="py-12 text-center bg-white/5 backdrop-blur-md/35 rounded-2xl border border-white/10 space-y-2" id="rev_modal_empty">
               <Layers className="w-8 h-8 text-gray-600 mx-auto animate-pulse" />
               <p className="text-xs text-gray-400">No matched royalty statements found matching search terms.</p>
             </div>
@@ -132,7 +133,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
                 return (
                   <div 
                     key={report.id}
-                    className="bg-[#141414] border border-[#1E1E1E] rounded-xl overflow-hidden transition-all duration-150 hover:border-[#2A2A2A]"
+                    className="bg-[#141414] border border-[rgba(255,255,255,0.1)] rounded-2xl overflow-hidden transition-all duration-150 hover:border-[#2A2A2A]"
                     id={`rev_record_${report.id}`}
                   >
                     {/* Header Row clickable */}
@@ -141,7 +142,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
                       className="p-4 flex items-center justify-between gap-3 cursor-pointer select-none hover:bg-[#181818] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                        <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
                           <Calendar className="w-4 h-4" />
                         </div>
                         <div>
@@ -151,7 +152,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-mono font-black text-sm text-emerald-400">
+                        <span className="font-mono font-black text-sm text-indigo-400">
                           {formatAmount(report.amount, report.currency)}
                         </span>
                         <div className="p-1 rounded bg-[#1A1A1A] text-gray-400 border border-[#2B2B2B]">
@@ -168,7 +169,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.18 }}
-                          className="border-t border-[#1F1F1F] bg-[#0A0A0A] overflow-hidden"
+                          className="border-t border-white/10 bg-black/20 overflow-hidden"
                         >
                           <div className="p-4 space-y-3">
                             <div className="flex items-center justify-between text-[9px] font-black tracking-widest uppercase text-gray-500 border-b border-[#1A1A1A] pb-1.5">
@@ -197,7 +198,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
 
                             {/* Export block */}
                             <div className="pt-2 border-t border-[#1A1A1A] flex justify-between items-center">
-                              <span className="text-[9px] text-[#1DB954] font-mono flex items-center gap-1">
+                              <span className="text-[9px] text-[#6366F1] font-mono flex items-center gap-1">
                                 <Eye className="w-3.5 h-3.5" /> Ledger Auto-Verified & Released
                               </span>
                               <button
@@ -223,7 +224,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
         </div>
 
         {/* Sticky footer */}
-        <div className="px-6 py-4 border-t border-[#1F1F1F] bg-[#0A0A0A] flex justify-end" id="rev_modal_footer">
+        <div className="px-6 py-4 border-t border-white/10 bg-black/20 flex justify-end" id="rev_modal_footer">
           <button
             type="button"
             className="px-4 py-2 bg-[#1C1C1C] hover:bg-[#2F2F2F] text-gray-200 hover:text-white font-bold text-xs uppercase tracking-wider rounded transition cursor-pointer"
@@ -233,6 +234,7 @@ export default function RevenueReportsModal({ isOpen, onClose, currentUser, reve
           </button>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 }

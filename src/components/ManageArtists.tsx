@@ -64,7 +64,7 @@ export default function ManageArtists({
       name: artistName,
       spotifyLink: (hasSpotify === 'yes' && spotifyLink.trim()) ? spotifyLink.trim() : (hasSpotify === 'no' ? 'NONE' : 'https://open.spotify.com/artist/dummy_id'),
       appleMusicLink: (hasApple === 'yes' && appleMusicLink.trim()) ? appleMusicLink.trim() : (hasApple === 'no' ? 'NONE' : 'https://music.apple.com/artist/dummy_id'),
-      instagramLink: instagramLink.trim() || 'https://instagram.com/dummy_handle',
+      instagramLink: instagramLink.trim() || 'NONE',
     };
 
     onAddArtist(profile);
@@ -82,7 +82,7 @@ export default function ManageArtists({
   return (
     <div className="space-y-6" id="manage_artists_root">
       {/* Page description */}
-      <div className="p-6 bg-[#0f1424] rounded-2xl border border-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4" id="artist_reg_header">
+      <div className="p-6 bg-[#0f1424] rounded-3xl border border-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4" id="artist_reg_header">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-5 h-5 text-blue-400" />
@@ -97,7 +97,7 @@ export default function ManageArtists({
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition self-start md:self-auto"
+            className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-2xl flex items-center gap-1.5 transition self-start md:self-auto"
             id="btn_add_artist_trigger"
           >
             <Plus className="w-4 h-4" /> Add Managed Artist
@@ -109,7 +109,7 @@ export default function ManageArtists({
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-6 bg-[#0f1424] rounded-2xl border border-blue-900/40 shadow-2xl space-y-4"
+          className="p-6 bg-[#0f1424] rounded-3xl border border-blue-900/40 shadow-2xl space-y-4"
           id="add_artist_form_container"
         >
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
@@ -125,7 +125,7 @@ export default function ManageArtists({
 
           <form onSubmit={handleSubmit} className="space-y-4" id="add_artist_form">
             {formError && (
-              <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-lg text-xs text-red-500 font-semibold">
+              <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-xs text-red-500 font-semibold">
                 ⚠️ {formError}
               </div>
             )}
@@ -134,7 +134,7 @@ export default function ManageArtists({
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Assign to Profile</label>
                 <select
-                  className="w-full bg-[#151c2e] border border-slate-850 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#151c2e] border border-slate-850 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
                   value={targetUserEmail}
                   onChange={(e) => setTargetUserEmail(e.target.value)}
                 >
@@ -151,7 +151,7 @@ export default function ManageArtists({
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Artist Name / Studio Alias</label>
                 <input
                   type="text"
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
                   placeholder="e.g. DJ Solar Void"
                   value={artistName}
                   onChange={(e) => setArtistName(e.target.value)}
@@ -185,7 +185,7 @@ export default function ManageArtists({
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs">Spotify</div>
                     <input
                       type="url"
-                      className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 pl-16 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 pl-16 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
                       placeholder="https://open.spotify.com/artist/..."
                       value={spotifyLink}
                       onChange={(e) => setSpotifyLink(e.target.value)}
@@ -221,7 +221,7 @@ export default function ManageArtists({
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs">Apple</div>
                     <input
                       type="url"
-                      className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 pl-16 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 pl-16 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
                       placeholder="https://music.apple.com/artist/..."
                       value={appleMusicLink}
                       onChange={(e) => setAppleMusicLink(e.target.value)}
@@ -237,7 +237,7 @@ export default function ManageArtists({
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs">IG</div>
                   <input
                     type="url"
-                    className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 pl-12 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 pl-12 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
                     placeholder="https://instagram.com/..."
                     value={instagramLink}
                     onChange={(e) => setInstagramLink(e.target.value)}
@@ -249,7 +249,7 @@ export default function ManageArtists({
 
             <button
               type="submit"
-              className="w-full cursor-pointer py-2 px-4 bg-blue-600 hover:bg-blue-505 text-white font-bold rounded-lg text-xs tracking-wider uppercase transition shadow-lg shadow-blue-900/30"
+              className="w-full cursor-pointer py-2 px-4 bg-blue-600 hover:bg-blue-505 text-white font-bold rounded-xl text-xs tracking-wider uppercase transition shadow-2xl shadow-indigo-500/10 shadow-blue-900/30"
               id="btn_submit_artist"
             >
               Verify & Add Artist Alias
@@ -260,7 +260,7 @@ export default function ManageArtists({
 
       {/* Artists grid */}
       {displayArtists.length === 0 ? (
-        <div className="p-12 text-center bg-[#0e1424] rounded-2xl border border-slate-900 space-y-3" id="no_artists_box">
+        <div className="p-12 text-center bg-[#0e1424] rounded-3xl border border-slate-900 space-y-3" id="no_artists_box">
           <Users className="w-12 h-12 text-slate-700 mx-auto" />
           <h3 className="text-sm font-bold text-gray-200">No managed artists found.</h3>
           <p className="text-xs text-gray-400 max-w-sm mx-auto">Click "Add Managed Artist" to configure aliases that populate guests and collaborators inputs on metadata sheets.</p>
@@ -278,7 +278,7 @@ export default function ManageArtists({
           {displayArtists.map((artist) => (
             <div 
               key={artist.id} 
-              className="p-5 bg-gradient-to-b from-[#111625] to-[#0a0e1c] rounded-xl border border-slate-850 flex flex-col justify-between"
+              className="p-5 bg-gradient-to-b from-[#111625] to-[#0a0e1c] rounded-2xl border border-slate-850 flex flex-col justify-between"
               style={{ minHeight: '11rem' }}
               id={`artist_card_${artist.id}`}
             >
@@ -303,7 +303,7 @@ export default function ManageArtists({
                       {artist.spotifyLink === 'NONE' ? (
                         <span className="text-red-400/60 font-medium italic">No Spotify ID</span>
                       ) : (
-                        <a href={artist.spotifyLink} target="_blank" rel="noreferrer" className="hover:text-green-400 hover:underline text-gray-400 truncate">
+                        <a href={artist.spotifyLink} target="_blank" rel="noreferrer" className="hover:text-violet-400 hover:underline text-gray-400 truncate">
                           Spotify Account Profile
                         </a>
                       )}
@@ -348,9 +348,13 @@ export default function ManageArtists({
                   <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
                     <div className="flex items-center gap-2 truncate">
                       <Instagram className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      <a href={artist.instagramLink} target="_blank" rel="noreferrer" className="hover:text-pink-400 hover:underline text-gray-400 truncate">
-                        Instagram Link
-                      </a>
+                      {artist.instagramLink === 'NONE' ? (
+                        <span className="text-red-400/60 font-medium italic">No Instagram</span>
+                      ) : (
+                        <a href={artist.instagramLink} target="_blank" rel="noreferrer" className="hover:text-pink-400 hover:underline text-gray-400 truncate">
+                          Instagram Link
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>

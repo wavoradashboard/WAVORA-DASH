@@ -107,7 +107,7 @@ export default function NewReleaseWizard({
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-12 text-center bg-[#0f1424] rounded-2xl border border-slate-900 shadow-2xl space-y-6 max-w-2xl mx-auto my-12"
+        className="p-12 text-center bg-[#0f1424] rounded-3xl border border-slate-900 shadow-2xl space-y-6 max-w-2xl mx-auto my-12"
       >
         <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto border border-amber-500/20">
           <Users className="w-10 h-10 text-amber-500" />
@@ -121,13 +121,13 @@ export default function NewReleaseWizard({
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button 
             onClick={() => setCurrentTab('manage-artists')}
-            className="w-full sm:w-auto px-8 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-black font-black rounded-lg transition active:scale-95 flex items-center justify-center gap-2 uppercase tracking-tight text-xs cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3 bg-[#6366F1] hover:bg-[#818CF8] text-black font-black rounded-xl transition active:scale-95 flex items-center justify-center gap-2 uppercase tracking-tight text-xs cursor-pointer"
           >
             <Sparkles className="w-4 h-4" /> Add My Artist Profile
           </button>
           <button 
             onClick={() => setCurrentTab('home')}
-            className="w-full sm:w-auto px-8 py-3 bg-transparent hover:bg-white/5 text-gray-400 font-bold rounded-lg transition border border-slate-800 uppercase tracking-tight text-xs cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3 bg-transparent hover:bg-white/5 text-gray-400 font-bold rounded-xl transition border border-slate-800 uppercase tracking-tight text-xs cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -151,14 +151,14 @@ export default function NewReleaseWizard({
   const [releaseType, setReleaseType] = useState<'Single' | 'EP' | 'Album'>('Single');
   const [featureArtists, setFeatureArtists] = useState<string[]>([]);
   const [otherArtists, setOtherArtists] = useState<string[]>([]);
-  const [newCustomFeatureArtist, setNewCustomFeatureArtist] = useState('');
+  const [selectedFeatureToAdd, setSelectedFeatureToAdd] = useState('');
   const [primaryArtists, setPrimaryArtists] = useState<string[]>([currentUser.artistName]);
   const [selectedPrimaryToAdd, setSelectedPrimaryToAdd] = useState('');
-  const [language, setLanguage] = useState('English');
-  const [contentType, setContentType] = useState<'Original' | 'Licensed' | 'AI'>('Original');
+  const [language, setLanguage] = useState('');
+  const [contentType, setContentType] = useState<'Original' | 'Licensed' | 'AI' | ''>('');
   const [numTracks, setNumTracks] = useState(1);
-  const [genre, setGenre] = useState('Electronic');
-  const [subGenre, setSubGenre] = useState('Ambient');
+  const [genre, setGenre] = useState('');
+  const [subGenre, setSubGenre] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [cLine, setCLine] = useState(`© ${new Date().getFullYear()} Wavora Live`);
   const [pLine, setPLine] = useState(`℗ ${new Date().getFullYear()} Wavora Live`);
@@ -203,9 +203,9 @@ export default function NewReleaseWizard({
             mainArtistName: primaryArtists.length > 0 ? primaryArtists.join(', ') : 'Unknown Artist',
             featureArtists: [],
             otherArtists: [],
-            genre: 'Electronic',
-            subGenre: 'Ambient',
-            language: 'English',
+            genre: '',
+            subGenre: '',
+            language: '',
             producer: '',
             lyricist: '',
             composer: '',
@@ -390,11 +390,10 @@ export default function NewReleaseWizard({
     });
   };
 
-  const handleAddCustomFeatureArtist = () => {
-    const trimmed = newCustomFeatureArtist.trim();
-    if (trimmed && !featureArtists.includes(trimmed) && !primaryArtists.includes(trimmed)) {
-      setFeatureArtists(prev => [...prev, trimmed]);
-      setNewCustomFeatureArtist('');
+  const handleAddFeatureArtistClick = () => {
+    if (selectedFeatureToAdd && !featureArtists.includes(selectedFeatureToAdd) && !primaryArtists.includes(selectedFeatureToAdd)) {
+      setFeatureArtists(prev => [...prev, selectedFeatureToAdd]);
+      setSelectedFeatureToAdd('');
     }
   };
 
@@ -406,6 +405,10 @@ export default function NewReleaseWizard({
     if (!albumName.trim()) return 'Album/Single Name is required';
     if (!releaseDate) return 'Official Release Date is required';
     if (!coverArtUrl) return 'You must upload or select a Cover Art image';
+    if (!language) return 'Metadata Language is required';
+    if (!contentType) return 'Origination (Content Type) is required';
+    if (!genre) return 'Main Genre selection is required';
+    if (!subGenre) return 'Sub-Genre selection is required';
     // Allow empty string to default to 'Wavora Live' as the publishing label
     return '';
   };
@@ -418,6 +421,8 @@ export default function NewReleaseWizard({
       if (!t.producer.trim()) return `Producer is required for Track #${i + 1}`;
       if (!t.composer.trim()) return `Composer/Songwriter is required for Track #${i + 1}`;
       if (!t.lyricist.trim()) return `Lyricist metadata is required for Track #${i + 1}`;
+      if (!t.genre) return `Main Genre is required for Track #${i + 1}`;
+      if (!t.subGenre) return `Sub-Genre is required for Track #${i + 1}`;
     }
     return '';
   };
@@ -479,47 +484,72 @@ export default function NewReleaseWizard({
   };
 
   return (
-    <div className="p-6 bg-[#0f1424] rounded-2xl border border-slate-900 shadow-xl space-y-6" id="wizard_root">
+    <div className="p-6 bg-[#0f1424] rounded-3xl border border-slate-900 shadow-xl space-y-6" id="wizard_root">
       {/* Step Indicator Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-slate-800" id="wizard_header">
+      <div className="flex justify-between items-start pb-4 border-b border-slate-800" id="wizard_header">
         <div>
-          <h2 className="text-lg font-bold text-white uppercase tracking-wider">Configure New Digital Release</h2>
-          <span className="text-xs text-slate-400">Step {step} of 4 • {
-            step === 1 ? 'Release Metadata & Cover Artwork' :
-            step === 2 ? 'Track Uploads & Songwriter Metadata' :
-            step === 3 ? 'Additional Ingestion Notes' :
-            'Verification & Validation Submit'
+          <h2 className="text-xl font-black text-white uppercase tracking-tighter">New Digital Release Pipeline</h2>
+          <span className="text-xs text-slate-400 font-medium">Step {step} of 4 • {
+            step === 1 ? 'Release Metadata & Cover Art' :
+            step === 2 ? 'Track Metadata & Assets' :
+            step === 3 ? 'Ingestion Command Notes' :
+            'Validation & Global Proxy Submission'
           }</span>
         </div>
 
-        {/* Level indicator */}
-        <div className="text-right">
-          <span className="text-[10px] block text-gray-500 font-semibold uppercase tracking-wider">Level Privileges</span>
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-blue-400 bg-blue-900/10 border border-blue-500/30">
-            {currentUser.plan} Plan
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <span className="text-[9px] block text-gray-500 font-bold uppercase tracking-widest">Plan Eligibility</span>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black text-[#6366F1] bg-[#6366F1]/10 border border-[#6366F1]/30">
+              {currentUser.plan} Plan
+            </span>
+          </div>
+          <button 
+            onClick={() => setCurrentTab('home')}
+            className="p-2 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded-xl transition cursor-pointer"
+            title="Cancel Ingestion"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       {/* Grid containing Wizard Progress Bar */}
-      <div className="relative flex items-center justify-between" id="wizard_tracker_mesh">
-        <div className="absolute left-0 right-0 h-0.5 bg-slate-800 pointer-events-none z-0" />
-        {[1, 2, 3, 4].map((num) => (
-          <div 
-            key={num} 
-            className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border transition ${
-              step >= num 
-                ? 'bg-blue-600 text-white border-blue-500' 
-                : 'bg-[#151c2e] text-gray-400 border-slate-800'
-            }`}
-          >
-            {num}
-          </div>
-        ))}
+      <div className="relative flex items-center justify-between px-2 sm:px-4" id="wizard_tracker_mesh">
+        <div className="absolute left-0 right-0 h-[1px] bg-slate-800/50 pointer-events-none z-0 mx-6 sm:mx-8" />
+        {[1, 2, 3, 4].map((num) => {
+          const isActive = step === num;
+          const isCompleted = step > num;
+          return (
+            <div 
+              key={num} 
+              className={`relative z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex flex-col items-center justify-center transition-all duration-300 ${
+                isActive 
+                  ? 'scale-110' 
+                  : ''
+              }`}
+            >
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-[10px] sm:text-xs border transition-all duration-300 ${
+                isActive 
+                  ? 'bg-[#6366F1] text-black border-[#6366F1] shadow-[0_0_15px_rgba(99,102,241,0.4)]' 
+                  : isCompleted
+                    ? 'bg-emerald-500 text-black border-emerald-500'
+                    : 'bg-[#151c2e] text-gray-500 border-slate-800'
+              }`}>
+                {isCompleted ? '✓' : num}
+              </div>
+              <span className={`absolute -bottom-5 sm:-bottom-6 text-[7px] sm:text-[8px] font-black uppercase tracking-widest transition-colors ${isActive ? 'text-[#6366F1]' : 'text-gray-600'} ${num === 1 || num === 4 ? '' : 'hidden xs:block'}`}>
+                {num === 1 ? 'Start' : num === 2 ? 'Assets' : num === 3 ? 'Notes' : 'Finish'}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
+      <div className="pt-2"></div>
+
       {error && (
-        <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-lg text-xs text-red-400 flex items-start gap-2" id="w_error">
+        <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-xs text-red-400 flex items-start gap-2" id="w_error">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -528,219 +558,183 @@ export default function NewReleaseWizard({
       {/* Step Components */}
       <div className="min-h-[300px]" id="wizard_step_stage">
         {step === 1 && (
-          <div className="space-y-5" id="wizard_step1_inputs">
-            {/* Title & Core Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Single / Album Title</label>
-                <input
-                  type="text"
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
-                  placeholder="e.g. Midnight Horizon"
-                  value={albumName}
-                  onChange={(e) => setAlbumName(e.target.value)}
-                  id="w_albumName"
-                />
+          <div className="space-y-8" id="wizard_step1_inputs">
+            {/* Group 1: Release Identity */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Music className="w-4 h-4 text-[#6366F1]" />
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Release Identity</span>
               </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Release Concept Format</label>
-                <select
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
-                  value={releaseType}
-                  onChange={(e) => {
-                    const val = e.target.value as 'Single' | 'EP' | 'Album';
-                    setReleaseType(val);
-                    if (val === 'Single') setNumTracks(1);
-                  }}
-                  id="w_releaseType"
-                >
-                  <option value="Single">Single (1 Track)</option>
-                  <option value="EP">EP (2-6 Tracks)</option>
-                  <option value="Album">Album (7-30 Tracks)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2" id="primary_artists_section">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Primary Artist(s)</label>
-                
-                {/* Current Primary Artists Chips */}
-                <div className="flex flex-wrap gap-1.5 p-2 bg-[#0a0f1d] border border-slate-800 rounded-lg min-h-10 items-center" id="primary_artists_chips_wrapper">
-                  {primaryArtists.map((artist, i) => {
-                    const isDefaultMain = artist === currentUser.artistName;
-                    return (
-                      <span 
-                        key={i} 
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#1a2333] border border-slate-700/60 rounded-md text-xs font-semibold text-white transition-all hover:bg-[#202b3e]"
-                        id={`primary_artist_chip_${i}`}
-                      >
-                        <span className="truncate max-w-[120px]">{artist}</span>
-                        {isDefaultMain ? (
-                          <span className="text-[8px] bg-blue-500/10 text-blue-400 px-1 py-0.5 rounded border border-blue-500/25 font-sans font-bold uppercase tracking-wide">Main</span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePrimaryArtist(artist)}
-                            className="cursor-pointer p-0.5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded transition"
-                            title="Remove Artist"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </span>
-                    );
-                  })}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Single / Album Title</label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1] transition shadow-inner"
+                    placeholder="e.g. Midnight Horizon"
+                    value={albumName}
+                    onChange={(e) => setAlbumName(e.target.value)}
+                    id="w_albumName"
+                  />
                 </div>
 
-                {/* Restricted selection list for Extra Primaries */}
-                <div className="flex gap-2">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Release Concept Format</label>
                   <select
-                    className="flex-1 bg-[#111726] border border-slate-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
-                    value={selectedPrimaryToAdd}
-                    onChange={(e) => setSelectedPrimaryToAdd(e.target.value)}
-                    id="select_add_primary_artist"
+                    className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1] transition"
+                    value={releaseType}
+                    onChange={(e) => {
+                      const val = e.target.value as 'Single' | 'EP' | 'Album';
+                      setReleaseType(val);
+                      if (val === 'Single') setNumTracks(1);
+                    }}
+                    id="w_releaseType"
                   >
-                    <option value="">-- Choose Managed Artist to Add as Primary --</option>
-                    {filteredArtists
-                      .filter(m => !primaryArtists.includes(m.name))
-                      .map((artist) => (
-                        <option key={artist.id} value={artist.name}>
-                          {artist.name}
-                        </option>
-                      ))
-                    }
+                    <option value="Single">Single (1 Track)</option>
+                    <option value="EP">EP (2-6 Tracks)</option>
+                    <option value="Album">Album (7-30 Tracks)</option>
                   </select>
-                  <button
-                    type="button"
-                    onClick={handleAddPrimaryArtistClick}
-                    className="cursor-pointer px-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-gray-500 text-white rounded-lg flex items-center justify-center transition active:scale-95 text-xs font-bold gap-1"
-                    title="Add Primary Artist"
-                    id="btn_add_primary_artist"
-                    disabled={!selectedPrimaryToAdd}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
                 </div>
-                <span className="text-[9px] text-gray-500 block">Adding multiple primary artists enables split-billing profiles. Only pre-configured artists added in <span className="text-blue-400 font-bold">Manage Artists</span> may be designated.</span>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Number of Tracks</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
-                  disabled={releaseType === 'Single'}
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  value={numTracks}
-                  onChange={(e) => setNumTracks(Math.max(1, Math.min(30, parseInt(e.target.value) || 1)))}
-                  id="w_numTracks"
-                />
               </div>
             </div>
 
-            {/* Featured Artists / Collaborators section */}
-            <div className="space-y-3" id="featured_artists_section">
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Featured Artist(s) / Collaborators</label>
-              
-              {/* Show selected featured artists as chips */}
-              {featureArtists.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 p-2 bg-[#0a0f1d] border border-slate-800 rounded-lg min-h-10 items-center" id="featured_artists_chips_wrapper">
-                  {featureArtists.map((artist, i) => (
-                    <span 
-                      key={i} 
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-md text-xs font-semibold text-amber-400"
-                      id={`featured_artist_chip_${i}`}
-                    >
-                      <span className="truncate max-w-[120px]">{artist}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFeatureArtist(artist)}
-                        className="cursor-pointer p-0.5 hover:bg-red-500/20 text-amber-500/75 hover:text-red-400 rounded transition"
-                        title="Remove Featured Artist"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
+            <div className="h-[1px] bg-slate-800/50" />
 
-              {/* Grid with 2 columns: Left column managed artists selection list, Right column custom artists typed input */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Managed selection checkboxes */}
-                <div className="space-y-1.5">
-                  <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Select Managed Artist</span>
-                  <div className="p-3 bg-slate-950/40 rounded-lg border border-slate-800 max-h-24 overflow-y-auto space-y-1">
-                    {filteredArtists.length === 0 ? (
-                      <span className="text-gray-500 text-[10px] block py-2">No artists added in "Manage Artists" yet.</span>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-1 text-xs text-left">
-                        {filteredArtists.map((artist) => {
-                          const selected = featureArtists.includes(artist.name);
-                          const isAlreadyPrimary = primaryArtists.includes(artist.name);
-                          return (
-                            <label 
-                              key={artist.id} 
-                              className={`flex items-center gap-2 cursor-pointer transition ${isAlreadyPrimary ? 'opacity-40 cursor-not-allowed text-gray-500' : 'text-gray-300 hover:text-white'}`}
+            {/* Group 2: Artist Matrix */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-4 h-4 text-[#6366F1]" />
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Artist Matrix</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2" id="primary_artists_section">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Primary Artist(s)</label>
+                  
+                  {/* Current Primary Artists Chips */}
+                  <div className="flex flex-wrap gap-1.5 p-3 bg-[#0a0f1d] border border-slate-900 rounded-2xl min-h-[50px] items-center shadow-inner" id="primary_artists_chips_wrapper">
+                    {primaryArtists.map((artist, i) => {
+                      const isDefaultMain = artist === currentUser.artistName;
+                      return (
+                        <span 
+                          key={i} 
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#151c2e] border border-slate-800 rounded-lg text-[11px] font-bold text-white transition-all hover:border-slate-700"
+                          id={`primary_artist_chip_${i}`}
+                        >
+                          <span className="truncate max-w-[120px]">{artist}</span>
+                          {isDefaultMain ? (
+                            <span className="text-[8px] bg-[#6366F1]/10 text-[#6366F1] px-1.5 py-0.5 rounded font-black uppercase tracking-widest border border-[#6366F1]/20">Main</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePrimaryArtist(artist)}
+                              className="cursor-pointer p-0.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded transition"
+                              title="Remove Artist"
                             >
-                              <input
-                                type="checkbox"
-                                checked={selected && !isAlreadyPrimary}
-                                disabled={isAlreadyPrimary}
-                                onChange={() => !isAlreadyPrimary && handleFeatureArtistToggle(artist.name)}
-                                className="rounded border-slate-700 text-amber-500 bg-slate-900 focus:ring-0 cursor-pointer disabled:cursor-not-allowed"
-                              />
-                              <span className="truncate">{artist.name} {isAlreadyPrimary && <span className="text-[8px] text-gray-500 font-bold uppercase tracking-wide ml-1">(Primary)</span>}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </span>
+                      );
+                    })}
                   </div>
-                </div>
 
-                {/* Custom addition input with + button */}
-                <div className="space-y-1.5">
-                  <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Add Custom / External Guest</span>
                   <div className="flex gap-2">
-                    <input
-                      type="text"
-                      className="flex-1 bg-[#111726]/80 border border-slate-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-amber-500 placeholder:text-gray-600"
-                      placeholder="Type custom guest, translator, producer..."
-                      value={newCustomFeatureArtist}
-                      onChange={(e) => setNewCustomFeatureArtist(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomFeatureArtist();
-                        }
-                      }}
-                      id="input_add_custom_featured_artist"
-                    />
+                    <select
+                      className="flex-1 bg-[#111726]/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#6366F1]"
+                      value={selectedPrimaryToAdd}
+                      onChange={(e) => setSelectedPrimaryToAdd(e.target.value)}
+                      id="select_add_primary_artist"
+                    >
+                      <option value="">Choose Managed Artist...</option>
+                      {filteredArtists
+                        .filter(m => !primaryArtists.includes(m.name))
+                        .map((artist) => (
+                          <option key={artist.id} value={artist.name}>
+                            {artist.name}
+                          </option>
+                        ))
+                      }
+                    </select>
                     <button
                       type="button"
-                      onClick={handleAddCustomFeatureArtist}
-                      className="cursor-pointer px-3 bg-[#e0a82e] hover:bg-amber-500 disabled:bg-slate-800 disabled:text-gray-500 text-black font-extrabold rounded-lg flex items-center justify-center transition active:scale-95 text-xs gap-1"
-                      title="Add Featured Artist"
-                      id="btn_add_custom_featured_artist"
-                      disabled={!newCustomFeatureArtist.trim()}
+                      onClick={handleAddPrimaryArtistClick}
+                      className="cursor-pointer px-4 bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-slate-800 disabled:text-gray-600 text-black rounded-xl flex items-center justify-center transition active:scale-95 text-xs font-black"
+                      title="Add Primary Artist"
+                      id="btn_add_primary_artist"
+                      disabled={!selectedPrimaryToAdd}
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                  <span className="text-[9px] text-gray-500 block">Allows addition of external vocalists or producers not in managed accounts.</span>
+                </div>
+
+                <div className="space-y-3" id="featured_artists_section">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Featured Artist(s)</label>
+                  
+                  <div className="flex flex-wrap gap-1.5 p-3 bg-[#0a0f1d] border border-slate-900 rounded-2xl min-h-[50px] items-center shadow-inner" id="featured_artists_chips_wrapper">
+                    {featureArtists.length === 0 ? (
+                      <span className="text-[10px] text-gray-600 font-medium italic">No featured artists selected yet</span>
+                    ) : (
+                      featureArtists.map((artist, i) => (
+                        <span 
+                          key={i} 
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#151c2e] border border-[#6366F1]/20 rounded-lg text-[11px] font-bold text-[#6366F1] transition-all"
+                          id={`featured_artist_chip_${i}`}
+                        >
+                          <span className="truncate max-w-[120px]">{artist}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFeatureArtist(artist)}
+                            className="cursor-pointer p-0.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded transition"
+                            title="Remove Featured Artist"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 bg-[#111726]/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#6366F1]"
+                      value={selectedFeatureToAdd}
+                      onChange={(e) => setSelectedFeatureToAdd(e.target.value)}
+                      id="select_add_feature_artist"
+                    >
+                      <option value="">Choose Managed Artist...</option>
+                      {managedArtists
+                        .filter(m => !featureArtists.includes(m.name) && !primaryArtists.includes(m.name))
+                        .map((artist) => (
+                          <option key={artist.id} value={artist.name}>
+                            {artist.name}
+                          </option>
+                        ))
+                      }
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleAddFeatureArtistClick}
+                      className="cursor-pointer px-4 bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-slate-800 disabled:text-gray-600 text-black rounded-xl flex items-center justify-center transition active:scale-95 text-xs font-black"
+                      title="Add Featured Artist"
+                      id="btn_add_feature_artist"
+                      disabled={!selectedFeatureToAdd}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Custom inputs grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="h-[1px] bg-slate-800/50" />
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Language</label>
+                <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metadata Language</label>
                 <select
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
-                  value={LANGUAGES_LIST.includes(language) ? language : "Custom"}
+                  className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 md:py-2.5 px-3 md:px-4 text-[11px] md:text-sm text-white focus:outline-none focus:border-[#6366F1]"
+                  value={LANGUAGES_LIST.includes(language) ? language : (language === '' ? '' : "Custom")}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val === "Custom") {
@@ -751,52 +745,42 @@ export default function NewReleaseWizard({
                   }}
                   id="w_language_select"
                 >
+                  <option value="" disabled>Select...</option>
                   {LANGUAGES_LIST.map((lang) => (
                     <option key={lang} value={lang}>{lang}</option>
                   ))}
-                  <option value="Custom">Other (Type Custom...)</option>
+                  <option value="Custom">Other (Type...)</option>
                 </select>
-
-                {!LANGUAGES_LIST.includes(language) && (
-                  <input
-                    type="text"
-                    className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500 mt-1.5"
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    placeholder="Type custom language..."
-                    id="w_language"
-                    required
-                  />
-                )}
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Content Origination</label>
+                <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Origination</label>
                 <select
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white"
+                  className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 md:py-2.5 px-3 md:px-4 text-[11px] md:text-sm text-white focus:outline-none focus:border-[#6366F1]"
                   value={contentType}
                   onChange={(e) => setContentType(e.target.value as any)}
                   id="w_contentType"
                 >
-                  <option value="Original">Original Music</option>
-                  <option value="Licensed">Licensed Cover</option>
-                  <option value="AI">AI Voice Assisted</option>
+                  <option value="" disabled>Select...</option>
+                  <option value="Original">Original</option>
+                  <option value="Licensed">Cover</option>
+                  <option value="AI">AI Voice</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Genre</label>
+                <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Main Genre</label>
                 <select
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 md:py-2.5 px-3 md:px-4 text-[11px] md:text-sm text-white focus:outline-none focus:border-[#6366F1]"
                   value={genre}
                   onChange={(e) => {
                     const newGenre = e.target.value;
                     setGenre(newGenre);
-                    const list = GENRE_DATA[newGenre] || [];
-                    setSubGenre(list[0] || '');
+                    setSubGenre('');
                   }}
                   id="w_genre"
                 >
+                  <option value="" disabled>Select...</option>
                   {Object.keys(GENRE_DATA).map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
@@ -804,13 +788,14 @@ export default function NewReleaseWizard({
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Sub-Genre</label>
+                <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sub-Genre</label>
                 <select
-                  className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 md:py-2.5 px-3 md:px-4 text-[11px] md:text-sm text-white focus:outline-none focus:border-[#6366F1]"
                   value={subGenre}
                   onChange={(e) => setSubGenre(e.target.value)}
                   id="w_subGenre"
                 >
+                  <option value="" disabled>Select...</option>
                   {(GENRE_DATA[genre] || []).map((sg) => (
                     <option key={sg} value={sg}>{sg}</option>
                   ))}
@@ -818,21 +803,31 @@ export default function NewReleaseWizard({
               </div>
             </div>
 
-            {/* Plan Restrictions - C, P Lines and Label Choice */}
-            <div className="p-4 bg-slate-950/30 rounded-xl border border-slate-850 space-y-4" id="plan_restrictions_box">
-              <span className="text-[10px] font-bold text-indigo-400 block uppercase tracking-wider">Plan Authorized Delivery Tags</span>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Publishing Label Selection */}
+            <div className="h-[1px] bg-slate-800/50" />
+
+            <div className="p-5 bg-black/20 rounded-3xl border border-slate-800/50 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Publishing Label</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Number of Tracks</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    disabled={releaseType === 'Single'}
+                    className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1] disabled:opacity-30 disabled:grayscale"
+                    value={numTracks}
+                    onChange={(e) => setNumTracks(Math.max(1, Math.min(30, parseInt(e.target.value) || 1)))}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Publishing Label</label>
                   <select
-                    className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1]"
                     value={selectedLabel}
                     onChange={(e) => setSelectedLabel(e.target.value)}
-                    id="w_labelName"
                   >
-                    <option value="">Wavora Live (Default)</option>
+                    <option value="">Wavora Live (Global)</option>
                     {filteredLabels.map((lbl) => (
                       lbl.name !== 'Wavora Live' && <option key={lbl.id} value={lbl.name}>{lbl.name}</option>
                     ))}
@@ -840,125 +835,130 @@ export default function NewReleaseWizard({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Ingestion Release Date</label>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Release Date</label>
                   <input
                     type="date"
-                    className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#6366F1]"
                     value={releaseDate}
                     onChange={(e) => setReleaseDate(e.target.value)}
-                    id="w_releaseDate"
                   />
                 </div>
               </div>
 
-              {/* Pro and Elite C & P options (Also available to Admin) */}
-              {(!isBasic || currentUser.email === 'admin@g.g') ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">C Line (© Publisher Tag)</label>
-                    {currentUser.email === 'admin@g.g' ? (
-                      <input
-                        type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none"
-                        placeholder={`e.g. © ${new Date().getFullYear()} Wavora Live`}
-                        value={cLine}
-                        onChange={(e) => setCLine(e.target.value)}
-                        id="w_cLine"
-                      />
-                    ) : (
-                      <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
-                        value={cLine}
-                        onChange={(e) => setCLine(e.target.value)}
-                        id="w_cLine"
-                      >
-                        <option value={`© ${new Date().getFullYear()} Wavora Live`}>© {new Date().getFullYear()} Wavora Live</option>
-                        {currentUser.allowedCLines?.map((line, i) => (
-                          <option key={`cline-${i}`} value={line}>{line}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">P Line (℗ Phonographic Sound Tag)</label>
-                    {currentUser.email === 'admin@g.g' ? (
-                      <input
-                        type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none"
-                        placeholder={`e.g. ℗ ${new Date().getFullYear()} Wavora Live`}
-                        value={pLine}
-                        onChange={(e) => setPLine(e.target.value)}
-                        id="w_pLine"
-                      />
-                    ) : (
-                      <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-blue-500"
-                        value={pLine}
-                        onChange={(e) => setPLine(e.target.value)}
-                        id="w_pLine"
-                      >
-                        <option value={`℗ ${new Date().getFullYear()} Wavora Live`}>℗ {new Date().getFullYear()} Wavora Live</option>
-                        {currentUser.allowedPLines?.map((line, i) => (
-                          <option key={`pline-${i}`} value={line}>{line}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
+            {/* Pro and Elite C & P options */}
+            {(!isBasic || currentUser.email === 'admin@g.g') ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">C Line (© Publisher Tag)</label>
+                  {currentUser.email === 'admin@g.g' ? (
+                    <input
+                      type="text"
+                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
+                      placeholder={`e.g. © ${new Date().getFullYear()} Wavora Live`}
+                      value={cLine}
+                      onChange={(e) => setCLine(e.target.value)}
+                    />
+                  ) : (
+                    <select
+                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
+                      value={cLine}
+                      onChange={(e) => setCLine(e.target.value)}
+                    >
+                      <option value={`© ${new Date().getFullYear()} Wavora Live`}>© {new Date().getFullYear()} Wavora Live</option>
+                      {currentUser.allowedCLines?.map((line, i) => (
+                        <option key={`cline-${i}`} value={line}>{line}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
-              ) : (
-                <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-gray-500 flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-slate-600" />
-                  <span>C Line & P Line metadata options are restricted on the Basic tier. Standard publisher tags will be generated automatically. Upgrade to Pro/Elite to customize.</span>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">P Line (℗ Phonographic Sound Tag)</label>
+                  {currentUser.email === 'admin@g.g' ? (
+                    <input
+                      type="text"
+                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
+                      placeholder={`e.g. ℗ ${new Date().getFullYear()} Wavora Live`}
+                      value={pLine}
+                      onChange={(e) => setPLine(e.target.value)}
+                    />
+                  ) : (
+                    <select
+                      className="w-full bg-[#111726] border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-[#6366F1]"
+                      value={pLine}
+                      onChange={(e) => setPLine(e.target.value)}
+                    >
+                      <option value={`℗ ${new Date().getFullYear()} Wavora Live`}>℗ {new Date().getFullYear()} Wavora Live</option>
+                      {currentUser.allowedPLines?.map((line, i) => (
+                        <option key={`pline-${i}`} value={line}>{line}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
-              )}
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-[11px] text-gray-500 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-[#6366F1]" />
+                <span>C Line & P Line metadata options are restricted on the Basic tier. Standard publisher tags will be generated automatically.</span>
+              </div>
+            )}
             </div>
 
-            {/* Step 1 Cover Artwork Drag and Drop Selection */}
-            <div className="pt-2">
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">High Resolution Cover Art (Constraint: Exactly 3000x3000px, JPEG format)</label>
+            {/* Step 1 Cover Artwork */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-[#6366F1]" />
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Release Artwork</span>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-8 flex flex-col justify-center border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-5 bg-slate-950/35 transition relative">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-8 group relative flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-[#6366F1]/50 rounded-3xl p-8 bg-black/20 transition-all cursor-pointer overflow-hidden">
                   <input
                     type="file"
                     accept=".jpg,.jpeg"
                     onChange={handleCoverArtChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    id="artwork_upload_input"
                   />
-                  <div className="text-center space-y-2 relative pointer-events-none w-full">
-                    <ImageIcon className="w-8 h-8 text-blue-500 mx-auto" />
-                    <span className="block text-xs font-semibold text-gray-300">Drag & Drop or Click to browse your disk</span>
-                    <span className="block text-[10px] text-gray-500">Only JPG or JPEG images are accepted. Best quality if 3000x3000px dimensions.</span>
+                  <div className="text-center space-y-4 relative pointer-events-none">
+                    <div className="w-16 h-16 bg-[#6366F1]/10 rounded-2xl flex items-center justify-center mx-auto transition group-hover:scale-110">
+                      <ImageIcon className="w-8 h-8 text-[#6366F1]" />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="block text-sm font-black text-white uppercase tracking-tight">Drop Cover Art Here</span>
+                      <span className="block text-[10px] text-gray-500 font-medium uppercase tracking-widest">3000x3000px JPEG Required</span>
+                    </div>
+                    
                     {coverArtUploadProgress > 0 && (
-                      <div className="w-full bg-slate-800 h-2.5 rounded mt-4 overflow-hidden relative">
-                        <div 
-                          className="bg-blue-500 h-full transition-all duration-300"
-                          style={{ width: `${coverArtUploadProgress}%` }}
+                      <div className="w-48 bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden mx-auto">
+                        <motion.div 
+                          className="bg-[#6366F1] h-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${coverArtUploadProgress}%` }}
                         />
-                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white uppercase tracking-wider drop-shadow-md">
-                          Uploading... {coverArtUploadProgress}%
-                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="md:col-span-4 p-3 bg-slate-900 rounded-xl border border-slate-800/80 flex flex-col items-center justify-center">
+                <div className="md:col-span-4 p-4 bg-[#0a0f1d] rounded-3xl border border-slate-900 flex flex-col items-center justify-center shadow-inner min-h-[220px]">
                   {coverArtPreview || coverArtUrl ? (
-                    <div className="text-center space-y-1.5">
-                      <img 
-                        src={coverArtPreview || coverArtUrl} 
-                        alt="Preview" 
-                        className="w-24 h-24 rounded object-cover mx-auto"
-                        referrerPolicy="no-referrer"
-                      />
-                      <span className="text-[10px] block text-green-400 font-semibold uppercase tracking-wide">Ready for Delivery</span>
+                    <div className="text-center space-y-4">
+                      <div className="relative group">
+                        <img 
+                          src={coverArtPreview || coverArtUrl} 
+                          alt="Preview" 
+                          className="w-32 h-32 rounded-2xl object-cover shadow-2xl border border-slate-800 transition group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition rounded-2xl flex items-center justify-center pointer-events-none">
+                          <Sparkles className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                      <span className="text-[10px] block text-[#6366F1] font-black uppercase tracking-widest">Artwork Processed</span>
                     </div>
                   ) : (
-                    <div className="text-center p-4">
-                      <span className="text-[11px] text-gray-500 block mb-2">Or select a mock high-def artwork below:</span>
-                      <div className="flex justify-center gap-1.5">
+                    <div className="text-center space-y-4 px-4">
+                      <span className="text-[10px] text-gray-600 font-black uppercase tracking-[0.15em] block">Preservation Presets</span>
+                      <div className="grid grid-cols-3 gap-2">
                         {[
                           'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300&auto=format&fit=crop',
                           'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=300&auto=format&fit=crop',
@@ -968,7 +968,7 @@ export default function NewReleaseWizard({
                             type="button"
                             key={i}
                             onClick={() => selectPrebuiltCover(u)}
-                            className="w-10 h-10 rounded border border-slate-705 overflow-hidden hover:scale-105 transition cursor-pointer"
+                            className="aspect-square rounded-lg border border-slate-800 overflow-hidden hover:scale-110 active:scale-95 transition cursor-pointer shadow-lg"
                           >
                             <img src={u} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </button>
@@ -980,10 +980,14 @@ export default function NewReleaseWizard({
               </div>
 
               {artworkWarning && (
-                <div className="mt-2.5 p-2 bg-amber-950/40 border border-amber-600/30 rounded text-[10px] text-amber-300 flex items-start gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] text-amber-500 flex items-center gap-2 font-bold uppercase tracking-wide"
+                >
+                  <AlertCircle className="w-4 h-4" />
                   <span>{artworkWarning}</span>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
@@ -991,20 +995,22 @@ export default function NewReleaseWizard({
 
         {step === 2 && (
           <div className="space-y-6" id="wizard_step2_tracks">
-            <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-widest block">Metadata Schema for Individual Tracks ({numTracks} track(s) configured)</span>
+            <span className="text-xs text-[#6366F1] font-black uppercase tracking-widest block">Metadata Schema for Tracks ({numTracks} track(s) configured)</span>
             
-            <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2" id="tracks_builder_scrollarea">
+            <div className="space-y-6" id="tracks_builder_scrollarea">
               {trackList.map((track, idx) => (
                 <div 
                   key={track.id} 
-                  className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-4 relative"
+                  className="p-6 bg-[#0a0f1d] rounded-3xl border border-slate-900 space-y-5 relative shadow-inner"
                   id={`track_form_card_${idx}`}
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
-                    <span className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
-                      <AudioLines className="w-3.5 h-3.5 text-blue-500" /> Track #{idx + 1} Metadata
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <span className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+                      <AudioLines className="w-4 h-4 text-[#6366F1]" /> Track #{idx + 1}
                     </span>
-                    <span className="text-[10px] text-gray-500">Stereo Wave File Ingestion</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest bg-slate-950 px-2 py-0.5 rounded border border-slate-800">Master Ingestion</span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1012,7 +1018,7 @@ export default function NewReleaseWizard({
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Track Display Name</label>
                       <input
                         type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
                         placeholder="e.g. Retro Dreams (Radio Edit)"
                         value={track.trackName}
                         onChange={(e) => handleTrackFieldChange(idx, 'trackName', e.target.value)}
@@ -1040,7 +1046,7 @@ export default function NewReleaseWizard({
                         ))}
                       </div>
                       <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
                         onChange={(e) => {
                           const val = e.target.value;
                           if (!val) return;
@@ -1077,7 +1083,7 @@ export default function NewReleaseWizard({
                         ))}
                       </div>
                       <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
                         onChange={(e) => {
                           const val = e.target.value;
                           if (!val) return;
@@ -1114,7 +1120,7 @@ export default function NewReleaseWizard({
                         ))}
                       </div>
                       <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
                         onChange={(e) => {
                           const val = e.target.value;
                           if (!val) return;
@@ -1135,16 +1141,16 @@ export default function NewReleaseWizard({
                     <div className="space-y-1">
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Track Genre (Main)</label>
                       <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
-                        value={track.genre || 'Electronic'}
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        value={track.genre}
                         onChange={(e) => {
                           const newGenre = e.target.value;
                           handleTrackFieldChange(idx, 'genre', newGenre);
-                          const list = GENRE_DATA[newGenre] || [];
-                          handleTrackFieldChange(idx, 'subGenre', list[0] || '');
+                          handleTrackFieldChange(idx, 'subGenre', '');
                         }}
                         id={`w_track_${idx}_genre`}
                       >
+                        <option value="" disabled>Select...</option>
                         {Object.keys(GENRE_DATA).map((g) => (
                           <option key={g} value={g}>{g}</option>
                         ))}
@@ -1154,12 +1160,13 @@ export default function NewReleaseWizard({
                     <div className="space-y-1">
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Track Sub-Genre</label>
                       <select
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
                         value={track.subGenre}
                         onChange={(e) => handleTrackFieldChange(idx, 'subGenre', e.target.value)}
                         id={`w_track_${idx}_subgenre`}
                       >
-                        {(GENRE_DATA[track.genre || 'Electronic'] || []).map((sg) => (
+                        <option value="" disabled>Select...</option>
+                        {(GENRE_DATA[track.genre] || []).map((sg) => (
                           <option key={sg} value={sg}>{sg}</option>
                         ))}
                       </select>
@@ -1169,7 +1176,7 @@ export default function NewReleaseWizard({
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Production Producer</label>
                       <input
                         type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
                         placeholder="Full Name (eg. Albert Smith)"
                         value={track.producer}
                         onChange={(e) => handleTrackFieldChange(idx, 'producer', e.target.value)}
@@ -1181,7 +1188,7 @@ export default function NewReleaseWizard({
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Lyricist (Songwriter Name)</label>
                       <input
                         type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
                         placeholder="Full Name (eg. Albert Smith)"
                         value={track.lyricist}
                         onChange={(e) => handleTrackFieldChange(idx, 'lyricist', e.target.value)}
@@ -1193,7 +1200,7 @@ export default function NewReleaseWizard({
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">Composer (Songwriter Name)</label>
                       <input
                         type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500"
                         placeholder="Full Name (eg. Albert Smith)"
                         value={track.composer}
                         onChange={(e) => handleTrackFieldChange(idx, 'composer', e.target.value)}
@@ -1205,7 +1212,7 @@ export default function NewReleaseWizard({
                       <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest">ISRC (Optional Metadata Code)</label>
                       <input
                         type="text"
-                        className="w-full bg-[#151c2e] border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-indigo-300 font-mono"
+                        className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-indigo-300 font-mono"
                         placeholder="e.g. US-WV-26-XXXXX"
                         value={track.isrc}
                         onChange={(e) => handleTrackFieldChange(idx, 'isrc', e.target.value)}
@@ -1215,7 +1222,7 @@ export default function NewReleaseWizard({
                   </div>
 
                   {/* Explicit Tag check */}
-                  <div className="flex flex-col gap-3 p-3.5 bg-slate-950/45 rounded-lg border border-slate-800">
+                  <div className="flex flex-col gap-3 p-3.5 bg-slate-950/45 rounded-xl border border-slate-800">
                     <div>
                       <span className="text-xs font-bold text-gray-200 block">Explicit Parental Advisory Tagging</span>
                       <p className="text-[10px] text-gray-400">Strictly flag if the vocals contain strong profanity, drug references, or offensive content.</p>
@@ -1224,9 +1231,9 @@ export default function NewReleaseWizard({
                       <button
                         type="button"
                         onClick={() => handleTrackFieldChange(idx, 'explicitContent', true)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-lg border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
                           track.explicitContent
-                            ? 'bg-red-950/50 text-red-400 border-red-500/40 shadow-lg shadow-red-950/30'
+                            ? 'bg-red-950/50 text-red-400 border-red-500/40 shadow-2xl shadow-indigo-500/10 shadow-red-950/30'
                             : 'bg-[#121c2c]/40 text-slate-400 border-slate-800 hover:border-slate-700'
                         }`}
                         id={`w_track_${idx}_explicit_yes`}
@@ -1236,9 +1243,9 @@ export default function NewReleaseWizard({
                       <button
                         type="button"
                         onClick={() => handleTrackFieldChange(idx, 'explicitContent', false)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-lg border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border text-xs font-bold tracking-wider uppercase transition cursor-pointer ${
                           !track.explicitContent
-                            ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/40 shadow-lg shadow-emerald-950/30'
+                            ? 'bg-indigo-950/40 text-indigo-400 border-indigo-500/40 shadow-2xl shadow-indigo-500/10 shadow-indigo-950/30'
                             : 'bg-[#121c2c]/40 text-slate-400 border-slate-800 hover:border-slate-700'
                         }`}
                         id={`w_track_${idx}_explicit_no`}
@@ -1249,12 +1256,12 @@ export default function NewReleaseWizard({
                   </div>
 
                   {/* Audio Upload Element */}
-                  <div className="p-3 border border-dashed border-slate-800 rounded-xl bg-slate-950/20">
+                  <div className="p-3 border border-dashed border-slate-800 rounded-2xl bg-slate-950/20">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <span className="text-[10px] font-bold block text-slate-300 uppercase tracking-wider">Audio File Ingestion (.WAV or .MP3 - Max 50MB)</span>
                         {track.audioFileName ? (
-                          <span className="text-xs font-semibold text-green-400 mt-1 block font-mono">
+                          <span className="text-xs font-semibold text-violet-400 mt-1 block font-mono">
                             ✓ File attached: {track.audioFileName}
                           </span>
                         ) : (
@@ -1273,7 +1280,7 @@ export default function NewReleaseWizard({
                         <button
                           type="button"
                           disabled={trackUploadProgress[idx] > 0}
-                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 disabled:bg-slate-800/50 disabled:text-slate-500 text-white text-[11px] font-bold rounded-lg transition"
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 disabled:bg-slate-800/50 disabled:text-slate-500 text-white text-[11px] font-bold rounded-xl transition"
                         >
                           Select Audio File
                         </button>
@@ -1282,7 +1289,7 @@ export default function NewReleaseWizard({
                     {trackUploadProgress[idx] > 0 && (
                       <div className="mt-3 w-full bg-slate-800 h-2 rounded overflow-hidden relative">
                         <div 
-                          className="bg-green-500 h-full transition-all duration-300"
+                          className="bg-violet-500 h-full transition-all duration-300"
                           style={{ width: `${trackUploadProgress[idx]}%` }}
                         />
                         <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white uppercase tracking-wider drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
@@ -1293,14 +1300,14 @@ export default function NewReleaseWizard({
                   </div>
 
                   {/* Fallback Google Drive Link */}
-                  <div className="space-y-1.5 p-3 rounded-xl bg-blue-900/5 border border-blue-500/10 active:border-blue-500/20 transition-colors">
+                  <div className="space-y-1.5 p-3 rounded-2xl bg-blue-900/5 border border-blue-500/10 active:border-blue-500/20 transition-colors">
                     <label className="block text-[10px] font-bold text-blue-300 uppercase tracking-widest">
                       Alternative: Google Drive Link (If upload fails)
                     </label>
                     <div className="flex items-center gap-2">
                        <input
                         type="url"
-                        className="flex-1 bg-[#151c2e]/50 border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500/50"
+                        className="flex-1 bg-[#151c2e]/50 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-white focus:outline-none focus:border-blue-500/50"
                         placeholder="Paste Public Google Drive Link"
                         value={track.googleDriveLink || ''}
                         onChange={(e) => handleTrackFieldChange(idx, 'googleDriveLink', e.target.value)}
@@ -1317,7 +1324,7 @@ export default function NewReleaseWizard({
                     <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Full Lyrics (Optional)</label>
                     <textarea
                       rows={2}
-                      className="w-full bg-[#151c2e] border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none"
+                      className="w-full bg-[#151c2e] border border-slate-800 rounded-xl p-2 text-xs text-white focus:outline-none"
                       placeholder="Line by line lyrics for Sync publishing ingestion..."
                       value={track.lyrics || ''}
                       onChange={(e) => handleTrackFieldChange(idx, 'lyrics', e.target.value)}
@@ -1331,7 +1338,7 @@ export default function NewReleaseWizard({
                 <button
                   type="button"
                   onClick={() => setNumTracks(prev => prev + 1)}
-                  className="w-full py-3 border border-dashed border-slate-700 hover:border-slate-500 rounded-xl bg-slate-900/40 hover:bg-slate-800/60 text-slate-400 hover:text-white text-xs font-bold transition flex items-center justify-center gap-2"
+                  className="w-full py-3 border border-dashed border-slate-700 hover:border-slate-500 rounded-2xl bg-slate-900/40 hover:bg-slate-800/60 text-slate-400 hover:text-white text-xs font-bold transition flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" /> Add Another Track
                 </button>
@@ -1350,7 +1357,7 @@ export default function NewReleaseWizard({
 
             <textarea
               rows={8}
-              className="w-full bg-[#151c2e] border border-slate-850 rounded-xl p-4 text-xs text-white focus:outline-none focus:border-blue-500 md:text-sm"
+              className="w-full bg-[#151c2e] border border-slate-850 rounded-2xl p-4 text-xs text-white focus:outline-none focus:border-blue-500 md:text-sm"
               placeholder="e.g. I would like immediate submission to Beatport. Please configure the primary genre as Acid House instead of standard Trance. Also register under the active Apple Artist profile ID: 29841..."
               value={specialRequest}
               onChange={(e) => setSpecialRequest(e.target.value)}
@@ -1367,7 +1374,7 @@ export default function NewReleaseWizard({
               <p className="text-xs text-slate-400 mt-1">A brief audit of all package details before global ingestion transmission.</p>
             </div>
 
-            <div className="p-4 bg-slate-950/40 rounded-xl border border-slate-800 space-y-4" id="review_summary">
+            <div className="p-4 bg-slate-950/40 rounded-2xl border border-slate-800 space-y-4" id="review_summary">
               {/* Primary Details */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b border-slate-800/80 pb-4">
                 <img 
@@ -1382,10 +1389,10 @@ export default function NewReleaseWizard({
                     <span>{releaseType}</span>
                     <span>•</span>
                     <span>{currentUser.artistName}</span>
-                    {otherArtists.length > 0 && (
+                    {(featureArtists.length > 0 || otherArtists.length > 0) && (
                       <>
                         <span>•</span>
-                        <span>ft. {otherArtists.join(', ')}</span>
+                        <span>ft. {[...featureArtists, ...otherArtists].join(', ')}</span>
                       </>
                     )}
                   </div>
@@ -1408,7 +1415,7 @@ export default function NewReleaseWizard({
                 {isElite && (
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase block font-bold">Bespoke Label</span>
-                    <span className="text-emerald-400 font-medium">{selectedLabel || 'Prism Records (Elite)'}</span>
+                    <span className="text-indigo-400 font-medium">{selectedLabel || 'Prism Records (Elite)'}</span>
                   </div>
                 )}
                 {!isBasic && (
@@ -1429,7 +1436,8 @@ export default function NewReleaseWizard({
                         <span className="font-bold text-gray-200 block">{idx + 1}. {t.trackName || 'Unnamed track'}</span>
                         <div className="text-[11px] text-gray-400 mt-0.5">
                            By: <span className="font-bold text-gray-300">{t.mainArtistName}</span>
-                           {t.otherArtists && t.otherArtists.length > 0 && ` (feat. ${t.otherArtists.join(', ')})`}
+                            {( (t.featureArtists && t.featureArtists.length > 0) || (t.otherArtists && t.otherArtists.length > 0) ) && 
+                              ` (feat. ${[...(t.featureArtists || []), ...(t.otherArtists || [])].join(', ')})`}
                         </div>
                         <div className="text-[10px] text-slate-500 font-semibold uppercase mt-1">Producer: {t.producer || 'N/A'} • Composer: {t.composer || 'N/A'}</div>
                       </div>
@@ -1459,15 +1467,15 @@ export default function NewReleaseWizard({
       </div>
 
       {/* Navigation Buttons footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-800" id="wizard_buttons_footer">
+      <div className="flex items-center justify-between pt-6 border-t border-slate-800/50" id="wizard_buttons_footer">
         {step > 1 ? (
           <button
             type="button"
             onClick={handleBack}
-            className="cursor-pointer px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 font-bold text-xs text-white transition flex items-center gap-1.5"
+            className="cursor-pointer px-6 py-3 rounded-2xl bg-[#151c2e] hover:bg-slate-800 font-bold text-xs text-gray-400 hover:text-white transition-all flex items-center gap-2 border border-slate-800 active:scale-95"
             id="btn_wizard_back"
           >
-            <ChevronLeft className="w-4 h-4" /> Previous
+            <ChevronLeft className="w-4 h-4" /> Go Back
           </button>
         ) : (
           <div />
@@ -1477,19 +1485,19 @@ export default function NewReleaseWizard({
           <button
             type="button"
             onClick={handleNext}
-            className="cursor-pointer px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white transition flex items-center gap-1.5"
+            className="cursor-pointer px-8 py-3 rounded-2xl bg-[#6366F1] hover:bg-[#818CF8] font-black text-xs text-black transition-all flex items-center gap-2 shadow-lg shadow-[#6366F1]/20 active:scale-95 uppercase tracking-tighter"
             id="btn_wizard_next"
           >
-            Continue Ingestion <ChevronRight className="w-4 h-4" />
+            {step === 3 ? 'Review Package' : 'Continue Step'} <ChevronRight className="w-4 h-4" />
           </button>
         ) : (
           <button
             type="button"
             onClick={handleFinalSubmit}
-            className="cursor-pointer px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 font-black text-xs text-white rounded-lg shadow-lg shadow-emerald-900/30 transition flex items-center gap-1.5 animate-pulse"
+            className="cursor-pointer px-10 py-3 bg-gradient-to-r from-[#6366F1] to-emerald-400 hover:scale-[1.02] font-black text-xs text-black rounded-2xl shadow-xl shadow-[#6366F1]/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-tighter"
             id="btn_wizard_submit"
           >
-            <FileCheck className="w-4 h-4" /> Confirm & Ingest Track Package
+            <FileCheck className="w-4 h-4" /> Ingest Track Package
           </button>
         )}
       </div>

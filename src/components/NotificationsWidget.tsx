@@ -73,7 +73,7 @@ export default function NotificationsWidget({ currentUser, notifications }: Noti
       case 'Warning':
         return <AlertTriangle className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />;
       case 'Success':
-        return <CheckCircle2 className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />;
+        return <CheckCircle2 className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />;
       default:
         return <Bell className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />;
     }
@@ -87,7 +87,7 @@ export default function NotificationsWidget({ currentUser, notifications }: Noti
       case 'Warning':
         return 'bg-amber-950/20 border-amber-500/10 hover:border-amber-500/20 text-amber-200';
       case 'Success':
-        return 'bg-emerald-950/20 border-emerald-500/10 hover:border-emerald-500/20 text-emerald-200';
+        return 'bg-indigo-950/20 border-indigo-500/10 hover:border-indigo-500/20 text-indigo-200';
       default:
         return 'bg-blue-950/20 border-blue-500/10 hover:border-blue-500/20 text-blue-200';
     }
@@ -97,16 +97,16 @@ export default function NotificationsWidget({ currentUser, notifications }: Noti
     switch (severity) {
       case 'Critical': return 'text-red-400 bg-red-500/10 border-red-500/20';
       case 'Warning': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-      case 'Success': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+      case 'Success': return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
       default: return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
     }
   };
 
   return (
-    <div className="p-5 bg-[#121212] rounded-2xl border border-[#1F1F1F] text-left" id="notifications_dashboard_panel">
-      <div className="flex items-center justify-between mb-4 border-b border-[#1F1F1F] pb-3">
+    <div className="p-5 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 text-left" id="notifications_dashboard_panel">
+      <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/15">
+          <div className="p-1.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/15">
             <Bell className="w-4 h-4" />
           </div>
           <div>
@@ -118,7 +118,7 @@ export default function NotificationsWidget({ currentUser, notifications }: Noti
         {dismissedIds.length > 0 && (
           <button
             onClick={handleResetAll}
-            className="text-[9px] text-[#1DB954] hover:text-[#1ed760] font-bold uppercase tracking-wider hover:underline"
+            className="text-[9px] text-[#6366F1] hover:text-[#818CF8] font-bold uppercase tracking-wider hover:underline"
             id="btn_restore_dismissed_notifications"
           >
             Restore Hidden ({dismissedIds.length})
@@ -132,7 +132,7 @@ export default function NotificationsWidget({ currentUser, notifications }: Noti
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="py-6 px-4 text-center rounded-xl bg-black/30 border border-[#161616] flex flex-col items-center justify-center gap-2"
+            className="py-6 px-4 text-center rounded-2xl bg-black/30 border border-[#161616] flex flex-col items-center justify-center gap-2"
             id="notifications_empty_state"
           >
             <Inbox className="w-8 h-8 text-gray-700" />
@@ -147,12 +147,12 @@ export default function NotificationsWidget({ currentUser, notifications }: Noti
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`p-3 sm:p-4 rounded-xl border flex gap-3 transition group relative ${getSeverityClasses(notif.severity)}`}
+                className={`p-3 sm:p-4 rounded-2xl border flex gap-3 transition group relative ${getSeverityClasses(notif.severity)}`}
                 id={`notification_card_${notif.id}`}
               >
                 {/* Severity pill on left */}
                 <div className="flex-shrink-0 flex items-start justify-center pt-0.5">
-                  <div className="p-2 rounded-lg bg-black/40 border border-white/5">
+                  <div className="p-2 rounded-xl bg-black/40 border border-white/5">
                     {getSeverityIcon(notif.severity)}
                   </div>
                 </div>

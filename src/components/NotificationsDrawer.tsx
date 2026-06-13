@@ -106,7 +106,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
       case 'Warning':
         return <AlertTriangle className="w-4 h-4 text-amber-400" />;
       case 'Success':
-        return <CheckCircle2 className="w-4 h-4 text-[#1DB954]" />;
+        return <CheckCircle2 className="w-4 h-4 text-[#6366F1]" />;
       default:
         return <Bell className="w-4 h-4 text-blue-400" />;
     }
@@ -119,7 +119,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
       case 'Warning':
         return 'bg-amber-950/25 border-amber-500/10 text-amber-200';
       case 'Success':
-        return 'bg-emerald-950/20 border-emerald-500/10 text-emerald-200';
+        return 'bg-indigo-950/20 border-indigo-500/10 text-indigo-200';
       default:
         return 'bg-blue-950/20 border-blue-500/10 text-blue-200';
     }
@@ -129,7 +129,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
     switch (severity) {
       case 'Critical': return 'text-red-400 bg-red-500/10 border-red-500/20';
       case 'Warning': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-      case 'Success': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+      case 'Success': return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
       default: return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
     }
   };
@@ -154,20 +154,20 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="relative w-full max-w-md h-full bg-[#0E0E0E] border-l border-[#1F1F1F] text-white shadow-2xl flex flex-col z-10"
+            className="relative w-full max-w-md h-full bg-[#0E0E0E] border-l border-white/10 text-white shadow-2xl flex flex-col z-10"
             id="notif_drawer_surface"
           >
             {/* Header section */}
-            <div className="p-6 border-b border-[#1F1F1F] flex items-center justify-between bg-black/40">
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-black/40">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#1DB954]/10 text-[#1DB954] border border-[#1DB954]/25">
+                <div className="p-1.5 rounded-xl bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/25">
                   <Bell className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-sm font-black md:text-base uppercase tracking-tight text-white flex items-center gap-1.5">
                     Artist Notifications
                     {activeNotifications.length > 0 && (
-                      <span className="text-[10px] font-extrabold bg-[#1DB954] text-black px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="text-[10px] font-extrabold bg-[#6366F1] text-black px-1.5 py-0.5 rounded-full leading-none">
                         {activeNotifications.length}
                       </span>
                     )}
@@ -178,7 +178,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition cursor-pointer"
+                className="p-1.5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition cursor-pointer"
                 id="btn_close_notif_drawer"
                 title="Close drawer"
               >
@@ -195,7 +195,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
                   {activeNotifications.length > 0 && (
                     <button
                       onClick={handleDismissAll}
-                      className="text-[9px] text-gray-400 hover:text-[#1DB954] font-bold uppercase tracking-wider transition hover:underline cursor-pointer"
+                      className="text-[9px] text-gray-400 hover:text-[#6366F1] font-bold uppercase tracking-wider transition hover:underline cursor-pointer"
                       id="btn_dismiss_all_drawer"
                     >
                       Dismiss All
@@ -209,7 +209,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="py-10 px-4 text-center rounded-xl bg-black/20 border border-[#171717] flex flex-col items-center justify-center gap-2"
+                      className="py-10 px-4 text-center rounded-2xl bg-black/20 border border-[#171717] flex flex-col items-center justify-center gap-2"
                       id="drawer_notifs_empty"
                     >
                       <Inbox className="w-7 h-7 text-gray-700" />
@@ -223,11 +223,11 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
                           initial={{ opacity: 0, scale: 0.96, y: 8 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95 }}
-                          className={`p-4 rounded-xl border flex gap-3 transition relative group ${getSeverityColorClasses(notif.severity)}`}
+                          className={`p-4 rounded-2xl border flex gap-3 transition relative group ${getSeverityColorClasses(notif.severity)}`}
                           id={`drawer_notif_card_${notif.id}`}
                         >
                           <div className="flex-shrink-0 pt-0.5">
-                            <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                            <div className="p-1.5 rounded-xl bg-black/40 border border-white/5">
                               {getSeverityIcon(notif.severity)}
                             </div>
                           </div>
@@ -250,7 +250,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
                               <Calendar className="w-3 h-3 text-gray-600" />
                               <span>{new Date(notif.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                               {notif.targetType !== 'Everyone' && (
-                                <span className="text-[#1DB954] text-[8px] bg-black/40 px-1 border border-white/5 rounded">
+                                <span className="text-[#6366F1] text-[8px] bg-black/40 px-1 border border-white/5 rounded">
                                   {notif.targetType}
                                 </span>
                               )}
@@ -275,7 +275,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
 
               {/* Archived Alerts block (Only shows if they exist to keep UI tidy) */}
               {archivedNotifications.length > 0 && (
-                <div className="space-y-3.5 border-t border-[#1F1F1F] pt-6">
+                <div className="space-y-3.5 border-t border-white/10 pt-6">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Hidden Archive ({archivedNotifications.length})</span>
                     <button
@@ -291,7 +291,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
                     {archivedNotifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className="p-3 rounded-lg border border-[#161616] bg-black/20 flex items-center justify-between gap-3 text-xs opacity-60 hover:opacity-100 transition"
+                        className="p-3 rounded-xl border border-[#161616] bg-black/20 flex items-center justify-between gap-3 text-xs opacity-60 hover:opacity-100 transition"
                         id={`archived_notif_${notif.id}`}
                       >
                         <div className="min-w-0 flex-1 text-left">
@@ -309,7 +309,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
                         <button
                           type="button"
                           onClick={() => handleRestore(notif.id)}
-                          className="flex items-center justify-center p-1.5 rounded-md hover:bg-[#121212] text-[#1DB954] hover:text-[#1ed760] transition cursor-pointer"
+                          className="flex items-center justify-center p-1.5 rounded-md hover:bg-white/5 backdrop-blur-md text-[#6366F1] hover:text-[#818CF8] transition cursor-pointer"
                           title="Restore back to alerts"
                           id={`btn_drawer_restore_${notif.id}`}
                         >
@@ -323,7 +323,7 @@ export default function NotificationsDrawer({ isOpen, onClose, currentUser, noti
             </div>
 
             {/* Footer feedback */}
-            <div className="p-4 border-t border-[#1F1F1F] bg-black/40 text-center">
+            <div className="p-4 border-t border-white/10 bg-black/40 text-center">
               <span className="text-[9px] text-gray-650 uppercase font-mono tracking-widest">
                 Wavora Distribution Broadcast Node
               </span>

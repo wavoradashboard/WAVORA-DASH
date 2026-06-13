@@ -1400,19 +1400,19 @@ export default function App() {
   // Get active tab icon
   const getTabIcon = () => {
     switch (currentTab) {
-      case 'home': return <Home className="w-4 h-4 text-[#1DB954]" />;
-      case 'new-release': return <Disc className="w-4 h-4 text-[#1DB954]" />;
-      case 'manage-artists': return <Users className="w-4 h-4 text-[#1DB954]" />;
-      case 'manage-labels': return <Tags className="w-4 h-4 text-[#1DB954]" />;
-      case 'catalogue': return <Layers className="w-4 h-4 text-[#1DB954]" />;
-      case 'revenue': return <Landmark className="w-4 h-4 text-[#1DB954]" />;
-      case 'support': return <HelpCircle className="w-4 h-4 text-[#1DB954]" />;
-      default: return <Sparkles className="w-4 h-4 text-[#1DB954]" />;
+      case 'home': return <Home className="w-4 h-4 text-[#6366F1]" />;
+      case 'new-release': return <Disc className="w-4 h-4 text-[#6366F1]" />;
+      case 'manage-artists': return <Users className="w-4 h-4 text-[#6366F1]" />;
+      case 'manage-labels': return <Tags className="w-4 h-4 text-[#6366F1]" />;
+      case 'catalogue': return <Layers className="w-4 h-4 text-[#6366F1]" />;
+      case 'revenue': return <Landmark className="w-4 h-4 text-[#6366F1]" />;
+      case 'support': return <HelpCircle className="w-4 h-4 text-[#6366F1]" />;
+      default: return <Sparkles className="w-4 h-4 text-[#6366F1]" />;
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen w-full bg-[#0A0A0A] text-white font-sans overflow-hidden" id="app_root_layout">
+    <div className="flex flex-col lg:flex-row h-[100dvh] w-full bg-transparent text-white font-sans overflow-hidden" id="app_root_layout">
       
       {/* Sidebar Component */}
       <Sidebar
@@ -1429,43 +1429,56 @@ export default function App() {
       />
 
       {/* Main viewport block */}
-      <main className="flex-1 flex flex-col min-w-0 h-[calc(100vh-5rem)] md:h-screen overflow-y-auto" id="app_main_wrapper">
+      <main className="flex-1 flex flex-col min-w-0 lg:p-4 overflow-hidden" id="app_main_wrapper">
+        <div className="bg-[#0a0f1d] lg:border border-white/10 lg:rounded-[2rem] w-full h-full flex flex-col overflow-y-auto shadow-2xl shadow-indigo-500/10 relative">
         
-        {/* Editorial Top Bar / Header */}
-        <header className="h-20 border-b border-[#1F1F1F] flex items-center justify-between px-6 md:px-8 bg-[#0A0A0A]/90 backdrop-blur-md sticky top-0 z-30" id="editorial_top_bar">
-          <div className="flex items-center gap-3 animate-fade-in">
+        {/* Editorial Top Bar / Header - Conditionally hidden for New Release Wizard to prevent double headers */}
+        {currentTab !== 'new-release' && (
+          <header className="h-16 md:h-20 shrink-0 border-b border-white/10 flex items-center justify-between px-4 md:px-8 bg-[#070710] sticky top-0 z-30" id="editorial_top_bar">
+          <div className="flex items-center gap-2 md:gap-3 animate-fade-in">
+            {/* Mobile Nav Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsOpenMobile(true)}
+              className="lg:hidden p-1.5 -ml-1 rounded-xl hover:bg-white/5 text-gray-400 hover:text-[#6366F1] transition cursor-pointer"
+              id="btn_hamburger_mobile"
+              title="Open Navigation"
+            >
+              <Menu className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
             {isSidebarCollapsed && (
               <button
                 type="button"
                 onClick={() => setIsSidebarCollapsed(false)}
-                className="hidden md:flex p-1.5 rounded-lg hover:bg-[#121212] text-gray-400 hover:text-[#1DB954] transition cursor-pointer mr-2.5"
+                className="hidden lg:flex p-1.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-[#6366F1] transition cursor-pointer mr-2.5"
                 id="btn_expand_sidebar"
                 title="Expand Sidebar"
               >
-                <Menu className="w-5 h-5 text-gray-400 hover:text-[#1DB954]" />
+                <Menu className="w-5 h-5 text-gray-400 hover:text-[#6366F1]" />
               </button>
             )}
-            <div className="p-2 bg-[#121212] border border-[#1F1F1F] rounded-lg">
+            <div className="hidden md:block p-2 bg-white/5 border border-white/10 rounded-xl">
               {getTabIcon()}
             </div>
             <div className="text-left">
-              <h1 className="text-sm md:text-base font-black tracking-tighter uppercase text-white flex items-center gap-2">
-                Wavora Live <span className="text-[#1DB954]">●</span>
-                <span className="text-gray-400 font-medium normal-case tracking-normal hidden md:inline">
-                  {currentTab === 'admin-panel' ? 'Administration Suite' : `${currentTab.replace('-', ' ')} Feed`}
+              <h1 className="text-sm md:text-2xl font-black tracking-tighter text-white flex items-center gap-1.5 md:gap-3">
+                <span className="capitalize truncate max-w-[120px] md:max-w-none">{currentTab.replace('-', ' ')}</span>
+                <span className="text-[#6366F1] text-[8px] md:text-xs">●</span>
+                <span className="text-gray-500 font-medium text-[10px] md:text-sm tracking-widest uppercase hidden md:inline">
+                  {currentTab === 'admin-panel' ? 'Administration Suite' : 'Workspace'}
                 </span>
               </h1>
-              <p className="text-[10px] md:text-xs text-gray-500 font-mono uppercase tracking-wider hidden sm:block">
-                {(currentUser.email === 'admin@g.g' || currentUser.email === 'wavoradashboard@gmail.com') ? 'SYSTEM_ROOT_ADMIN_PORT' : `Artist Unique ID: #${currentUser.email.split('@')[0].toUpperCase()}-WA`}
+              <p className="text-[8px] md:text-[11px] text-gray-500 font-mono uppercase tracking-widest hidden sm:block mt-0.5">
+                {(currentUser.email === 'admin@g.g' || currentUser.email === 'wavoradashboard@gmail.com') ? 'SYSTEM_ROOT_ADMIN_PORT' : `Artist UID: #${currentUser.email.split('@')[0].toUpperCase()}-WA`}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="text-right hidden md:block">
               <p className="text-xs font-bold text-gray-350">{currentUser.artistName}</p>
-              <p className="text-[10px] text-[#1DB954] flex items-center gap-1 justify-end font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-ping" />
+              <p className="text-[10px] text-[#6366F1] flex items-center gap-1 justify-end font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1] animate-ping" />
                 VERIFIED & ACTIVE
               </p>
             </div>
@@ -1474,14 +1487,14 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsNotifDrawerOpen(true)}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#121212] hover:bg-[#1E1E1E] border border-[#1F1F1F] hover:border-[#1DB954]/50 flex items-center justify-center relative transition-all cursor-pointer shadow-inner active:scale-95 group"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#6366F1]/50 flex items-center justify-center relative transition-all cursor-pointer shadow-inner active:scale-95 group"
               id="btn_header_notification_bell"
               title="Open System Bulletins"
             >
-              <Bell className="w-4 h-4 md:w-[18px] md:h-[18px] text-gray-400 group-hover:text-[#1DB954] transition-all group-hover:rotate-12" />
+              <Bell className="w-3.5 h-3.5 md:w-[18px] md:h-[18px] text-gray-400 group-hover:text-[#6366F1] transition-all group-hover:rotate-12" />
               {activeNotifCount > 0 && (
                 <span 
-                  className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-red-500 text-[8px] md:text-[9px] font-black text-white leading-none ring-[3px] ring-[#0A0A0A] animate-pulse"
+                  className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full bg-red-500 text-[7px] md:text-[9px] font-black text-white leading-none ring-[2px] ring-[#070710] animate-pulse"
                   id="notif_header_badge_count"
                 >
                   {activeNotifCount}
@@ -1493,17 +1506,18 @@ export default function App() {
             <button 
               type="button"
               onClick={() => setIsProfileOpen(true)}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#121212] hover:bg-[#1E1E1E] border border-[#1F1F1F] hover:border-[#1DB954]/50 flex items-center justify-center font-bold text-xs text-[#1DB954] transition-all cursor-pointer shadow-inner active:scale-95 group relative"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#6366F1]/50 flex items-center justify-center font-bold text-[10px] md:text-xs text-[#6366F1] transition-all cursor-pointer shadow-inner active:scale-95 group relative"
               id="btn_header_profile_avatar"
               title="View Profile Suite"
             >
               <span className="group-hover:scale-105 transition-transform">
                 {currentUser.artistName.charAt(0).toUpperCase()}
               </span>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#1DB954] border border-[#0A0A0A] rounded-full" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 md:w-2.5 h-2 md:h-2.5 bg-[#6366F1] border border-[#070710] rounded-full" />
             </button>
           </div>
         </header>
+        )}
 
         {/* Dashboard Content Container */}
         <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto" id="app_view_viewport">
@@ -1511,10 +1525,10 @@ export default function App() {
         </div>
 
         {/* Editorial Footer */}
-        <footer className="py-4 px-6 md:px-8 bg-[#0A0A0A] border-t border-[#1F1F1F] flex flex-col md:flex-row items-center justify-between text-[9px] uppercase tracking-[0.2em] text-gray-500 font-bold gap-3 mt-auto" id="editorial_footer">
-          <div className="flex gap-4 md:gap-6">
+        <footer className="py-4 px-6 lg:px-8 bg-transparent border-t border-white/10 flex flex-col lg:flex-row items-center justify-between text-[9px] uppercase tracking-[0.2em] text-gray-500 font-bold gap-3 mt-auto shrink-0" id="editorial_footer">
+          <div className="flex gap-4 lg:gap-6">
             <span>v4.2.0-STABLE</span>
-            <span>System Status: <span className="text-[#1DB954] underline">Operational</span></span>
+            <span>System Status: <span className="text-[#6366F1] underline">Operational</span></span>
           </div>
           <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
             <button type="button" onClick={() => setCurrentTab('support')} className="hover:text-white cursor-pointer transition">Official Artist Channel Request</button>
@@ -1525,6 +1539,7 @@ export default function App() {
           </div>
         </footer>
 
+        </div>
       </main>
 
       {currentUser && (

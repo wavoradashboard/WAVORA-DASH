@@ -45,7 +45,7 @@ export default function CatalogueView({
       desc: 'Check reviewer comments below to correct metadata coordinates, artwork, or audio tags.',
     },
     Live: {
-      color: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/20',
+      color: 'text-indigo-400 border-indigo-500/30 bg-indigo-950/20',
       icon: UserCheck,
       label: 'Delivered Live to DSPs',
       desc: 'Actively ingested on Spotify, Apple Music, and active streaming catalogs.',
@@ -59,10 +59,10 @@ export default function CatalogueView({
   return (
     <div className="space-y-6" id="catalogue_root">
       {/* Header info */}
-      <div className="p-6 bg-[#121212] rounded-2xl border border-[#1F1F1F] flex items-center justify-between" id="catalogue_header">
+      <div className="p-6 bg-white/2 rounded-3xl border border-white/10 flex items-center justify-between" id="catalogue_header">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Layers className="w-5 h-5 text-[#1DB954]" />
+            <Layers className="w-5 h-5 text-[#6366F1]" />
             <h2 className="text-base font-black text-white uppercase tracking-tighter">My Ingestion Catalogue</h2>
           </div>
           <p className="text-xs text-gray-405 leading-relaxed">
@@ -72,7 +72,7 @@ export default function CatalogueView({
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-4 gap-1 sm:gap-2 p-1.5 bg-black rounded-xl border border-[#1F1F1F]" id="catalogue_tabs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 p-1.5 bg-black rounded-2xl border border-white/10" id="catalogue_tabs">
         {(['Submitted', 'Approved', 'Rejected', 'Live'] as TrackStatus[]).map((tab) => {
           const isActive = activeTab === tab;
           const count = getStatusCount(tab);
@@ -81,15 +81,15 @@ export default function CatalogueView({
               type="button"
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-2 px-1 text-center font-bold text-xs uppercase rounded-lg transition cursor-pointer relative ${
+              className={`py-2 px-1 text-center font-bold text-[10px] sm:text-xs uppercase rounded-xl transition cursor-pointer relative ${
                 isActive 
-                  ? 'bg-[#1DB954]/10 text-[#1DB954] border-b-2 border-[#1DB954]' 
-                  : 'text-gray-450 hover:text-white hover:bg-[#121212]'
+                  ? 'bg-[#6366F1]/10 text-[#6366F1] border-b-2 border-[#6366F1]' 
+                  : 'text-gray-450 hover:text-white hover:bg-white/5'
               }`}
               id={`cat_tab_trigger_${tab}`}
             >
-              <span className="block sm:inline">{tab}</span>
-              <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-black ${isActive ? 'bg-[#1DB954]/20 text-[#1DB954]' : 'bg-[#121212] text-gray-500'}`}>
+              <span className="">{tab}</span>
+              <span className={`ml-1 px-1 rounded text-[8px] sm:text-[9px] font-black ${isActive ? 'bg-[#6366F1]/20 text-[#6366F1]' : 'bg-white/2 text-gray-500'}`}>
                 {count}
               </span>
             </button>
@@ -98,7 +98,7 @@ export default function CatalogueView({
       </div>
 
       {/* Banner info text about active state */}
-      <div className={`p-4 rounded-xl border flex items-start gap-3 text-xs ${statusThemes[activeTab].color}`} id="active_tab_instructions_banner">
+      <div className={`p-4 rounded-2xl border flex items-start gap-3 text-xs ${statusThemes[activeTab].color}`} id="active_tab_instructions_banner">
         {React.createElement(statusThemes[activeTab].icon, { className: 'w-5 h-5 mt-0.5 flex-shrink-0' })}
         <div>
           <h4 className="font-bold text-gray-100">{statusThemes[activeTab].label}</h4>
@@ -108,7 +108,7 @@ export default function CatalogueView({
 
       {/* Catalogue releases dynamic grid */}
       {tabReleases.length === 0 ? (
-        <div className="py-16 text-center bg-[#0e1424] rounded-2xl border border-slate-900 space-y-3" id="catalogue_empty_box">
+        <div className="py-16 text-center bg-[#0e1424] rounded-3xl border border-slate-900 space-y-3" id="catalogue_empty_box">
           <Disc className="w-12 h-12 text-slate-705 mx-auto animate-spin" style={{ animationDuration: '6s' }} />
           <h3 className="text-sm font-bold text-gray-300">No releases found here.</h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">There are no files registered with status "{activeTab}" for your account.</p>
@@ -120,7 +120,7 @@ export default function CatalogueView({
             return (
               <div 
                 key={rel.id} 
-                className="bg-[#0f1322] border border-slate-850 rounded-xl overflow-hidden hover:border-slate-800 transition"
+                className="bg-[#0f1322] border border-slate-850 rounded-2xl overflow-hidden hover:border-slate-800 transition"
                 id={`cat_release_card_${rel.id}`}
               >
                 {/* Visual Header portion */}
@@ -132,7 +132,7 @@ export default function CatalogueView({
                     <img 
                       src={rel.coverArtSignedUrl || rel.coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop'} 
                       alt="" 
-                      className="w-14 h-14 rounded-lg object-cover border border-slate-800 flex-shrink-0"
+                      className="w-14 h-14 rounded-xl object-cover border border-slate-800 flex-shrink-0"
                       referrerPolicy="no-referrer"
                     />
                     <div className="space-y-0.5 text-left">
@@ -178,7 +178,7 @@ export default function CatalogueView({
                       <div className="p-5 space-y-4 text-xs">
                         {/* Rejection comment */}
                         {rel.status === 'Rejected' && rel.feedback && (
-                          <div className="p-3.5 bg-red-950/30 border border-red-500/20 rounded-xl space-y-1 text-red-300">
+                          <div className="p-3.5 bg-red-950/30 border border-red-500/20 rounded-2xl space-y-1 text-red-300">
                             <span className="text-[10px] font-black uppercase tracking-widest text-red-400 block">Reviewer Rejection Log:</span>
                             <p className="italic">"{rel.feedback}"</p>
                           </div>
@@ -230,7 +230,7 @@ export default function CatalogueView({
                           </div>
 
                           {/* Pitch text / Special requests */}
-                          <div className="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-900">
+                          <div className="space-y-2 bg-slate-900/60 p-3 rounded-2xl border border-slate-900">
                             <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Special Requests to Reviewer</span>
                             <p className="text-gray-400 text-[11px] leading-relaxed italic">
                               {rel.specialRequest ? `"${rel.specialRequest}"` : 'No special pitching requests submitted.'}
@@ -244,7 +244,7 @@ export default function CatalogueView({
                           
                           <div className="space-y-2">
                             {rel.tracks.map((track, idx) => (
-                              <div key={track.id} className="p-3 bg-slate-900/80 rounded-lg border border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                              <div key={track.id} className="p-3 bg-slate-900/80 rounded-xl border border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                                 <div className="space-y-1">
                                   <div className="font-bold text-gray-200">
                                     {idx + 1}. {track.trackName} {track.explicitContent && <span className="align-middle inline-block ml-1 px-1 py-0.2 rounded bg-red-950/40 text-[8px] font-black text-red-500 border border-red-900/20">EXPLICIT</span>}
