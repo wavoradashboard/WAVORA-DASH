@@ -1123,8 +1123,17 @@ export default function App() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
+        // Ensure valid UUID for the database in case of legacy local state IDs
+        let dbId = newRelease.id;
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dbId);
+        if (!isUUID) {
+          dbId = crypto.randomUUID();
+          newRelease.id = dbId; // ensure local state matches
+          console.warn(`Legacy ID format detected. Re-assigned standard UUID for database: ${dbId}`);
+        }
+
         const payload: any = {
-          id: newRelease.id,
+          id: dbId,
           user_id: session.user.id,
           email: currentUser?.email,
           album_name: newRelease.albumName,
@@ -1156,8 +1165,9 @@ export default function App() {
           };
           
           let firstError = null;
-          if (editingRelease) {
-            const { error } = await supabase.from('releases').update(fullPayload).eq('id', newRelease.id);
+          // If editing AND it was a valid UUID, try updating. Otherwise, just insert it.
+          if (editingRelease && isUUID) {
+            const { error } = await supabase.from('releases').update(fullPayload).eq('id', dbId);
             firstError = error;
           } else {
             const { error } = await supabase.from('releases').insert(fullPayload);
@@ -1175,8 +1185,8 @@ export default function App() {
             };
             
             let fallbackError = null;
-            if (editingRelease) {
-               const { error } = await supabase.from('releases').update(fallbackPayload).eq('id', newRelease.id);
+            if (editingRelease && isUUID) {
+               const { error } = await supabase.from('releases').update(fallbackPayload).eq('id', dbId);
                fallbackError = error;
             } else {
                const { error } = await supabase.from('releases').insert(fallbackPayload);

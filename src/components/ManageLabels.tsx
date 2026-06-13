@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Tags, Building2, Trash2, ShieldAlert, Sparkles } from 'lucide-react';
+import { Plus, Tags, Building2, Trash2, ShieldAlert, Sparkles, Users } from 'lucide-react';
 import { Label, User } from '../types';
 
 interface ManageLabelsProps {
@@ -31,6 +31,44 @@ export default function ManageLabels({
   const displayLabels = (isAdmin && !isImpersonating)
     ? managedLabels
     : managedLabels.filter(lbl => lbl.email === 'admin@g.g' || lbl.email === currentUser.email);
+
+  const [expandedUserEmail, setExpandedUserEmail] = useState<string | null>(null);
+
+  const toggleUserFolder = (email: string) => {
+    setExpandedUserEmail(prev => prev === email ? null : email);
+  };
+
+  const renderLabelCard = (lbl: Label) => (
+    <div 
+      key={lbl.id} 
+      className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col gap-1 text-xs"
+      id={`label_card_${lbl.id}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 truncate">
+          <Building2 className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <span className="font-extrabold text-gray-200 truncate">{lbl.name}</span>
+          {lbl.name === 'Wavora Live' && <span className="text-[8px] bg-amber-500/20 text-amber-500 px-1 rounded font-black uppercase">System</span>}
+        </div>
+
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => onRemoveLabel(lbl.id)}
+            className="p-1 rounded text-red-400 hover:bg-red-950/30 transition cursor-pointer"
+            id={`btn_delete_label_${lbl.id}`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      {isAdmin && !isImpersonating && lbl.email !== 'admin@g.g' && (
+        <div className="text-[9px] text-slate-500 italic mt-0.5 border-t border-slate-800/50 pt-1">
+          Owner: {users.find(u => u.email === lbl.email)?.artistName || lbl.email}
+        </div>
+      )}
+    </div>
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,49 +173,70 @@ export default function ManageLabels({
         <div className="md:col-span-8 space-y-3" id="labels_list_box">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Global Registries ({displayLabels.length})</h3>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" id="labels_list">
-            {/* Primary System Default Label (Always Visible) */}
-            <div className="p-3 bg-indigo-950/20 rounded-xl border border-indigo-500/20 flex items-center justify-between text-xs sm:col-span-1">
-              <div className="flex items-center gap-2 truncate">
-                <Building2 className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <span className="font-extrabold text-indigo-200 truncate">Wavora Live</span>
-                <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-1 rounded font-black uppercase">System Default</span>
-              </div>
-            </div>
-            
-            {/* Registered Managed Labels */}
-            {displayLabels.filter(lbl => lbl.name !== 'Wavora Live').map((lbl) => (
-              <div 
-                key={lbl.id} 
-                className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col gap-1 text-xs"
-                id={`label_card_${lbl.id}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 truncate">
-                    <Building2 className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                    <span className="font-extrabold text-gray-200 truncate">{lbl.name}</span>
-                    {lbl.name === 'Wavora Live' && <span className="text-[8px] bg-amber-500/20 text-amber-500 px-1 rounded font-black uppercase">System</span>}
-                  </div>
-
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => onRemoveLabel(lbl.id)}
-                      className="p-1 rounded text-red-400 hover:bg-red-950/30 transition cursor-pointer"
-                      id={`btn_delete_label_${lbl.id}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+          {isAdmin && !isImpersonating ? (
+            <div className="space-y-4" id="labels_grouped_list">
+              <div className="p-3 bg-indigo-950/20 rounded-xl border border-indigo-500/20 flex items-center justify-between text-xs w-full sm:w-1/2">
+                <div className="flex items-center gap-2 truncate">
+                  <Building2 className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                  <span className="font-extrabold text-indigo-200 truncate">Wavora Live</span>
+                  <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-1 rounded font-black uppercase">System Default</span>
                 </div>
-                {isAdmin && lbl.email !== 'admin@g.g' && (
-                  <div className="text-[9px] text-slate-500 italic mt-0.5 border-t border-slate-800/50 pt-1">
-                    Owner: {users.find(u => u.email === lbl.email)?.artistName || lbl.email}
-                  </div>
-                )}
               </div>
-            ))}
-          </div>
+              {Object.entries(
+                displayLabels.filter(lbl => lbl.name !== 'Wavora Live').reduce((acc, lbl) => {
+                  if (!acc[lbl.email]) acc[lbl.email] = [];
+                  acc[lbl.email].push(lbl);
+                  return acc;
+                }, {} as Record<string, Label[]>)
+              ).map(([email, userLabels]) => {
+                const ownerName = users.find(u => u.email === email)?.artistName || email;
+                const isExpanded = expandedUserEmail === email;
+                return (
+                  <div key={email} className="bg-slate-900/40 rounded-xl border border-slate-800 p-2 space-y-4">
+                    <div 
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer transition"
+                      onClick={() => toggleUserFolder(email)}
+                    >
+                      <div className="w-8 h-8 bg-amber-500/10 rounded-lg border border-amber-500/20 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xs text-gray-200">{ownerName}</h3>
+                        <p className="text-[9px] text-gray-500 font-mono">{email}</p>
+                      </div>
+                      <div className="ml-auto flex items-center gap-3">
+                        <span className="text-[9px] font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded-full">
+                          {userLabels.length} Label{userLabels.length !== 1 ? 's' : ''}
+                        </span>
+                        <svg className={`w-3 h-3 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-2 pb-2">
+                        {userLabels.map((lbl) => renderLabelCard(lbl))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" id="labels_list">
+              {/* Primary System Default Label (Always Visible) */}
+              <div className="p-3 bg-indigo-950/20 rounded-xl border border-indigo-500/20 flex items-center justify-between text-xs sm:col-span-1">
+                <div className="flex items-center gap-2 truncate">
+                  <Building2 className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                  <span className="font-extrabold text-indigo-200 truncate">Wavora Live</span>
+                  <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-1 rounded font-black uppercase">System Default</span>
+                </div>
+              </div>
+              
+              {/* Registered Managed Labels */}
+              {displayLabels.filter(lbl => lbl.name !== 'Wavora Live').map((lbl) => renderLabelCard(lbl))}
+            </div>
+          )}
         </div>
       </div>
     </div>

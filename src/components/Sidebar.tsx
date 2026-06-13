@@ -50,8 +50,8 @@ export default function Sidebar({
   const menuItems = [
     { id: 'home', label: 'Home Feed', icon: Home, visible: !isAdmin },
     { id: 'new-release', label: 'New Release', icon: FilePlus2, visible: !isAdmin },
-    { id: 'manage-artists', label: 'Manage Artists', icon: Users, visible: !isAdmin },
-    { id: 'manage-labels', label: 'Manage Labels', icon: Tags, visible: true },
+    { id: 'manage-artists', label: isAdmin ? 'Artist DB' : 'Manage Artists', icon: Users, visible: true },
+    { id: 'manage-labels', label: isAdmin ? 'Label DB' : 'Manage Labels', icon: Tags, visible: true },
     { id: 'catalogue', label: 'Music Catalogue', icon: Layers, visible: !isAdmin },
     { id: 'revenue', label: 'Revenue Reports', icon: Wallet, visible: !isAdmin },
     { id: 'support', label: 'Help & Support', icon: HelpCircle, visible: !isAdmin },

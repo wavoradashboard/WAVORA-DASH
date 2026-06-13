@@ -57,6 +57,11 @@ export default function ManageArtists({
       return;
     }
 
+    if (!instagramLink.trim()) {
+      setFormError('Instagram link is required.');
+      return;
+    }
+
     // Prepare links default or validate
     const profile: ArtistProfile = {
       id: `art-${Date.now()}`,
@@ -64,7 +69,7 @@ export default function ManageArtists({
       name: artistName,
       spotifyLink: (hasSpotify === 'yes' && spotifyLink.trim()) ? spotifyLink.trim() : (hasSpotify === 'no' ? 'NONE' : 'https://open.spotify.com/artist/dummy_id'),
       appleMusicLink: (hasApple === 'yes' && appleMusicLink.trim()) ? appleMusicLink.trim() : (hasApple === 'no' ? 'NONE' : 'https://music.apple.com/artist/dummy_id'),
-      instagramLink: instagramLink.trim() || 'NONE',
+      instagramLink: instagramLink.trim(),
     };
 
     onAddArtist(profile);
@@ -78,6 +83,123 @@ export default function ManageArtists({
     setInstagramLink('');
     setShowForm(false);
   };
+
+  const [expandedUserEmail, setExpandedUserEmail] = useState<string | null>(null);
+
+  const toggleUserFolder = (email: string) => {
+    setExpandedUserEmail(prev => prev === email ? null : email);
+  };
+
+  const renderArtistCard = (artist: ArtistProfile) => (
+    <div 
+      key={artist.id} 
+      className="p-5 bg-gradient-to-b from-[#111625] to-[#0a0e1c] rounded-2xl border border-slate-850 flex flex-col justify-between"
+      style={{ minHeight: '11rem' }}
+      id={`artist_card_${artist.id}`}
+    >
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-extrabold text-white text-sm tracking-wide truncate">{artist.name}</h4>
+          <span className="p-1 rounded bg-blue-950/40 text-blue-400 border border-blue-900/30 text-[9px] uppercase font-bold">
+            Profile Linked
+          </span>
+        </div>
+        
+        {isAdmin && !isImpersonating && artist.email !== 'admin@g.g' && (
+          <div className="text-[9px] text-blue-400/70 italic mb-3 font-mono">
+            Owner: {users.find(u => u.email === artist.email)?.artistName || artist.email}
+          </div>
+        )}
+        
+        <div className="space-y-2 mt-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
+            <div className="flex items-center gap-2 truncate">
+              <Globe className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+              {artist.spotifyLink === 'NONE' ? (
+                <span className="text-red-400/60 font-medium italic">No Spotify ID</span>
+              ) : (
+                <a href={artist.spotifyLink} target="_blank" rel="noreferrer" className="hover:text-violet-400 hover:underline text-gray-400 truncate">
+                  Spotify Account Profile
+                </a>
+              )}
+            </div>
+            {artist.spotifyLink && artist.spotifyLink !== 'NONE' && (
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(artist.spotifyLink);
+                  alert('Spotify URL copied to clipboard');
+                }}
+                className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
+                title="Copy Link"
+              >
+                Copy
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
+            <div className="flex items-center gap-2 truncate">
+              <Disc className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+              {artist.appleMusicLink === 'NONE' ? (
+                <span className="text-red-400/60 font-medium italic">No Apple ID</span>
+              ) : (
+                <a href={artist.appleMusicLink} target="_blank" rel="noreferrer" className="hover:text-red-400 hover:underline text-gray-400 truncate">
+                  Apple Music Profile
+                </a>
+              )}
+            </div>
+            {artist.appleMusicLink && artist.appleMusicLink !== 'NONE' && (
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(artist.appleMusicLink);
+                  alert('Apple Music URL copied to clipboard');
+                }}
+                className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
+                title="Copy Link"
+              >
+                Copy
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
+            <div className="flex items-center gap-2 truncate">
+              <Instagram className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+              {artist.instagramLink === 'NONE' ? (
+                <span className="text-red-400/60 font-medium italic">No Instagram</span>
+              ) : (
+                <a href={artist.instagramLink} target="_blank" rel="noreferrer" className="hover:text-pink-400 hover:underline text-gray-400 truncate">
+                  Instagram Link
+                </a>
+              )}
+            </div>
+            {artist.instagramLink && artist.instagramLink !== 'NONE' && (
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(artist.instagramLink);
+                  alert('Instagram URL copied to clipboard');
+                }}
+                className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
+                title="Copy Link"
+              >
+                Copy
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-3 border-t border-slate-800/60 mt-2">
+        <button
+          type="button"
+          onClick={() => onRemoveArtist(artist.id)}
+          className="p-1 rounded bg-red-950/20 text-red-400 hover:bg-red-950/60 transition cursor-pointer"
+          id={`btn_delete_artist_${artist.id}`}
+          title="Remove Alias"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6" id="manage_artists_root">
@@ -232,11 +354,12 @@ export default function ManageArtists({
               )}
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Instagram Handler link</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-widest">Instagram Handler link *</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs">IG</div>
                   <input
                     type="url"
+                    required
                     className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 pl-12 pr-3 text-sm text-white focus:outline-none focus:border-blue-500"
                     placeholder="https://instagram.com/..."
                     value={instagramLink}
@@ -274,106 +397,53 @@ export default function ManageArtists({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="artists_grid_list">
-          {displayArtists.map((artist) => (
-            <div 
-              key={artist.id} 
-              className="p-5 bg-gradient-to-b from-[#111625] to-[#0a0e1c] rounded-2xl border border-slate-850 flex flex-col justify-between"
-              style={{ minHeight: '11rem' }}
-              id={`artist_card_${artist.id}`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-extrabold text-white text-sm tracking-wide truncate">{artist.name}</h4>
-                  <span className="p-1 rounded bg-blue-950/40 text-blue-400 border border-blue-900/30 text-[9px] uppercase font-bold">
-                    Profile Linked
-                  </span>
+        isAdmin && !isImpersonating ? (
+          <div className="space-y-6" id="artists_grouped_list">
+            {Object.entries(
+              displayArtists.reduce((acc, artist) => {
+                if (!acc[artist.email]) acc[artist.email] = [];
+                acc[artist.email].push(artist);
+                return acc;
+              }, {} as Record<string, ArtistProfile[]>)
+            ).map(([email, userArtists]) => {
+              const ownerName = users.find(u => u.email === email)?.artistName || email;
+              const isExpanded = expandedUserEmail === email;
+              return (
+                <div key={email} className="bg-slate-900/40 rounded-2xl border border-slate-800 p-2 space-y-4">
+                  <div 
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 cursor-pointer transition"
+                    onClick={() => toggleUserFolder(email)}
+                  >
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl border border-blue-500/20 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-gray-200">{ownerName}</h3>
+                      <p className="text-[10px] text-gray-500 font-mono">{email}</p>
+                    </div>
+                    <div className="ml-auto flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded-full">
+                        {userArtists.length} Artist{userArtists.length !== 1 ? 's' : ''}
+                      </span>
+                      <svg className={`w-4 h-4 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 px-3 pb-3">
+                      {userArtists.map((artist) => renderArtistCard(artist))}
+                    </div>
+                  )}
                 </div>
-                
-                {isAdmin && artist.email !== 'admin@g.g' && (
-                  <div className="text-[9px] text-blue-400/70 italic mb-3 font-mono">
-                    Owner: {users.find(u => u.email === artist.email)?.artistName || artist.email}
-                  </div>
-                )}
-                
-                <div className="space-y-2 mt-2 text-xs text-gray-400">
-                  <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
-                    <div className="flex items-center gap-2 truncate">
-                      <Globe className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      {artist.spotifyLink === 'NONE' ? (
-                        <span className="text-red-400/60 font-medium italic">No Spotify ID</span>
-                      ) : (
-                        <a href={artist.spotifyLink} target="_blank" rel="noreferrer" className="hover:text-violet-400 hover:underline text-gray-400 truncate">
-                          Spotify Account Profile
-                        </a>
-                      )}
-                    </div>
-                    {artist.spotifyLink && artist.spotifyLink !== 'NONE' && (
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText(artist.spotifyLink);
-                          alert('Spotify URL copied to clipboard');
-                        }}
-                        className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
-                        title="Copy Link"
-                      >
-                        Copy
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
-                    <div className="flex items-center gap-2 truncate">
-                      <Disc className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      {artist.appleMusicLink === 'NONE' ? (
-                        <span className="text-red-400/60 font-medium italic">No Apple ID</span>
-                      ) : (
-                        <a href={artist.appleMusicLink} target="_blank" rel="noreferrer" className="hover:text-red-400 hover:underline text-gray-400 truncate">
-                          Apple Music Profile
-                        </a>
-                      )}
-                    </div>
-                    {artist.appleMusicLink && artist.appleMusicLink !== 'NONE' && (
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText(artist.appleMusicLink);
-                          alert('Apple Music URL copied to clipboard');
-                        }}
-                        className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
-                        title="Copy Link"
-                      >
-                        Copy
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 justify-between group/link truncate text-[11px]">
-                    <div className="flex items-center gap-2 truncate">
-                      <Instagram className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      {artist.instagramLink === 'NONE' ? (
-                        <span className="text-red-400/60 font-medium italic">No Instagram</span>
-                      ) : (
-                        <a href={artist.instagramLink} target="_blank" rel="noreferrer" className="hover:text-pink-400 hover:underline text-gray-400 truncate">
-                          Instagram Link
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-3 border-t border-slate-800/60 mt-2">
-                <button
-                  type="button"
-                  onClick={() => onRemoveArtist(artist.id)}
-                  className="p-1 rounded bg-red-950/20 text-red-400 hover:bg-red-950/60 transition cursor-pointer"
-                  id={`btn_delete_artist_${artist.id}`}
-                  title="Remove Alias"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="artists_grid_list">
+            {displayArtists.map((artist) => renderArtistCard(artist))}
+          </div>
+        )
       )}
     </div>
   );
