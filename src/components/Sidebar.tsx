@@ -57,6 +57,7 @@ export default function Sidebar({
     { id: 'support', label: 'Help & Support', icon: HelpCircle, visible: !isAdmin },
     // Admin features visible to Admin
     { id: 'admin-panel', label: 'Administration Suite', icon: ShieldCheck, visible: isAdmin },
+    { id: 'member-pool', label: 'Member Pool', icon: Users, visible: isAdmin },
   ];
 
   const handleTabClick = (id: string) => {

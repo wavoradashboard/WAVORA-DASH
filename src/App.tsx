@@ -14,6 +14,7 @@ import CatalogueView from './components/CatalogueView';
 import RevenuePage from './components/RevenuePage';
 import SupportPage from './components/SupportPage';
 import AdminPanel from './components/AdminPanel';
+import MemberPool from './components/MemberPool';
 import ProfileModal from './components/ProfileModal';
 import RevenueReportsModal from './components/RevenueReportsModal';
 import NotificationsDrawer from './components/NotificationsDrawer';
@@ -1423,6 +1424,15 @@ export default function App() {
             isImpersonating={isImpersonating}
           />
         );
+      case 'member-pool':
+        return (
+          <MemberPool
+            currentUser={currentUser}
+            users={users}
+            onImpersonateUser={handleImpersonateUser}
+            onUpdateUser={handleUpdateUser}
+          />
+        );
       case 'manage-labels':
         return (
           <ManageLabels
@@ -1518,6 +1528,7 @@ export default function App() {
       case 'home': return <Home className="w-4 h-4 text-[#6366F1]" />;
       case 'new-release': return <Disc className="w-4 h-4 text-[#6366F1]" />;
       case 'manage-artists': return <Users className="w-4 h-4 text-[#6366F1]" />;
+      case 'member-pool': return <Users className="w-4 h-4 text-[#6366F1]" />;
       case 'manage-labels': return <Tags className="w-4 h-4 text-[#6366F1]" />;
       case 'catalogue': return <Layers className="w-4 h-4 text-[#6366F1]" />;
       case 'revenue': return <Landmark className="w-4 h-4 text-[#6366F1]" />;

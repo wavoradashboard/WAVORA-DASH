@@ -714,9 +714,16 @@ export default function NewReleaseWizard({
 
                   <div className="flex gap-2">
                     <select
-                      className="flex-1 bg-[#111726]/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#6366F1]"
+                      className="flex-1 bg-[#111726]/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#6366F1] w-full"
                       value={selectedPrimaryToAdd}
-                      onChange={(e) => setSelectedPrimaryToAdd(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && !primaryArtists.includes(val)) {
+                          setPrimaryArtists(prev => [...prev, val]);
+                          setOtherArtists(prev => prev.filter(name => name !== val));
+                        }
+                        setSelectedPrimaryToAdd('');
+                      }}
                       id="select_add_primary_artist"
                     >
                       <option value="">Choose Managed Artist...</option>
@@ -729,16 +736,6 @@ export default function NewReleaseWizard({
                         ))
                       }
                     </select>
-                    <button
-                      type="button"
-                      onClick={handleAddPrimaryArtistClick}
-                      className="cursor-pointer px-4 bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-slate-800 disabled:text-gray-600 text-black rounded-xl flex items-center justify-center transition active:scale-95 text-xs font-black"
-                      title="Add Primary Artist"
-                      id="btn_add_primary_artist"
-                      disabled={!selectedPrimaryToAdd}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
 
@@ -771,9 +768,15 @@ export default function NewReleaseWizard({
 
                   <div className="flex gap-2">
                     <select
-                      className="flex-1 bg-[#111726]/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#6366F1]"
+                      className="flex-1 bg-[#111726]/50 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#6366F1] w-full"
                       value={selectedFeatureToAdd}
-                      onChange={(e) => setSelectedFeatureToAdd(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && !featureArtists.includes(val) && !primaryArtists.includes(val)) {
+                          setFeatureArtists(prev => [...prev, val]);
+                        }
+                        setSelectedFeatureToAdd('');
+                      }}
                       id="select_add_feature_artist"
                     >
                       <option value="">Choose Managed Artist...</option>
@@ -786,16 +789,6 @@ export default function NewReleaseWizard({
                         ))
                       }
                     </select>
-                    <button
-                      type="button"
-                      onClick={handleAddFeatureArtistClick}
-                      className="cursor-pointer px-4 bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-slate-800 disabled:text-gray-600 text-black rounded-xl flex items-center justify-center transition active:scale-95 text-xs font-black"
-                      title="Add Featured Artist"
-                      id="btn_add_feature_artist"
-                      disabled={!selectedFeatureToAdd}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               </div>
