@@ -129,7 +129,7 @@ export default function ManageArtists({
                   navigator.clipboard.writeText(artist.spotifyLink);
                   alert('Spotify URL copied to clipboard');
                 }}
-                className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
+                className="opacity-100 lg:opacity-0 lg:group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
                 title="Copy Link"
               >
                 Copy
@@ -153,7 +153,7 @@ export default function ManageArtists({
                   navigator.clipboard.writeText(artist.appleMusicLink);
                   alert('Apple Music URL copied to clipboard');
                 }}
-                className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
+                className="opacity-100 lg:opacity-0 lg:group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
                 title="Copy Link"
               >
                 Copy
@@ -177,7 +177,7 @@ export default function ManageArtists({
                   navigator.clipboard.writeText(artist.instagramLink);
                   alert('Instagram URL copied to clipboard');
                 }}
-                className="opacity-0 group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
+                className="opacity-100 lg:opacity-0 lg:group-hover/link:opacity-100 p-0.5 hover:text-white transition cursor-pointer text-[10px]"
                 title="Copy Link"
               >
                 Copy

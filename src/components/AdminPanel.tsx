@@ -26,7 +26,8 @@ import {
   Hash,
   Layers,
   Copy,
-  Landmark
+  Landmark,
+  Edit2
 } from 'lucide-react';
 import { User, Release, SupportQuery, OacApplication, RevenueReport, TrackStatus, Plan, Notification, ArtistProfile, PayoutRequest } from '../types';
 
@@ -41,6 +42,7 @@ interface AdminPanelProps {
   onRejectUser: (email: string) => void;
   onCreateUser: (newUser: User) => Promise<{ success: boolean; message: string }>;
   onUpdateReleaseStatus: (releaseId: string, status: TrackStatus, feedback?: string) => void;
+  onUpdateRelease?: (releaseId: string, updates: Partial<Release>) => void;
   onReplySupportQuery: (queryId: string, replyText: string) => void;
   onUpdateOacStatus: (oacId: string, status: 'Approved' | 'Rejected') => void;
   onPostRevenue: (email: string, month: string, amount: number, releaseName: string, currency: 'USD' | 'INR') => void;
@@ -159,6 +161,7 @@ export default function AdminPanel({
   onRejectUser,
   onCreateUser,
   onUpdateReleaseStatus,
+  onUpdateRelease,
   onReplySupportQuery,
   onUpdateOacStatus,
   onPostRevenue,
@@ -174,6 +177,7 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'users' | 'releases' | 'queries' | 'oac' | 'revenue' | 'notifications' | 'artists' | 'legal' | 'payouts'>('users');
   const [inspectRelease, setInspectRelease] = useState<Release | null>(null);
+  const [editingTrackIsrcMap, setEditingTrackIsrcMap] = useState<Record<string, string>>({});
 
   // New User Provisioning States
   const [createArtistName, setCreateArtistName] = useState('');
@@ -588,6 +592,29 @@ export default function AdminPanel({
     );
   };
 
+  const handleSaveTrackIsrc = (trackId: string) => {
+    if (!inspectRelease || !onUpdateRelease) return;
+    const newIsrc = editingTrackIsrcMap[trackId];
+    if (newIsrc === undefined) return;
+    
+    const updatedTracks = inspectRelease.tracks.map((t) => 
+      t.id === trackId ? { ...t, isrc: newIsrc } : t
+    );
+    
+    // Update locally in modal
+    setInspectRelease({ ...inspectRelease, tracks: updatedTracks });
+    
+    // Update global context/db
+    onUpdateRelease(inspectRelease.id, { tracks: updatedTracks });
+    
+    // Clear edit state
+    setEditingTrackIsrcMap((prev) => {
+      const next = { ...prev };
+      delete next[trackId];
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-6" id="admin_panel_root">
       {/* Header Info */}
@@ -650,9 +677,9 @@ export default function AdminPanel({
         {/* MEMBERS APPROVAL TAB */}
         {activeTab === 'users' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="admin_members_section">
-            {/* Column 1 of 3: Create / Provision Artist Account */}
-            <div className="md:col-span-4 bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
+            <div className="max-w-2xl mx-auto w-full" id="admin_members_section">
+            {/* Create / Provision Artist Account */}
+            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-[#6366F1]">Provision Artist</h3>
               <p className="text-[11px] text-gray-400">Directly generate, configure, and approve a secure artist account.</p>
 
@@ -738,113 +765,6 @@ export default function AdminPanel({
                   )}
                 </button>
               </form>
-            </div>
-
-            {/* Column 2 of 3: Pending approvals */}
-            <div className="md:col-span-4 bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500">Pending Approvals ({pendingUsers.length})</h3>
-              
-              {pendingUsers.length === 0 ? (
-                <p className="text-xs text-gray-500 py-8 text-center bg-black/40 rounded-xl">No pending external registrations.</p>
-              ) : (
-                <div className="space-y-3">
-                  {pendingUsers.map((user, idx) => (
-                    <div key={`${user.email}-p-${idx}`} className="p-4 bg-black rounded-2xl border border-white/10 flex flex-col justify-between gap-3 text-xs text-left">
-                      <div>
-                        <div className="font-bold text-white text-sm">{user.artistName}</div>
-                        <div className="text-gray-400 font-mono text-[11px] mt-0.5 truncate">{user.email}</div>
-                        <div className="text-gray-500 mt-2 flex items-center gap-2">
-                          <span className="px-1.5 py-0.5 rounded bg-blue-900/20 text-blue-400 font-bold text-[9px] uppercase">{user.plan}</span>
-                          <span>Reg: {new Date(user.registeredAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => onApproveUser(user.email)}
-                          className="flex-1 py-1.5 bg-[#6366F1] text-black hover:bg-indigo-400 font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer transition text-[11px]"
-                          id={`btn_approve_user_${user.email}`}
-                        >
-                          <Check className="w-3.5 h-3.5" /> Approve
-                        </button>
-                        <button
-                          onClick={() => onRejectUser(user.email)}
-                          className="flex-1 py-1.5 bg-red-955 text-red-400 border border-red-500/20 hover:bg-red-900 hover:text-white font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer transition text-[11px]"
-                        >
-                          <X className="w-3.5 h-3.5" /> Deny
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Column 3 of 3: Active Members listing with Impersonate */}
-            <div className="md:col-span-4 bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Active Members Pool ({activeUsers.length})</h3>
-              
-              <div className="max-h-[400px] overflow-y-auto space-y-2 pr-1">
-                {activeUsers.map((user, idx) => (
-                  <div key={`${user.email}-a-${idx}`} className="p-3 bg-black rounded-xl border border-white/10 flex flex-col gap-2 text-xs text-left" id={`active_member_card_${user.email}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1 pr-2">
-                        <span className="font-bold text-gray-200 block truncate">{user.artistName}</span>
-                        <span className="text-[10px] text-gray-400 block truncate">{user.email}</span>
-                        <span className="text-[9px] bg-slate-850 border border-slate-800 text-slate-300 font-semibold px-1 rounded inline-block mt-1">{user.plan} Tier</span>
-                        {user.password && (
-                          <span className="text-[10px] text-indigo-400 font-medium font-mono block mt-1.5 bg-indigo-950/30 border border-indigo-500/10 px-1.5 py-0.5 rounded w-fit">🔑 Active Pass: <span className="font-extrabold">{user.password}</span></span>
-                        )}
-                        {passwordChangeSuccessEmail === user.email && (
-                          <span className="text-[10px] text-indigo-400 font-extrabold block mt-1.5">✓ Credentials updated successfully!</span>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1.5 flex-shrink-0 items-end">
-                        <button
-                          onClick={() => onImpersonateUser(user)}
-                          className="px-2.5 py-1.5 bg-white hover:bg-gray-100 text-black font-extrabold rounded text-[9px] uppercase tracking-wider cursor-pointer transition w-24 text-center"
-                          id={`btn_impersonate_${user.email}`}
-                        >
-                          Impersonate
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (editingPasswordUserEmail === user.email) {
-                              setEditingPasswordUserEmail(null);
-                            } else {
-                              setEditingPasswordUserEmail(user.email);
-                              setNewPasswordValue('');
-                            }
-                          }}
-                          className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-850 hover:bg-zinc-800 text-gray-300 font-extrabold rounded text-[9px] uppercase tracking-wider cursor-pointer transition w-24 text-center"
-                          id={`btn_change_pass_${user.email}`}
-                        >
-                          {editingPasswordUserEmail === user.email ? 'Cancel' : 'Change Pass'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {editingPasswordUserEmail === user.email && (
-                      <div className="mt-2.5 pt-2 border-t border-zinc-900 flex items-center gap-1.5" id={`pwd_form_container_${user.email}`}>
-                        <input
-                          type="text"
-                          value={newPasswordValue}
-                          onChange={(e) => setNewPasswordValue(e.target.value)}
-                          placeholder="Type new password"
-                          className="flex-1 bg-zinc-905 border border-zinc-800 text-white rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-violet-500"
-                          id={`input_new_pass_${user.email}`}
-                        />
-                        <button
-                          onClick={() => handleAdminChangePassword(user.email)}
-                          className="bg-[#6366F1] hover:bg-[#818CF8] text-black font-black px-3 py-1.5 rounded text-[10px] uppercase cursor-pointer"
-                          id={`btn_save_pass_${user.email}`}
-                        >
-                          Save
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -2112,16 +2032,55 @@ export default function AdminPanel({
 
                         <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left relative group">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Technical ISRC Code</span>
-                          <span className="text-amber-400 font-mono font-black text-[11px]">{track.isrc || 'Awaiting Auto-Generation'}</span>
-                          {track.isrc && (
+                          {editingTrackIsrcMap[track.id] !== undefined ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              <input
+                                type="text"
+                                className="w-full bg-zinc-900 border border-zinc-700 text-white rounded px-2 py-1 text-[10px] focus:outline-none focus:border-[#6366F1]"
+                                value={editingTrackIsrcMap[track.id]}
+                                onChange={(e) => setEditingTrackIsrcMap(prev => ({ ...prev, [track.id]: e.target.value }))}
+                              />
+                              <button onClick={() => handleSaveTrackIsrc(track.id)} className="bg-[#6366F1] text-black px-2 py-1 rounded text-[9px] font-bold">Save</button>
+                              <button onClick={() => setEditingTrackIsrcMap(prev => { const n = {...prev}; delete n[track.id]; return n; })} className="bg-red-500 text-white px-2 py-1 rounded text-[9px] font-bold">Cancel</button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-amber-400 font-mono font-black text-[11px]">{track.isrc || 'Awaiting Auto-Generation'}</span>
+                              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                                <button
+                                  onClick={() => setEditingTrackIsrcMap(prev => ({ ...prev, [track.id]: track.isrc || '' }))}
+                                  className="p-0.5 hover:text-[#6366F1] text-gray-500 cursor-pointer"
+                                  title="Edit ISRC"
+                                >
+                                  <Edit2 className="w-2.5 h-2.5" />
+                                </button>
+                                {track.isrc && (
+                                  <button 
+                                    onClick={() => handleCopy(track.isrc!, 'ISRC')}
+                                    className="p-0.5 hover:text-[#6366F1] text-gray-500 cursor-pointer"
+                                  >
+                                    <Copy className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {track.googleDriveLink && (
+                          <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left relative group">
+                            <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Google Drive Master</span>
+                            <a href={track.googleDriveLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 font-semibold text-[11px] underline truncate block">
+                              Open Source Link
+                            </a>
                             <button 
-                              onClick={() => handleCopy(track.isrc!, 'ISRC')}
+                              onClick={() => handleCopy(track.googleDriveLink!, 'Google Drive Link')}
                               className="absolute top-2 right-2 p-0.5 hover:text-[#6366F1] text-gray-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                             >
                               <Copy className="w-2.5 h-2.5" />
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
 
                         <div className="p-2.5 bg-[#090909] rounded border border-white/10 space-y-0.5 text-left">
                           <span className="text-[8px] text-gray-500 uppercase font-extrabold block">Genre/Sub-Genre</span>

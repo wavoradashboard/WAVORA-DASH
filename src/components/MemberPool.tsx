@@ -53,6 +53,10 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
     onUpdateUser(email, { plan });
   };
 
+  const handlePlanStartDateUpdate = (email: string, dateStr: string) => {
+    onUpdateUser(email, { planStartDate: dateStr });
+  };
+
   const handlePlanDateUpdate = (email: string, dateStr: string) => {
     onUpdateUser(email, { planEndDate: dateStr });
   };
@@ -93,6 +97,7 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">Alias / Email</th>
                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">Account Type</th>
                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">Subscription Plan</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">Plan Start Date</th>
                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">Plan End Date</th>
                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">Security</th>
                 <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400 text-right">Actions</th>
@@ -126,6 +131,15 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
                         <option value="Pro">Pro</option>
                         <option value="Elite">Elite</option>
                       </select>
+                    </td>
+                    <td className="px-6 py-4">
+                      <input 
+                        type="date"
+                        value={user.planStartDate || user.registeredAt.split('T')[0]} // Default to registered start
+                        onChange={(e) => handlePlanStartDateUpdate(user.email, e.target.value)}
+                        className="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-text min-w-[130px] color-scheme-dark"
+                        style={{ colorScheme: 'dark' }}
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <input 
@@ -193,7 +207,7 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
                        <Info className="w-8 h-8 text-slate-700" />
                        <p>No active members found matching your criteria.</p>

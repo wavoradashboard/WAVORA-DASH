@@ -196,7 +196,8 @@ export default function App() {
             plan: u.plan,
             isApproved: u.is_approved,
             registeredAt: u.registered_at,
-            planEndDate: extractedPlanEndDate,
+            planStartDate: u.plan_start_date ? u.plan_start_date.split('T')[0] : undefined,
+            planEndDate: u.plan_end_date ? u.plan_end_date.split('T')[0] : extractedPlanEndDate,
             password: overridePassword,
             upiId: extractedUpiId,
             bankName: extractedBankName,
@@ -587,6 +588,28 @@ export default function App() {
     }));
   };
 
+  const handleUpdateRelease = async (releaseId: string, updates: Partial<Release>) => {
+    try {
+      // In Supabase we mainly care about 'tracks' for now, but handle generically
+      let dbUpdates: any = {};
+      if (updates.tracks !== undefined) dbUpdates.tracks = updates.tracks;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.feedback !== undefined) dbUpdates.feedback = updates.feedback;
+      
+      await supabase.from('releases').update(dbUpdates).eq('id', releaseId);
+    } catch (e) {
+      console.warn("Release full update failed, updating locally only:", e);
+    }
+    updateState((prev) => ({
+      ...prev,
+      releases: prev.releases.map((r) => 
+        r.id === releaseId 
+          ? { ...r, ...updates } 
+          : r
+      ),
+    }));
+  };
+
   const handleReplySupportQuery = async (queryId: string, replyText: string) => {
     try {
       await supabase.from('support_queries').update({ status: 'Resolved', reply_text: replyText }).eq('id', queryId);
@@ -875,6 +898,7 @@ export default function App() {
     if (activePassword) {
       rawPLinesToCommit.push(`__PWD_OVERRIDE__:${activePassword}`);
     }
+    // We used to pack planEndDate here. But let's also preserve it here for backward compatibility or let native DB take precedence.
     if (activePlanEndDate) {
       rawPLinesToCommit.push(`__PLAN_END_DATE__:${activePlanEndDate}`);
     }
@@ -899,6 +923,8 @@ export default function App() {
       ...(updates.plan && { plan: updates.plan }),
       ...(updates.isApproved !== undefined && { is_approved: updates.isApproved }),
       ...(updates.registeredAt && { registered_at: updates.registeredAt }),
+      ...(updates.planStartDate && { plan_start_date: updates.planStartDate }),
+      ...(updates.planEndDate && { plan_end_date: updates.planEndDate }),
     };
 
     try {
@@ -1487,6 +1513,7 @@ export default function App() {
             onRejectUser={handleRejectUser}
             onCreateUser={handleCreateUser}
             onUpdateReleaseStatus={handleUpdateReleaseStatus}
+            onUpdateRelease={handleUpdateRelease}
             onReplySupportQuery={handleReplySupportQuery}
             onUpdateOacStatus={handleUpdateOacStatus}
             onPostRevenue={handlePostRevenue}

@@ -243,6 +243,9 @@ export default function NewReleaseWizard({
   // Sync trackList length with numTracks and primaryArtists
   useEffect(() => {
     setTrackList((prev) => {
+      // If editing release, and trackList length already matches numTracks, skip
+      if (editingRelease && prev.length === numTracks && prev.length > 0) return prev;
+      
       let updated = [...prev];
       if (updated.length < numTracks) {
         // Append new empty templates
@@ -277,7 +280,7 @@ export default function NewReleaseWizard({
         mainArtistName: t.mainArtistName ? t.mainArtistName : primaryArtists.join(', ')
       }));
     });
-  }, [numTracks, primaryArtists]);
+  }, [numTracks, primaryArtists, editingRelease]);
 
   // Cover Art Preview for UI
   const [coverArtPreview, setCoverArtPreview] = useState('');

@@ -10,6 +10,7 @@ export interface User {
   plan: Plan;
   isApproved: boolean;
   registeredAt: string;
+  planStartDate?: string;
   planEndDate?: string;
   allowedCLines?: string[];
   allowedPLines?: string[];
