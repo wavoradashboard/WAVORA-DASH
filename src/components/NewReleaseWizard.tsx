@@ -291,60 +291,78 @@ export default function NewReleaseWizard({
     if (!file) return;
 
     setArtworkWarning('');
-    setCoverArtFile(file);
 
     // Standard format constraint validation
     const fileType = file.type;
-    const isJPEG = fileType === 'image/jpeg' || fileType === 'image/jpg';
+    const isJPEG = fileType === 'image/jpeg' || fileType === 'image/jpg' || fileType === 'image/pjpeg';
 
     if (!isJPEG) {
-      setArtworkWarning('Warning: Cover Art must be in JPEG/JPG format. Please convert your artwork for official DSP ingestion.');
+      setArtworkWarning('Cover Art must be in JPEG/JPG format.');
+      setCoverArtFile(null);
+      return;
     }
 
-    setCoverArtUploadProgress(1);
-    
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      setCoverArtUploadProgress(prev => {
-        if (prev >= 95) return 95;
-        return prev + Math.floor(Math.random() * 10) + 5;
-      });
-    }, 200);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
-
-      const ext = file.name.split('.').pop() || 'jpg';
-      const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const safeRelease = (albumName || 'Unknown_Release').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/cover/cover_${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('app-files')
-        .upload(storagePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Save the storage path for database submission
-      setCoverArtUrl(storagePath);
-      
-      // Get signed URL for preview immediately
-      const { data: urlData } = await supabase.storage
-        .from('app-files')
-        .createSignedUrl(storagePath, 3600);
-
-      if (urlData?.signedUrl) {
-        setCoverArtPreview(urlData.signedUrl);
+    // Dimension constraint validation
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = async () => {
+      URL.revokeObjectURL(img.src);
+      if (img.width !== 3000 || img.height !== 3000) {
+        setArtworkWarning('Cover Art must be exactly 3000x3000px. Use the resizer link below to convert.');
+        setCoverArtFile(null);
+        return;
       }
-      setCoverArtUploadProgress(100);
-      setTimeout(() => setCoverArtUploadProgress(0), 1000);
-    } catch(err: any) {
-      setArtworkWarning('Failed to upload via Supabase: ' + err.message);
-      setCoverArtUploadProgress(0);
-    } finally {
-      clearInterval(progressInterval);
-    }
+      
+      setCoverArtFile(file);
+      setCoverArtUploadProgress(1);
+      
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setCoverArtUploadProgress(prev => {
+          if (prev >= 95) return 95;
+          return prev + Math.floor(Math.random() * 10) + 5;
+        });
+      }, 200);
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error('Not authenticated');
+
+        const ext = file.name.split('.').pop() || 'jpg';
+        const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeRelease = (albumName || 'Unknown_Release').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/cover/cover_${Date.now()}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('app-files')
+          .upload(storagePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // Save the storage path for database submission
+        setCoverArtUrl(storagePath);
+        
+        // Get signed URL for preview immediately
+        const { data: urlData } = await supabase.storage
+          .from('app-files')
+          .createSignedUrl(storagePath, 3600);
+
+        if (urlData?.signedUrl) {
+          setCoverArtPreview(urlData.signedUrl);
+        }
+        setCoverArtUploadProgress(100);
+        setTimeout(() => setCoverArtUploadProgress(0), 1000);
+      } catch(err: any) {
+        setArtworkWarning('Failed to upload via Supabase: ' + err.message);
+        setCoverArtUploadProgress(0);
+      } finally {
+        clearInterval(progressInterval);
+      }
+    };
+    img.onerror = () => {
+      setArtworkWarning('Invalid image file.');
+      setCoverArtFile(null);
+    };
   };
 
   const selectPrebuiltCover = (url: string) => {
@@ -396,9 +414,11 @@ export default function NewReleaseWizard({
 
       const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
       const safeRelease = (albumName || 'Unknown_Release').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const safeTrack = (trackList[index].title || `Track_${index + 1}`).replace(/[^a-zA-Z0-9_-]/g, '_');
-      const fileExt = file.name.toLowerCase().endsWith('.wav') ? 'wav' : 'mp3';
-      const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/Track/${safeTrack}_${Date.now()}.${fileExt}`;
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'wav';
+      const trackObj = trackList[index];
+      const trackNameStr = trackObj?.trackName || `Track_${index + 1}`;
+      const cleanTrackName = trackNameStr.replace(/\//g, '-');
+      const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/track ${index + 1}/${cleanTrackName}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('app-files')
@@ -1039,6 +1059,20 @@ export default function NewReleaseWizard({
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="p-3 bg-[#0c1222] border border-slate-800/80 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" id="cover_art_resizer_box">
+                <span className="text-gray-400 font-medium">
+                  💡 Cover art must be exactly <strong className="text-white">3000x3000px</strong>. If yours is not, convert/resize it here:
+                </span>
+                <a 
+                  href="https://www.imageresizer.work/resize-image-to-3000x3000" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="px-4 py-1.5 bg-[#6366F1] text-black font-extrabold hover:bg-opacity-90 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md shadow-[#6366F1]/10 flex items-center gap-1 shrink-0"
+                >
+                  Resize to 3000x3000px
+                </a>
               </div>
 
               {artworkWarning && (

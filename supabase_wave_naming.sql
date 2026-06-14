@@ -1,0 +1,17 @@
+-- Since track lists and file paths are stored inside the 'tracks' JSONB array 
+-- in the 'releases' table, no changes to the Supabase database schema are required.
+-- 
+-- The storage path format has been successfully updated in the frontend application logic to:
+-- `host-id/artist_name/album_name/track X/track_name.wav` (or other audio file format ext).
+--
+-- If you need to search for tracks having '.wav' or '.wave' names under specific folder patterns:
+-- 
+-- SELECT 
+--   id,
+--   album_name,
+--   t->>'trackName' as track_name,
+--   t->>'audioFileName' as wave_storage_path
+-- FROM 
+--   releases,
+--   jsonb_array_elements(tracks) as t
+-- WHERE t->>'audioFileName' ILIKE '%.wav' OR t->>'audioFileName' ILIKE '%.wave';
