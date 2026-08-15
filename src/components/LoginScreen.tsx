@@ -80,23 +80,31 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
     } else {
       // Login flow
       try {
-        // Find if this user has an overridden or mock password set in our loaded list
-        const matchedOverrideUser = allUsers.find(
-          u => u.email.toLowerCase() === email.toLowerCase() && u.password && u.password === password
+        // Find if this user exists in our loaded list
+        const targetUser = allUsers.find(
+          u => u.email.toLowerCase() === email.toLowerCase()
         );
 
-        if (matchedOverrideUser) {
-          const isApproved = matchedOverrideUser.isApproved;
-          if (!isApproved) {
-            setError('Account is pending approval. Please sign in as admin (admin@g.g / 232323) to approve your access!');
+        // If the admin has assigned an override password for this user, they MUST use it.
+        // This prevents them from using their old Supabase password after the admin changed it.
+        if (targetUser && targetUser.password) {
+          if (targetUser.password === password) {
+            const isApproved = targetUser.isApproved;
+            if (!isApproved) {
+              setError('Account is pending approval. Please sign in as admin (admin@g.g / 232323) to approve your access!');
+              setLoading(false);
+              return;
+            }
+            setSuccessMsg('Authenticating using admin-assigned access credentials...');
+            onLogin(targetUser);
+            setLoading(false);
+            return;
+          } else {
+            // Password mismatch with the admin-assigned password. Reject immediately.
+            setError('Invalid email or password.');
             setLoading(false);
             return;
           }
-          
-          setSuccessMsg('Authenticating using admin-assigned access credentials...');
-          onLogin(matchedOverrideUser);
-          setLoading(false);
-          return;
         }
 
         // 1. Attempt standard sign in on Supabase first

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { getStoredData, saveStoredData, AppState } from './data';
 import { User, Release, ArtistProfile, Label, RevenueReport, SupportQuery, OacApplication, TrackStatus, PayoutRequest } from './types';
 import { supabase, isolatedAdminSupabase } from './supabase';
@@ -1565,8 +1566,53 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[100dvh] w-full bg-transparent text-white font-sans overflow-hidden" id="app_root_layout">
+    <div className="flex flex-col lg:flex-row h-[100dvh] w-full bg-transparent text-white font-sans overflow-hidden relative" id="app_root_layout">
       
+      {/* Floating Ambient Glowing Orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <motion.div 
+          animate={{
+            x: [0, 80, -40, 0],
+            y: [0, -50, 60, 0],
+            scale: [1, 1.2, 0.9, 1],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-1/4 left-1/4 w-[35rem] h-[35rem] rounded-full bg-indigo-500/10 blur-[120px]"
+        />
+        <motion.div 
+          animate={{
+            x: [0, -60, 80, 0],
+            y: [0, 70, -50, 0],
+            scale: [1, 0.9, 1.15, 1],
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+          className="absolute bottom-1/4 right-1/4 w-[40rem] h-[40rem] rounded-full bg-purple-500/10 blur-[150px]"
+        />
+        <motion.div 
+          animate={{
+            x: [0, 50, -30, 0],
+            y: [0, 80, -40, 0],
+            scale: [1, 1.1, 0.85, 1],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 4
+          }}
+          className="absolute top-1/2 left-2/3 w-[30rem] h-[30rem] rounded-full bg-blue-500/5 blur-[100px]"
+        />
+      </div>
+
       {/* Sidebar Component */}
       <Sidebar
         currentTab={currentTab}
@@ -1673,8 +1719,19 @@ export default function App() {
         )}
 
         {/* Dashboard Content Container */}
-        <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto" id="app_view_viewport">
-          {renderCurrentView()}
+        <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto relative z-10" id="app_view_viewport">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentTab}
+              initial={{ opacity: 0, y: 15, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -15, scale: 0.99 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full h-full flex flex-col"
+            >
+              {renderCurrentView()}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Editorial Footer */}

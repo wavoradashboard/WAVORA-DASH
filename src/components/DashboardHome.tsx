@@ -46,12 +46,32 @@ export default function DashboardHome({
 
   // Live status helper
   const liveReleases = userReleases.filter(r => r.status === 'Live').length;
-  const pendingReleases = userReleases.filter(r => r.status === 'Submitted').length;
+  const pendingReleases = userReleases.filter(r => r.status === 'Submitted').length;  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.02
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in" id="dashboard_home_root">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6" 
+      id="dashboard_home_root"
+    >
       {/* Upper header banner - Sleek Magazine Hero aesthetic */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-5 md:p-8 bg-white/2 rounded-3xl border border-white/10 relative overflow-hidden" id="home_welcome_banner">
+      <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-5 md:p-8 bg-white/2 rounded-3xl border border-white/10 relative overflow-hidden" id="home_welcome_banner">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(29,185,84,0.06),transparent_50%)] pointer-events-none" />
         <div className="relative z-10 space-y-1.5">
           <div className="text-[9px] md:text-[10px] text-[#6366F1] font-mono tracking-widest uppercase">Digital DSP Pipeline Ingestion</div>
@@ -71,13 +91,15 @@ export default function DashboardHome({
         >
           <Play className="w-3 md:w-3.5 h-3 md:h-3.5 fill-current" /> Distribute New Track
         </button>
-      </div>
+      </motion.div>
 
       {/* Broadcast System Announcements Bulletin Board */}
-      <NotificationsWidget currentUser={currentUser} notifications={notifications} />
+      <motion.div variants={itemVariants}>
+        <NotificationsWidget currentUser={currentUser} notifications={notifications} />
+      </motion.div>
 
       {/* C Lines and P Lines display */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="home_legal_lines_grid">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6" id="home_legal_lines_grid">
         <div className="p-5 bg-white/2 rounded-2xl border border-white/10" id="home_c_lines">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Authorized C Lines (©)</h3>
           <div className="space-y-1">
@@ -106,10 +128,10 @@ export default function DashboardHome({
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Metric Cards - Dynamic */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="home_stats_grid">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="home_stats_grid">
         <motion.div 
           whileHover={{ y: -2 }}
           className="p-5 bg-white/2 rounded-2xl border border-white/10 hover:border-[#2F2F2F] transition-all overflow-hidden"
@@ -223,10 +245,10 @@ export default function DashboardHome({
             Direct Ingestion APIs Operational
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Grid: Recent Releases and Streaming Analysis */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="home_secondary_grid">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-12 gap-6" id="home_secondary_grid">
         {/* Recent Submissions */}
         <div className="md:col-span-12 p-6 bg-white/2 rounded-3xl border border-white/10 flex flex-col justify-between" id="recent_releases_section">
           <div>
@@ -300,7 +322,7 @@ export default function DashboardHome({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
