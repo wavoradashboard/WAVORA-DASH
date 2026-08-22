@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { getStoredData, saveStoredData, AppState } from './data';
 import { User, Release, ArtistProfile, Label, RevenueReport, SupportQuery, OacApplication, TrackStatus, PayoutRequest } from './types';
 import { supabase, isolatedAdminSupabase } from './supabase';
+import { getR2FileUrl, deleteFilesFromR2, isR2Configured } from './r2';
 
 // Importing Tab Components
 import LoginScreen from './components/LoginScreen';
@@ -134,12 +135,35 @@ export default function App() {
 
       const signedUrlMap: Record<string, string> = {};
       if (storagePathsToResolve.length > 0) {
-        const { data: signedUrls } = await supabase.storage.from('app-files').createSignedUrls(storagePathsToResolve, 3600);
-        signedUrls?.forEach(item => {
-          if (item.signedUrl) {
-            signedUrlMap[item.path] = item.signedUrl;
+        if (isR2Configured) {
+          await Promise.all(
+            storagePathsToResolve.map(async (path) => {
+              try {
+                const url = await getR2FileUrl(path, 86400);
+                if (url) {
+                  signedUrlMap[path] = url;
+                }
+              } catch (e) {
+                console.warn('Could not resolve R2 URL for:', path, e);
+              }
+            })
+          );
+        }
+
+        // For any unresolved paths, fallback to Supabase Storage
+        const remainingPaths = storagePathsToResolve.filter(p => !signedUrlMap[p]);
+        if (remainingPaths.length > 0) {
+          try {
+            const { data: signedUrls } = await supabase.storage.from('app-files').createSignedUrls(remainingPaths, 3600);
+            signedUrls?.forEach(item => {
+              if (item.signedUrl) {
+                signedUrlMap[item.path] = item.signedUrl;
+              }
+            });
+          } catch (e) {
+            console.warn('Supabase signed URLs batch resolution failed:', e);
           }
-        });
+        }
       }
 
       // De-duplicate users by email if any duplicates exist in DB
@@ -1114,6 +1138,9 @@ export default function App() {
       // Attempt storage deletion
       if (filesToDelete.length > 0) {
         try {
+          if (isR2Configured) {
+            await deleteFilesFromR2(filesToDelete);
+          }
           await supabase.storage.from('app-files').remove(filesToDelete);
         } catch(e) {
           console.error("Failed to delete storage files", e);
@@ -1239,10 +1266,19 @@ export default function App() {
 
     let coverArtSignedUrl = newRelease.coverArtSignedUrl;
     try {
-      if (newRelease.coverArtUrl && !newRelease.coverArtUrl.startsWith('http')) {
-        const { data: urlData } = await supabase.storage.from('app-files').createSignedUrl(newRelease.coverArtUrl, 3600);
-        if (urlData?.signedUrl) {
-           coverArtSignedUrl = urlData.signedUrl;
+      if (newRelease.coverArtUrl && !newRelease.coverArtUrl.startsWith('http') && !newRelease.coverArtUrl.startsWith('blob:')) {
+        if (isR2Configured) {
+          const r2Url = await getR2FileUrl(newRelease.coverArtUrl, 86400);
+          if (r2Url) {
+            coverArtSignedUrl = r2Url;
+          }
+        }
+        
+        if (!coverArtSignedUrl || coverArtSignedUrl === newRelease.coverArtUrl) {
+          const { data: urlData } = await supabase.storage.from('app-files').createSignedUrl(newRelease.coverArtUrl, 3600);
+          if (urlData?.signedUrl) {
+             coverArtSignedUrl = urlData.signedUrl;
+          }
         }
       }
     } catch (e) {
@@ -1374,6 +1410,21 @@ export default function App() {
 
   const handleDownloadFile = async (path: string) => {
     try {
+      if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
+        window.open(path, '_blank');
+        return;
+      }
+      if (isR2Configured) {
+        try {
+          const r2Url = await getR2FileUrl(path, 3600);
+          if (r2Url) {
+            window.open(r2Url, '_blank');
+            return;
+          }
+        } catch (e) {
+          console.warn('R2 download link generation failed, trying Supabase fallback:', e);
+        }
+      }
       const { data, error } = await supabase.storage.from('app-files').createSignedUrl(path, 60);
       if (error) throw error;
       if (data?.signedUrl) {

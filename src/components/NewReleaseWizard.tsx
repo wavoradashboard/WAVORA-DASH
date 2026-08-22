@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { User, Release, ReleaseTrack, ArtistProfile, Label } from '../types';
 import { supabase } from '../supabase';
+import { uploadFileToR2, getR2FileUrl, isR2Configured } from '../r2';
 
 export const GENRE_DATA: Record<string, string[]> = {
   "Alternative": ["Indie Rock", "Grunge", "Gothic Rock", "College Rock", "Britpop", "Dream Pop", "Shoegaze", "Post-Punk", "Noise Rock"],
@@ -326,34 +327,57 @@ export default function NewReleaseWizard({
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) throw new Error('Not authenticated');
+        const userId = session?.user?.id || currentUser?.id || 'usr-' + Date.now();
 
         const ext = file.name.split('.').pop() || 'jpg';
         const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
         const safeRelease = (albumName || 'Unknown_Release').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/cover/cover_${Date.now()}.${ext}`;
+        const storagePath = `${userId}/${safeArtist}/${safeRelease}/cover/cover_${Date.now()}.${ext}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('app-files')
-          .upload(storagePath, file);
+        let uploaded = false;
 
-        if (uploadError) throw uploadError;
-
-        // Save the storage path for database submission
-        setCoverArtUrl(storagePath);
-        
-        // Get signed URL for preview immediately
-        const { data: urlData } = await supabase.storage
-          .from('app-files')
-          .createSignedUrl(storagePath, 3600);
-
-        if (urlData?.signedUrl) {
-          setCoverArtPreview(urlData.signedUrl);
+        // 1. Try Cloudflare R2 first
+        if (isR2Configured) {
+          try {
+            await uploadFileToR2(storagePath, file, file.type);
+            const previewUrl = await getR2FileUrl(storagePath, 86400);
+            setCoverArtUrl(storagePath);
+            setCoverArtPreview(previewUrl || URL.createObjectURL(file));
+            uploaded = true;
+          } catch (r2Err: any) {
+            console.warn('Cloudflare R2 upload failed, trying Supabase fallback:', r2Err);
+          }
         }
+
+        // 2. Supabase Storage Fallback
+        if (!uploaded) {
+          if (!session?.user) {
+            // Local offline fallback
+            const localUrl = URL.createObjectURL(file);
+            setCoverArtUrl(localUrl);
+            setCoverArtPreview(localUrl);
+          } else {
+            const { error: uploadError } = await supabase.storage
+              .from('app-files')
+              .upload(storagePath, file);
+
+            if (uploadError) throw uploadError;
+
+            setCoverArtUrl(storagePath);
+            const { data: urlData } = await supabase.storage
+              .from('app-files')
+              .createSignedUrl(storagePath, 3600);
+
+            if (urlData?.signedUrl) {
+              setCoverArtPreview(urlData.signedUrl);
+            }
+          }
+        }
+
         setCoverArtUploadProgress(100);
         setTimeout(() => setCoverArtUploadProgress(0), 1000);
       } catch(err: any) {
-        setArtworkWarning('Failed to upload via Supabase: ' + err.message);
+        setArtworkWarning('Failed to upload: ' + err.message);
         setCoverArtUploadProgress(0);
       } finally {
         clearInterval(progressInterval);
@@ -383,10 +407,10 @@ export default function NewReleaseWizard({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size first: 50MB (50 * 1024 * 1024 = 52428800 bytes)
-    const maxSizeBytes = 50 * 1024 * 1024;
+    // Check size limit: 500MB for Cloudflare R2, 50MB for fallback
+    const maxSizeBytes = isR2Configured ? 500 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      alert('Limit Exceeded: Audio files must be under 50MB in size.');
+      alert(`Limit Exceeded: Audio files must be under ${isR2Configured ? '500MB' : '50MB'} in size.`);
       return;
     }
 
@@ -410,7 +434,7 @@ export default function NewReleaseWizard({
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session?.user?.id || currentUser?.id || 'usr-' + Date.now();
 
       const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
       const safeRelease = (albumName || 'Unknown_Release').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -418,15 +442,36 @@ export default function NewReleaseWizard({
       const trackObj = trackList[index];
       const trackNameStr = trackObj?.trackName || `Track_${index + 1}`;
       const cleanTrackName = trackNameStr.replace(/\//g, '-');
-      const storagePath = `${session.user.id}/${safeArtist}/${safeRelease}/track ${index + 1}/${cleanTrackName}.${fileExt}`;
+      const storagePath = `${userId}/${safeArtist}/${safeRelease}/track ${index + 1}/${cleanTrackName}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('app-files')
-        .upload(storagePath, file);
+      let uploaded = false;
 
-      if (uploadError) throw uploadError;
+      // 1. Try Cloudflare R2 first
+      if (isR2Configured) {
+        try {
+          await uploadFileToR2(storagePath, file, file.type || 'audio/wav');
+          handleTrackFieldChange(index, 'audioFileName', storagePath);
+          uploaded = true;
+        } catch (r2Err: any) {
+          console.warn('Cloudflare R2 audio upload failed, trying Supabase fallback:', r2Err);
+        }
+      }
 
-      handleTrackFieldChange(index, 'audioFileName', storagePath);
+      // 2. Supabase Storage Fallback
+      if (!uploaded) {
+        if (!session?.user) {
+          // Local fallback
+          handleTrackFieldChange(index, 'audioFileName', file.name);
+        } else {
+          const { error: uploadError } = await supabase.storage
+            .from('app-files')
+            .upload(storagePath, file);
+
+          if (uploadError) throw uploadError;
+          handleTrackFieldChange(index, 'audioFileName', storagePath);
+        }
+      }
+
       setTrackUploadProgress(prev => ({ ...prev, [index]: 100 }));
       setTimeout(() => {
         setTrackUploadProgress(prev => ({ ...prev, [index]: 0 }));
@@ -438,6 +483,7 @@ export default function NewReleaseWizard({
       clearInterval(progressInterval);
     }
   };
+
 
   const handleRemovePrimaryArtist = (artistToRemove: string) => {
     if (artistToRemove === currentUser.artistName) return; // Main artist is protected
