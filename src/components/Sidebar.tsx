@@ -46,7 +46,7 @@ export default function Sidebar({
   const isBasic = currentUser.plan === 'Basic';
   const isPro = currentUser.plan === 'Pro';
   const isElite = currentUser.plan === 'Elite';
-  const isAdmin = currentUser.email === 'admin@g.g';
+  const isAdmin = currentUser.email.toLowerCase() === 'admin@g.g' || currentUser.email.toLowerCase() === 'wavoralive@gmail.com' || currentUser.email.toLowerCase() === 'wavoradashboard@gmail.com';
 
   const menuItems = [
     { id: 'home', label: 'Home Feed', icon: Home, visible: !isAdmin },

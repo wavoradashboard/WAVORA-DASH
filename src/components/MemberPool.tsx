@@ -18,7 +18,7 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
   const [passwordChangeSuccessEmail, setPasswordChangeSuccessEmail] = useState<string | null>(null);
 
   // Group active members (not pending, not admin, not rejected)
-  const activeUsers = users.filter(u => u.isApproved === true && u.email.toLowerCase() !== 'admin@g.g' && u.email.toLowerCase() !== 'wavoradashboard@gmail.com');
+  const activeUsers = users.filter(u => u.isApproved === true && u.email.toLowerCase() !== 'admin@g.g' && u.email.toLowerCase() !== 'wavoralive@gmail.com' && u.email.toLowerCase() !== 'wavoradashboard@gmail.com');
   const displayedUsers = activeUsers.filter(user => 
     user.artistName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase())

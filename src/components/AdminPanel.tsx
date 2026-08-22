@@ -278,8 +278,13 @@ export default function AdminPanel({
     console.log(`${label} copied to clipboard`);
   };
 
-  const pendingUsers = users.filter(u => !u.isApproved && u.email !== 'admin@g.g');
-  const activeUsers = users.filter(u => u.isApproved && u.email !== 'admin@g.g');
+  const isSystemAdmin = (email: string) => {
+    const e = email.toLowerCase();
+    return e === 'admin@g.g' || e === 'wavoralive@gmail.com' || e === 'wavoradashboard@gmail.com';
+  };
+
+  const pendingUsers = users.filter(u => !u.isApproved && !isSystemAdmin(u.email));
+  const activeUsers = users.filter(u => u.isApproved && !isSystemAdmin(u.email));
   
   const submittedReleases = releases.filter(r => r.status === 'Submitted');
   const approvedReleases = releases.filter(r => r.status === 'Approved');

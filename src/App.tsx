@@ -58,7 +58,7 @@ export default function App() {
   // Fetch all Supabase data
   const loadSupabaseData = async (userEmail: string, userId: string) => {
     try {
-      const isAdmin = userEmail.toLowerCase() === 'admin@g.g' || userEmail.toLowerCase() === 'wavoradashboard@gmail.com';
+      const isAdmin = userEmail.toLowerCase() === 'admin@g.g' || userEmail.toLowerCase() === 'wavoralive@gmail.com' || userEmail.toLowerCase() === 'wavoradashboard@gmail.com';
 
       // Build scoped queries to enforce data privacy at the DB level
       const usersQuery = supabase.from('users').select('*');
@@ -376,8 +376,7 @@ export default function App() {
           const u = session.user;
           const metadata = u.user_metadata || {};
           
-          const adminStr = 'admin@g.g';
-        const isAppAdmin = (email: string) => email === adminStr || email === 'wavoradashboard@gmail.com';
+        const isAppAdmin = (email: string) => email === 'admin@g.g' || email === 'wavoralive@gmail.com' || email === 'wavoradashboard@gmail.com';
 
         const mappedUser: User = {
             email: u.email!,
@@ -486,7 +485,10 @@ export default function App() {
     if (session?.user) {
       await loadSupabaseData(user.email, session.user.id);
     }
-    const isAppAdmin = (email?: string) => email === 'admin@g.g' || email === 'wavoradashboard@gmail.com';
+    const isAppAdmin = (email?: string) => {
+      const e = email?.toLowerCase();
+      return e === 'admin@g.g' || e === 'wavoralive@gmail.com' || e === 'wavoradashboard@gmail.com';
+    };
 
     if (isAppAdmin(user.email)) {
       setCurrentTab('admin-panel');
@@ -733,7 +735,10 @@ export default function App() {
   };
 
   // Impersonating mechanics
-  const isAppAdmin = (email?: string) => email === 'admin@g.g' || email === 'wavoradashboard@gmail.com';
+  const isAppAdmin = (email?: string) => {
+    const e = email?.toLowerCase();
+    return e === 'admin@g.g' || e === 'wavoralive@gmail.com' || e === 'wavoradashboard@gmail.com';
+  };
 
   const handleImpersonateUser = (targetUser: User) => {
     if (isAppAdmin(currentUser?.email)) {

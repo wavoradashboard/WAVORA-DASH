@@ -24,13 +24,13 @@ export default function ManageLabels({
   const [targetUserEmail, setTargetUserEmail] = useState(currentUser.email);
   const [error, setError] = useState('');
   
-  const isAdmin = currentUser.email === 'admin@g.g';
+  const isAdmin = currentUser.email.toLowerCase() === 'admin@g.g' || currentUser.email.toLowerCase() === 'wavoralive@gmail.com' || currentUser.email.toLowerCase() === 'wavoradashboard@gmail.com';
   
   // Show all labels globally if true Admin. 
   // If impersonating or normal user: Show Global labels (admin@g.g) + their Private labels (currentUser.email)
   const displayLabels = (isAdmin && !isImpersonating)
     ? managedLabels
-    : managedLabels.filter(lbl => lbl.email === 'admin@g.g' || lbl.email === currentUser.email);
+    : managedLabels.filter(lbl => lbl.email === 'admin@g.g' || lbl.email === 'wavoralive@gmail.com' || lbl.email === 'wavoradashboard@gmail.com' || lbl.email === currentUser.email);
 
   const [expandedUserEmail, setExpandedUserEmail] = useState<string | null>(null);
 

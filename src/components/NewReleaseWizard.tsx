@@ -104,7 +104,7 @@ export default function NewReleaseWizard({
   editingRelease,
   onCancelEdit,
 }: NewReleaseWizardProps) {
-  const isAppAdmin = currentUser.email === 'admin@g.g' || currentUser.email === 'wavoradashboard@gmail.com';
+  const isAppAdmin = currentUser.email.toLowerCase() === 'admin@g.g' || currentUser.email.toLowerCase() === 'wavoralive@gmail.com' || currentUser.email.toLowerCase() === 'wavoradashboard@gmail.com';
   const filteredArtists = managedArtists.filter(art => art.email === currentUser.email);
   const filteredLabels = managedLabels.filter(lbl => isAppAdmin || lbl.email === currentUser.email);
 
