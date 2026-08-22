@@ -1,21 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Lock, UserPlus, LogIn, Sparkles, Building2, AudioLines, Info, ShieldCheck } from 'lucide-react';
-import { Plan, User } from '../types';
+import { Mail, Lock, LogIn, Building2, AudioLines, ShieldCheck } from 'lucide-react';
+import { User } from '../types';
 import { supabase } from '../supabase';
 
 interface LoginScreenProps {
   onLogin: (user: User) => void;
-  onRegister: (newUser: User) => void;
+  onRegister?: (newUser: User) => void;
   allUsers: User[];
 }
 
-export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScreenProps) {
-  const [isSignUp, setIsSignUp] = useState(false);
+export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [artistName, setArtistName] = useState('');
-  const [plan, setPlan] = useState<Plan>('Basic');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,196 +29,137 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
 
     setLoading(true);
 
-    if (isSignUp) {
-      if (!artistName) {
-        setError('Artist or Band name is required for registration.');
+    try {
+      const cleanEmail = email.toLowerCase().trim();
+
+      // 1. Direct Root Admin Fallback check (allows wavoralive@gmail.com / admin@g.g with valid credentials to always login)
+      const isRootAdminEmail = cleanEmail === 'wavoralive@gmail.com' || cleanEmail === 'admin@g.g' || cleanEmail === 'wavoradashboard@gmail.com';
+      
+      // Find if this user exists in our loaded list
+      const targetUser = allUsers.find(
+        u => u.email.toLowerCase() === cleanEmail
+      );
+
+      // If the user is an administrative account and password matches the seed/custom password, grant immediate login
+      if (isRootAdminEmail) {
+        const validAdminPasswords = ['admin2', '232323', 'password', targetUser?.password].filter(Boolean);
+        if (validAdminPasswords.includes(password)) {
+          const adminUserObj: User = targetUser || {
+            email: cleanEmail,
+            artistName: cleanEmail.includes('wavora') ? 'Wavora Administrator' : 'Administrator',
+            plan: 'Elite',
+            isApproved: true,
+            registeredAt: '2026-01-01T00:00:00Z',
+            planEndDate: '2030-12-31T23:59:59Z',
+          };
+          setSuccessMsg('Welcome back, System Administrator!');
+          onLogin(adminUserObj);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If the admin has assigned an override password for this user, they MUST use it.
+      if (targetUser && targetUser.password) {
+        if (targetUser.password === password) {
+          const isApproved = targetUser.isApproved;
+          if (!isApproved) {
+            setError('Account is pending approval. Please sign in as admin to approve your access!');
+            setLoading(false);
+            return;
+          }
+          setSuccessMsg('Authenticating using admin-assigned access credentials...');
+          onLogin(targetUser);
+          setLoading(false);
+          return;
+        } else if (!isRootAdminEmail) {
+          setError('Invalid email or password.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Attempt standard sign in on Supabase first
+      let authData: any = null;
+      let loginError: any = null;
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password
+        });
+        authData = data;
+        loginError = error;
+      } catch (e: any) {
+        console.warn("Supabase auth signin failed, trying local/mock fallback:", e);
+        loginError = e;
+      }
+
+      if (!loginError && authData?.user) {
+        const u = authData.user;
+        const metadata = u.user_metadata || {};
+        const isApproved = metadata.isApproved !== undefined ? metadata.isApproved : true;
+
+        if (!isApproved && !isRootAdminEmail) {
+          setError('Account is pending approval. Please contact administrator to approve your access!');
+          setLoading(false);
+          return;
+        }
+
+        const loggedInUser: User = {
+          email: u.email!,
+          artistName: metadata.artistName || u.email!.split('@')[0],
+          plan: metadata.plan || (isRootAdminEmail ? 'Elite' : 'Basic'),
+          isApproved: isRootAdminEmail ? true : isApproved,
+          registeredAt: u.created_at || new Date().toISOString()
+        };
+
+        onLogin(loggedInUser);
         setLoading(false);
         return;
       }
-      
-      try {
-        // Attempt to sign up the new user in Supabase Auth
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.toLowerCase(),
-          password: password,
-          options: {
-            data: {
-              artistName: artistName,
-              plan: plan,
-              isApproved: false, // Pending Admin approval
-              registeredAt: new Date().toISOString()
-            }
-          }
-        });
 
-        if (signUpError) {
-          setError(signUpError.message);
-          setLoading(false);
-          return;
-        }
+      // 3. If login failed on Supabase but matched local mock database, auto-provision client accounts in Supabase to link them
+      const found = allUsers.find(
+        u => u.email.toLowerCase() === cleanEmail && u.password === password
+      );
 
-        const newUser: User = {
-          email: email.toLowerCase(),
-          password,
-          artistName,
-          plan,
-          isApproved: false, // Must be approved by admin
-          registeredAt: new Date().toISOString(),
-        };
-
-        onRegister(newUser);
-        setSuccessMsg('Account registered in Supabase safely! It is pending admin approval before you can sign in.');
-        setIsSignUp(false);
-      } catch (err: any) {
-        setError(err.message || 'Supabase authentication registration failed.');
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      // Login flow
-      try {
-        const cleanEmail = email.toLowerCase().trim();
-
-        // 1. Direct Root Admin Fallback check (allows wavoralive@gmail.com / admin@g.g with valid credentials to always login)
-        const isRootAdminEmail = cleanEmail === 'wavoralive@gmail.com' || cleanEmail === 'admin@g.g' || cleanEmail === 'wavoradashboard@gmail.com';
+      if (found) {
+        setSuccessMsg('Authenticating session...');
         
-        // Find if this user exists in our loaded list
-        const targetUser = allUsers.find(
-          u => u.email.toLowerCase() === cleanEmail
-        );
-
-        // If the user is an administrative account and password matches the seed/custom password, grant immediate login
-        if (isRootAdminEmail) {
-          const validAdminPasswords = ['admin2', '232323', 'password', targetUser?.password].filter(Boolean);
-          if (validAdminPasswords.includes(password)) {
-            const adminUserObj: User = targetUser || {
-              email: cleanEmail,
-              artistName: cleanEmail.includes('wavora') ? 'Wavora Administrator' : 'Administrator',
-              plan: 'Elite',
-              isApproved: true,
-              registeredAt: '2026-01-01T00:00:00Z',
-              planEndDate: '2030-12-31T23:59:59Z',
-            };
-            setSuccessMsg('Welcome back, System Administrator!');
-            onLogin(adminUserObj);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // If the admin has assigned an override password for this user, they MUST use it.
-        // This prevents them from using their old Supabase password after the admin changed it.
-        if (targetUser && targetUser.password) {
-          if (targetUser.password === password) {
-            const isApproved = targetUser.isApproved;
-            if (!isApproved) {
-              setError('Account is pending approval. Please sign in as admin to approve your access!');
-              setLoading(false);
-              return;
-            }
-            setSuccessMsg('Authenticating using admin-assigned access credentials...');
-            onLogin(targetUser);
-            setLoading(false);
-            return;
-          } else if (!isRootAdminEmail) {
-            // Password mismatch with the admin-assigned password. Reject immediately.
-            setError('Invalid email or password.');
-            setLoading(false);
-            return;
-          }
-        }
-
-        // 2. Attempt standard sign in on Supabase first
-        let authData: any = null;
-        let loginError: any = null;
         try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password: password
-          });
-          authData = data;
-          loginError = error;
-        } catch (e: any) {
-          console.warn("Supabase auth signin failed, trying local/mock fallback:", e);
-          loginError = e;
-        }
-
-        if (!loginError && authData?.user) {
-          const u = authData.user;
-          const metadata = u.user_metadata || {};
-          const isApproved = metadata.isApproved !== undefined ? metadata.isApproved : true;
-
-          if (!isApproved && !isRootAdminEmail) {
-            setError('Account is pending approval. Please contact administrator to approve your access!');
-            setLoading(false);
-            return;
-          }
-
-          const loggedInUser: User = {
-            email: u.email!,
-            artistName: metadata.artistName || u.email!.split('@')[0],
-            plan: metadata.plan || (isRootAdminEmail ? 'Elite' : 'Basic'),
-            isApproved: isRootAdminEmail ? true : isApproved,
-            registeredAt: u.created_at || new Date().toISOString()
-          };
-
-          onLogin(loggedInUser);
-          setLoading(false);
-          return;
-        }
-
-        // 3. If login failed on Supabase but matched local mock database, auto-provision client accounts in Supabase to link them
-        const found = allUsers.find(
-          u => u.email.toLowerCase() === cleanEmail && u.password === password
-        );
-
-        if (found) {
-          setSuccessMsg('Authenticating session...');
-          
-          try {
-            await supabase.auth.signUp({
-              email: found.email,
-              password: found.password || 'password',
-              options: {
-                data: {
-                  artistName: found.artistName,
-                  plan: found.plan,
-                  isApproved: found.isApproved,
-                  registeredAt: found.registeredAt
-                }
+          await supabase.auth.signUp({
+            email: found.email,
+            password: found.password || 'password',
+            options: {
+              data: {
+                artistName: found.artistName,
+                plan: found.plan,
+                isApproved: found.isApproved,
+                registeredAt: found.registeredAt
               }
-            });
+            }
+          });
 
-            await supabase.auth.signInWithPassword({
-              email: found.email,
-              password: found.password || 'password'
-            });
-          } catch (linkError) {
-            console.warn("Failed automatic credentials sync step with Supabase:", linkError);
-          }
-
-          onLogin(found);
-          setLoading(false);
-          return;
+          await supabase.auth.signInWithPassword({
+            email: found.email,
+            password: found.password || 'password'
+          });
+        } catch (linkError) {
+          console.warn("Failed automatic credentials sync step with Supabase:", linkError);
         }
 
-        setError(loginError?.message || 'Invalid email or password.');
-      } catch (err: any) {
-        setError(err.message || 'Supabase connectivity error.');
-      } finally {
+        onLogin(found);
         setLoading(false);
+        return;
       }
+
+      setError(loginError?.message || 'Invalid email or password.');
+    } catch (err: any) {
+      setError(err.message || 'Supabase connectivity error.');
+    } finally {
+      setLoading(false);
     }
   };
-
-  const handleQuickFill = (targetEmail: string, pass: string) => {
-    setEmail(targetEmail);
-    setPassword(pass);
-    setIsSignUp(false);
-    setError('');
-    setSuccessMsg('');
-  };
-
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-transparent" id="login_container">
@@ -268,8 +206,6 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
               </div>
             </div>
           </div>
-
-
         </div>
 
         {/* Right column: Interactive form card */}
@@ -280,36 +216,12 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
             className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl"
             id="login_animated_box"
           >
-            {/* Header branding & Tabs */}
-            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4" id="login_tabs">
-              <div className="flex items-center gap-2">
-                <LogIn className="w-5 h-5 text-[#6366F1]" />
-                <h2 className="text-sm font-black uppercase tracking-widest text-[#6366F1]">
-                  {isSignUp ? 'Apply for Artist Account' : 'Sign In to Wavora Live'}
-                </h2>
-              </div>
-              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => { setIsSignUp(false); setError(''); setSuccessMsg(''); }}
-                  className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition ${
-                    !isSignUp ? 'bg-[#6366F1] text-white shadow' : 'text-gray-400 hover:text-white'
-                  }`}
-                  id="tab_signin"
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setIsSignUp(true); setError(''); setSuccessMsg(''); }}
-                  className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition ${
-                    isSignUp ? 'bg-[#6366F1] text-white shadow' : 'text-gray-400 hover:text-white'
-                  }`}
-                  id="tab_signup"
-                >
-                  Register
-                </button>
-              </div>
+            {/* Header branding */}
+            <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4" id="login_tabs">
+              <LogIn className="w-5 h-5 text-[#6366F1]" />
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#6366F1]">
+                Sign In to Wavora Live
+              </h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4" id="auth_form">
@@ -327,27 +239,10 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                 </div>
               )}
 
-              {isSignUp && (
-                <div className="space-y-1.5" id="signup_artist_group">
-                  <label className="block text-[10px] font-bold text-gray-450 uppercase tracking-widest">Artist / Brand Name</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-xs font-mono">@</span>
-                    <input
-                      type="text"
-                      className="w-full bg-black border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-[#6366F1] transition"
-                      placeholder="e.g. DJ Eclipse"
-                      value={artistName}
-                      onChange={(e) => setArtistName(e.target.value)}
-                      id="signup_artistName"
-                    />
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-1.5" id="login_email_group">
-                <label className="block text-[10px] font-bold text-gray-450 uppercase tracking-widest">Email Address</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email Address</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-550">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                     <Mail className="w-4 h-4 text-gray-450" />
                   </div>
                   <input
@@ -362,9 +257,9 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
               </div>
 
               <div className="space-y-1.5" id="login_pass_group">
-                <label className="block text-[10px] font-bold text-gray-450 uppercase tracking-widest">Password</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Password</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-550">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                     <Lock className="w-4 h-4 text-gray-450" />
                   </div>
                   <input
@@ -377,43 +272,6 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                   />
                 </div>
               </div>
-
-              {isSignUp && (
-                <div className="space-y-2 pt-2" id="signup_plans_selector_group">
-                  <label className="block text-[10px] font-bold text-gray-450 uppercase tracking-widest">Select Distribution Level</label>
-                  <div className="grid grid-cols-3 gap-2" id="plans_options_box">
-                    {[
-                      { name: 'Basic' as Plan, desc: 'Standard metadata pipelines' },
-                      { name: 'Pro' as Plan, desc: 'Custom copyrights and C/P lines' },
-                      { name: 'Elite' as Plan, desc: 'Multiple sub-label imprints' }
-                    ].map((pObj) => (
-                      <button
-                        type="button"
-                        key={pObj.name}
-                        onClick={() => setPlan(pObj.name)}
-                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition cursor-pointer h-24 ${
-                          plan === pObj.name 
-                            ? 'bg-[#6366F1]/10 border-[#6366F1] text-[#6366F1]' 
-                            : 'bg-black border-white/10 text-gray-400 hover:border-[#2F2F2F]'
-                        }`}
-                        id={`plan_select_${pObj.name}`}
-                      >
-                        <div>
-                          <span className={`text-xs font-bold block ${plan === pObj.name ? 'text-white' : 'text-gray-300'}`}>
-                            {pObj.name}
-                          </span>
-                          <span className="text-[9px] block text-gray-500 mt-1 leading-normal">
-                            {pObj.desc}
-                          </span>
-                        </div>
-                        <span className="text-[8px] font-black uppercase tracking-wider block text-right text-[#6366F1] mt-1">
-                          {pObj.name === 'Elite' ? '💎 Elite' : pObj.name === 'Pro' ? '⚡ Pro' : '🎵 Basic'}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <button
                 type="submit"
@@ -431,8 +289,8 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
                   </span>
                 ) : (
                   <>
-                    {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-                    {isSignUp ? 'Submit Verification Application' : 'Access Digital Pipeline'}
+                    <LogIn className="w-4 h-4" />
+                    Access Digital Pipeline
                   </>
                 )}
               </button>

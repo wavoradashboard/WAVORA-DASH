@@ -27,7 +27,10 @@ import {
   Layers,
   Copy,
   Landmark,
-  Edit2
+  Edit2,
+  RefreshCw,
+  Database,
+  AlertCircle
 } from 'lucide-react';
 import { User, Release, SupportQuery, OacApplication, RevenueReport, TrackStatus, Plan, Notification, ArtistProfile, PayoutRequest } from '../types';
 
@@ -55,6 +58,10 @@ interface AdminPanelProps {
   onUpdateUser: (email: string, updates: Partial<User>) => void;
   payoutRequests?: PayoutRequest[];
   onUpdatePayoutRequest: (id: string, status: 'Approved' | 'Rejected', feedback?: string) => void;
+  onRefreshData?: () => Promise<void>;
+  isSyncing?: boolean;
+  lastSyncTime?: string;
+  dbErrors?: Record<string, string>;
 }
 
 function LegalLineManager({ 
@@ -173,7 +180,11 @@ export default function AdminPanel({
   onUpdateArtist,
   onUpdateUser,
   payoutRequests = [],
-  onUpdatePayoutRequest
+  onUpdatePayoutRequest,
+  onRefreshData,
+  isSyncing = false,
+  lastSyncTime,
+  dbErrors = {}
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'users' | 'releases' | 'queries' | 'oac' | 'revenue' | 'notifications' | 'artists' | 'legal' | 'payouts'>('users');
   const [inspectRelease, setInspectRelease] = useState<Release | null>(null);
@@ -632,11 +643,58 @@ export default function AdminPanel({
           <p className="text-xs text-gray-400 max-w-xl">
             Authorize new members, review submitted WAV files/artwork metadata, verify Spotify/YouTube OAC credentials, and sign official royalty balance accounts.
           </p>
+          <div className="flex items-center gap-3 mt-3 flex-wrap text-[11px] text-gray-400">
+            <span className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Supabase Connected
+            </span>
+            <span className="bg-white/5 px-2 py-0.5 rounded-md border border-white/10 font-mono text-gray-300">
+              {releases.length} Releases · {users.length} Users · {artists.length} Artists · {payoutRequests.length} Payouts
+            </span>
+            {lastSyncTime && (
+              <span className="text-gray-500">
+                Last synced: {lastSyncTime}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="px-3 py-1 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-full text-xs text-[#6366F1] font-bold">
-          Role: Master Admin
+        <div className="flex items-center gap-2 flex-wrap">
+          {onRefreshData && (
+            <button
+              onClick={() => onRefreshData()}
+              disabled={isSyncing}
+              className={`px-3.5 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 hover:text-white border border-indigo-500/30 font-bold rounded-xl text-xs flex items-center gap-2 transition cursor-pointer ${
+                isSyncing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              id="btn_refresh_supabase"
+              title="Fetch latest updates directly from Supabase Cloud database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing Supabase...' : 'Sync Database'}</span>
+            </button>
+          )}
+          <div className="px-3 py-2 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-xl text-xs text-[#6366F1] font-bold">
+            Role: Master Admin
+          </div>
         </div>
       </div>
+
+      {/* Supabase Table Warning Banner if any table errors occurred */}
+      {Object.keys(dbErrors).length > 0 && (
+        <div className="p-4 bg-amber-950/40 border border-amber-500/30 rounded-2xl text-xs text-amber-200 space-y-1" id="supabase_error_banner">
+          <div className="flex items-center gap-2 font-bold text-amber-400">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>Supabase Table Notice: Some tables returned restricted access or missing schema</span>
+          </div>
+          <div className="text-[11px] text-amber-300/80 pl-6 space-y-0.5">
+            {Object.entries(dbErrors).map(([tbl, msg]) => (
+              <div key={tbl}>
+                <span className="font-mono font-bold uppercase">{tbl}:</span> {msg}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Admin Tabs */}
       <div className="flex flex-wrap gap-2 p-1 bg-black/20 border border-white/10 rounded-2xl overflow-x-auto" id="admin_tabs_row">

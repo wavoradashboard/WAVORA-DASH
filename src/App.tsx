@@ -55,33 +55,45 @@ export default function App() {
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
   const [editingRelease, setEditingRelease] = useState<Release | null>(null);
 
+  const [isSyncingData, setIsSyncingData] = useState<boolean>(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const [dbErrors, setDbErrors] = useState<Record<string, string>>({});
+
   // Fetch all Supabase data
   const loadSupabaseData = async (userEmail: string, userId: string) => {
+    setIsSyncingData(true);
+    const errorsEncountered: Record<string, string> = {};
+
     try {
-      const isAdmin = userEmail.toLowerCase() === 'admin@g.g' || userEmail.toLowerCase() === 'wavoralive@gmail.com' || userEmail.toLowerCase() === 'wavoradashboard@gmail.com';
+      const cleanEmail = userEmail.toLowerCase().trim();
+      const isAdmin = cleanEmail === 'admin@g.g' || cleanEmail === 'wavoralive@gmail.com' || cleanEmail === 'wavoradashboard@gmail.com';
 
-      // Build scoped queries to enforce data privacy at the DB level
-      const usersQuery = supabase.from('users').select('*');
-      const releasesQuery = supabase.from('releases').select('*').order('submitted_at', { ascending: false });
-      const artistsQuery = supabase.from('artists').select('*');
-      const labelsQuery = supabase.from('labels').select('*');
-      const revenueQuery = supabase.from('revenue_reports').select('*');
-      const queriesQuery = supabase.from('support_queries').select('*').order('submitted_at', { ascending: false });
-      const oacQuery = supabase.from('oac_applications').select('*').order('submitted_at', { ascending: false });
-      const notifQuery = supabase.from('notifications').select('*').order('created_at', { ascending: false });
-      const payoutsQuery = supabase.from('payout_requests').select('*').order('submitted_at', { ascending: false });
-
-      // Apply row-level filtering if not admin
-      if (!isAdmin) {
-        usersQuery.eq('id', userId);
-        releasesQuery.eq('user_id', userId);
-        artistsQuery.eq('user_id', userId);
-        labelsQuery.eq('user_id', userId);
-        revenueQuery.eq('user_id', userId);
-        queriesQuery.eq('user_id', userId);
-        oacQuery.eq('user_id', userId);
-        payoutsQuery.eq('user_id', userId);
-      }
+      // Helper function to query table with fallback if column sorting or specific column fails
+      const safeQuery = async (table: string, orderCol?: string) => {
+        try {
+          let q = supabase.from(table).select('*');
+          if (!isAdmin) {
+            // For regular users, try filtering by user_id or email
+            if (userId && userId !== 'admin-root') {
+              q = q.eq('user_id', userId);
+            }
+          } else if (orderCol) {
+            q = q.order(orderCol, { ascending: false });
+          }
+          const res = await q;
+          if (res.error) {
+            // Retry without orderCol in case column does not exist
+            const fallback = await supabase.from(table).select('*');
+            if (fallback.error) {
+              return { data: null, error: fallback.error };
+            }
+            return { data: fallback.data, error: null };
+          }
+          return { data: res.data, error: null };
+        } catch (e: any) {
+          return { data: null, error: e };
+        }
+      };
 
       const [
         { data: usersData, error: usersErr },
@@ -94,36 +106,56 @@ export default function App() {
         { data: notifData, error: notifErr },
         { data: payoutsData, error: payoutsErr }
       ] = await Promise.all([
-        usersQuery,
-        releasesQuery,
-        artistsQuery,
-        labelsQuery,
-        revenueQuery,
-        queriesQuery,
-        oacQuery,
-        notifQuery,
-        payoutsQuery
+        safeQuery('users'),
+        safeQuery('releases', 'submitted_at'),
+        safeQuery('artists'),
+        safeQuery('labels'),
+        safeQuery('revenue_reports'),
+        safeQuery('support_queries', 'submitted_at'),
+        safeQuery('oac_applications', 'submitted_at'),
+        safeQuery('notifications', 'created_at'),
+        safeQuery('payout_requests', 'submitted_at')
       ]);
 
-      if (usersErr) console.error("Error loading users:", usersErr);
-      if (releasesErr) console.error("Error loading releases:", releasesErr);
-      if (artistsErr) console.error("Error loading artists:", artistsErr);
-      if (labelsErr) console.error("Error loading labels:", labelsErr);
-      if (revenueErr) console.error("Error loading revenue reports:", revenueErr);
-      if (queriesErr) console.error("Error loading support queries:", queriesErr);
-      if (oacErr) console.error("Error loading OAC applications:", oacErr);
-      if (notifErr) console.error("Error loading notifications:", notifErr);
-      if (payoutsErr) {
-        console.error("Error loading payout requests:", payoutsErr);
-        // If the table is missing, don't break the whole app, but alert admin
-        if (isAdmin) {
-          if (payoutsErr.code === '42P01') {
-            console.warn("Table 'payout_requests' missing in Supabase. Payouts will only be local.");
-          } else {
-            alert(`Database Error for Payout Requests: ${payoutsErr.message}\nCode: ${payoutsErr.code}\nDetails: ${payoutsErr.details}`);
-          }
-        }
+      if (usersErr) {
+        console.warn("Supabase users error:", usersErr);
+        errorsEncountered['users'] = usersErr.message;
       }
+      if (releasesErr) {
+        console.warn("Supabase releases error:", releasesErr);
+        errorsEncountered['releases'] = releasesErr.message;
+      }
+      if (artistsErr) {
+        console.warn("Supabase artists error:", artistsErr);
+        errorsEncountered['artists'] = artistsErr.message;
+      }
+      if (labelsErr) {
+        console.warn("Supabase labels error:", labelsErr);
+        errorsEncountered['labels'] = labelsErr.message;
+      }
+      if (revenueErr) {
+        console.warn("Supabase revenue reports error:", revenueErr);
+        errorsEncountered['revenue'] = revenueErr.message;
+      }
+      if (queriesErr) {
+        console.warn("Supabase support queries error:", queriesErr);
+        errorsEncountered['queries'] = queriesErr.message;
+      }
+      if (oacErr) {
+        console.warn("Supabase OAC error:", oacErr);
+        errorsEncountered['oac'] = oacErr.message;
+      }
+      if (notifErr) {
+        console.warn("Supabase notifications error:", notifErr);
+        errorsEncountered['notifications'] = notifErr.message;
+      }
+      if (payoutsErr) {
+        console.warn("Supabase payout requests error:", payoutsErr);
+        errorsEncountered['payouts'] = payoutsErr.message;
+      }
+
+      setDbErrors(errorsEncountered);
+      setLastSyncTime(new Date().toLocaleTimeString());
 
       // Batch resolve signed URLs for private files
       const storagePathsToResolve: string[] = [];
@@ -255,88 +287,116 @@ export default function App() {
         ...prev,
         users: uniqueUsers,
         releases: (releasesData || [])
-          .map(r => ({
-            ...r,
-            albumName: r.album_name,
-            mainArtistName: r.main_artist_name,
-            featureArtists: (() => {
-              if (r.feature_artists && Array.isArray(r.feature_artists)) {
-                return r.feature_artists;
-              }
-              if (r.other_artists && typeof r.other_artists === 'object' && !Array.isArray(r.other_artists)) {
-                const nestedFeature = (r.other_artists as any).serialized_feature || (r.other_artists as any).feature;
-                if (nestedFeature && Array.isArray(nestedFeature)) {
-                  return nestedFeature;
+          .map(r => {
+            // Handle if the release row contains a jsonb 'data' field or direct fields
+            const rawData = (r.data && typeof r.data === 'object') ? r.data : {};
+            const merged = { ...r, ...rawData };
+
+            const coverUrl = merged.cover_art_url || merged.coverArtUrl || r.cover_art_url || '';
+            const tracksList = Array.isArray(merged.tracks) ? merged.tracks : (Array.isArray(r.tracks) ? r.tracks : []);
+
+            return {
+              id: String(merged.id || r.id),
+              email: merged.email || r.email || '',
+              albumName: merged.album_name || merged.albumName || merged.title || 'Untitled Release',
+              type: merged.type || 'Single',
+              mainArtistName: merged.main_artist_name || merged.mainArtistName || merged.artist_name || 'Artist',
+              featureArtists: (() => {
+                if (merged.feature_artists && Array.isArray(merged.feature_artists)) {
+                  return merged.feature_artists;
                 }
-              }
-              return r.featureArtists || [];
-            })(),
-            otherArtists: (() => {
-              if (r.other_artists) {
-                if (Array.isArray(r.other_artists)) {
-                  return r.other_artists;
+                if (merged.featureArtists && Array.isArray(merged.featureArtists)) {
+                  return merged.featureArtists;
                 }
-                if (typeof r.other_artists === 'object') {
-                  const nestedOther = (r.other_artists as any).serialized_other || (r.other_artists as any).other;
-                  if (nestedOther && Array.isArray(nestedOther)) {
-                    return nestedOther;
+                if (merged.other_artists && typeof merged.other_artists === 'object' && !Array.isArray(merged.other_artists)) {
+                  const nestedFeature = (merged.other_artists as any).serialized_feature || (merged.other_artists as any).feature;
+                  if (nestedFeature && Array.isArray(nestedFeature)) {
+                    return nestedFeature;
                   }
                 }
-              }
-              return r.otherArtists || [];
-            })(),
-            contentType: r.content_type,
-            numTracks: r.num_tracks,
-            subGenre: r.sub_genre,
-            labelName: r.label_name,
-            upc: r.upc,
-            contentId: r.content_id || r.contentId || 'No',
-            cLine: r.c_line,
-            pLine: r.p_line,
-            releaseDate: r.release_date,
-            // Extract signed url if it's a storage path
-            coverArtUrl: r.cover_art_url,
-            coverArtSignedUrl: (r.cover_art_url && !r.cover_art_url.startsWith('http')) ? signedUrlMap[r.cover_art_url] : undefined,
-            submittedAt: r.submitted_at,
-            specialRequest: r.special_request || r.specialRequest,
-            tracks: r.tracks || []
-          })),
+                return [];
+              })(),
+              otherArtists: (() => {
+                if (merged.other_artists) {
+                  if (Array.isArray(merged.other_artists)) {
+                    return merged.other_artists;
+                  }
+                  if (typeof merged.other_artists === 'object') {
+                    const nestedOther = (merged.other_artists as any).serialized_other || (merged.other_artists as any).other;
+                    if (nestedOther && Array.isArray(nestedOther)) {
+                      return nestedOther;
+                    }
+                  }
+                }
+                if (merged.otherArtists && Array.isArray(merged.otherArtists)) {
+                  return merged.otherArtists;
+                }
+                return [];
+              })(),
+              language: merged.language || 'English',
+              contentType: merged.content_type || merged.contentType || 'Original',
+              numTracks: merged.num_tracks || merged.numTracks || (tracksList.length || 1),
+              genre: merged.genre || 'Pop',
+              subGenre: merged.sub_genre || merged.subGenre || '',
+              labelName: merged.label_name || merged.labelName || '',
+              upc: merged.upc || '',
+              contentId: merged.content_id || merged.contentId || 'No',
+              cLine: merged.c_line || merged.cLine || '',
+              pLine: merged.p_line || merged.pLine || '',
+              releaseDate: merged.release_date || merged.releaseDate || new Date().toISOString().split('T')[0],
+              coverArtUrl: coverUrl,
+              coverArtSignedUrl: (coverUrl && !coverUrl.startsWith('http')) ? signedUrlMap[coverUrl] : undefined,
+              submittedAt: merged.submitted_at || merged.submittedAt || merged.created_at || new Date().toISOString(),
+              specialRequest: merged.special_request || merged.specialRequest,
+              status: (merged.status || r.status || 'Submitted') as TrackStatus,
+              feedback: merged.feedback || r.feedback,
+              tracks: tracksList
+            };
+          }),
         artists: (artistsData || [])
           .map(a => ({
-            id: a.id,
-            email: a.email,
-            name: a.name,
-            spotifyLink: a.spotify_link,
-            appleMusicLink: a.apple_music_link,
-            instagramLink: a.instagram_link,
-            defaultCLine: a.default_c_line,
-            defaultPLine: a.default_p_line
+            id: String(a.id),
+            email: a.email || '',
+            name: a.name || a.artist_name || '',
+            spotifyLink: a.spotify_link || a.spotify_id || a.spotifyLink || '',
+            appleMusicLink: a.apple_music_link || a.apple_music_id || a.appleMusicLink || '',
+            instagramLink: a.instagram_link || a.instagram_url || a.instagramLink || '',
+            defaultCLine: a.default_c_line || a.defaultCLine || '',
+            defaultPLine: a.default_p_line || a.defaultPLine || ''
           })),
-        labels: labelsData || prev.labels,
+        labels: (labelsData || []).map(l => ({
+          id: String(l.id),
+          email: l.email || '',
+          name: l.name || l.label_name || ''
+        })),
         revenueReports: (revenueData || prev.revenueReports).map(r => ({
-          ...r,
-          amount: typeof r.amount === 'string' ? parseFloat(r.amount) : r.amount
+          id: String(r.id),
+          email: r.email || '',
+          month: r.month || '',
+          amount: typeof r.amount === 'string' ? parseFloat(r.amount) : (r.amount || 0),
+          breakdown: Array.isArray(r.breakdown) ? r.breakdown : [],
+          currency: r.currency || 'INR'
         })),
         queries: (queriesData || [])
           .map(q => ({
-            id: q.id,
-            email: q.email,
-            artistName: q.artist_name,
-            queryText: q.query_text,
-            status: q.status,
-            replyText: q.reply_text,
-            submittedAt: q.submitted_at
+            id: String(q.id),
+            email: q.email || '',
+            artistName: q.artist_name || q.artistName || '',
+            queryText: q.query_text || q.message || q.queryText || '',
+            status: q.status || 'Pending',
+            replyText: q.reply_text || q.response || q.replyText || '',
+            submittedAt: q.submitted_at || q.created_at || new Date().toISOString()
           })),
         oacApplications: (oacData || [])
           .map(o => ({
-            id: o.id,
-            email: o.email,
-            artistName: o.artist_name,
-            spotifyLink: o.spotify_link,
-            youtubeLink: o.youtube_link,
-            fullName: o.full_name,
-            status: o.status,
-            submittedAt: o.submitted_at
+            id: String(o.id),
+            email: o.email || '',
+            artistName: o.artist_name || o.artistName || '',
+            spotifyLink: o.spotify_link || o.channel_link || o.spotifyLink || '',
+            youtubeLink: o.youtube_link || o.topic_channel_link || o.youtubeLink || '',
+            fullName: o.full_name || o.fullName || o.artist_name || '',
+            status: o.status || 'Pending',
+            submittedAt: o.submitted_at || o.created_at || new Date().toISOString()
           })),
         payoutRequests: payoutsData 
           ? payoutsData.map(p => ({
@@ -364,6 +424,8 @@ export default function App() {
       }
     } catch (e) {
       console.error('Data load error:', e);
+    } finally {
+      setIsSyncingData(false);
     }
   };
 
@@ -482,9 +544,7 @@ export default function App() {
     setIsImpersonating(false);
     setRealAdminUser(null);
     const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await loadSupabaseData(user.email, session.user.id);
-    }
+    await loadSupabaseData(user.email, session?.user?.id || user.id || 'admin-root');
     const isAppAdmin = (email?: string) => {
       const e = email?.toLowerCase();
       return e === 'admin@g.g' || e === 'wavoralive@gmail.com' || e === 'wavoradashboard@gmail.com';
@@ -1583,6 +1643,12 @@ export default function App() {
             onUpdateUser={handleUpdateUser}
             payoutRequests={appState.payoutRequests || []}
             onUpdatePayoutRequest={handleUpdatePayoutRequest}
+            onRefreshData={async () => {
+              await loadSupabaseData(currentUser.email, currentUser.id || 'admin-root');
+            }}
+            isSyncing={isSyncingData}
+            lastSyncTime={lastSyncTime}
+            dbErrors={dbErrors}
           />
         );
       default:
