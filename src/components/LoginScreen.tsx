@@ -80,10 +80,34 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
     } else {
       // Login flow
       try {
+        const cleanEmail = email.toLowerCase().trim();
+
+        // 1. Direct Root Admin Fallback check (allows wavoralive@gmail.com / admin@g.g with valid credentials to always login)
+        const isRootAdminEmail = cleanEmail === 'wavoralive@gmail.com' || cleanEmail === 'admin@g.g' || cleanEmail === 'wavoradashboard@gmail.com';
+        
         // Find if this user exists in our loaded list
         const targetUser = allUsers.find(
-          u => u.email.toLowerCase() === email.toLowerCase()
+          u => u.email.toLowerCase() === cleanEmail
         );
+
+        // If the user is an administrative account and password matches the seed/custom password, grant immediate login
+        if (isRootAdminEmail) {
+          const validAdminPasswords = ['admin2', '232323', 'password', targetUser?.password].filter(Boolean);
+          if (validAdminPasswords.includes(password)) {
+            const adminUserObj: User = targetUser || {
+              email: cleanEmail,
+              artistName: cleanEmail.includes('wavora') ? 'Wavora Administrator' : 'Administrator',
+              plan: 'Elite',
+              isApproved: true,
+              registeredAt: '2026-01-01T00:00:00Z',
+              planEndDate: '2030-12-31T23:59:59Z',
+            };
+            setSuccessMsg('Welcome back, System Administrator!');
+            onLogin(adminUserObj);
+            setLoading(false);
+            return;
+          }
+        }
 
         // If the admin has assigned an override password for this user, they MUST use it.
         // This prevents them from using their old Supabase password after the admin changed it.
@@ -91,7 +115,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
           if (targetUser.password === password) {
             const isApproved = targetUser.isApproved;
             if (!isApproved) {
-              setError('Account is pending approval. Please sign in as admin (admin@g.g / 232323) to approve your access!');
+              setError('Account is pending approval. Please sign in as admin to approve your access!');
               setLoading(false);
               return;
             }
@@ -99,7 +123,7 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
             onLogin(targetUser);
             setLoading(false);
             return;
-          } else {
+          } else if (!isRootAdminEmail) {
             // Password mismatch with the admin-assigned password. Reject immediately.
             setError('Invalid email or password.');
             setLoading(false);
@@ -107,12 +131,12 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
           }
         }
 
-        // 1. Attempt standard sign in on Supabase first
+        // 2. Attempt standard sign in on Supabase first
         let authData: any = null;
         let loginError: any = null;
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
-            email: email.toLowerCase(),
+            email: cleanEmail,
             password: password
           });
           authData = data;
@@ -127,8 +151,8 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
           const metadata = u.user_metadata || {};
           const isApproved = metadata.isApproved !== undefined ? metadata.isApproved : true;
 
-          if (!isApproved) {
-            setError('Account is pending approval. Please sign in as admin (admin@g.g / 232323) to approve your access!');
+          if (!isApproved && !isRootAdminEmail) {
+            setError('Account is pending approval. Please contact administrator to approve your access!');
             setLoading(false);
             return;
           }
@@ -136,8 +160,8 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
           const loggedInUser: User = {
             email: u.email!,
             artistName: metadata.artistName || u.email!.split('@')[0],
-            plan: metadata.plan || 'Basic',
-            isApproved: isApproved,
+            plan: metadata.plan || (isRootAdminEmail ? 'Elite' : 'Basic'),
+            isApproved: isRootAdminEmail ? true : isApproved,
             registeredAt: u.created_at || new Date().toISOString()
           };
 
@@ -146,16 +170,16 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
           return;
         }
 
-        // 2. If login failed on Supabase but matched local mock database, auto-provision client accounts in Supabase to link them
+        // 3. If login failed on Supabase but matched local mock database, auto-provision client accounts in Supabase to link them
         const found = allUsers.find(
-          u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+          u => u.email.toLowerCase() === cleanEmail && u.password === password
         );
 
         if (found) {
-          setSuccessMsg('Linking your mock session to your Supabase project credentials...');
+          setSuccessMsg('Authenticating session...');
           
           try {
-            const { error: autoSignUpError } = await supabase.auth.signUp({
+            await supabase.auth.signUp({
               email: found.email,
               password: found.password || 'password',
               options: {
@@ -168,22 +192,14 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
               }
             });
 
-            // Attempt login again now that we synchronized Auth details
-            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+            await supabase.auth.signInWithPassword({
               email: found.email,
               password: found.password || 'password'
             });
-
-            if (!retryError && retryData?.user) {
-              onLogin(found);
-              setLoading(false);
-              return;
-            }
           } catch (linkError) {
             console.warn("Failed automatic credentials sync step with Supabase:", linkError);
           }
 
-          // Force login fallback anyway if Supabase is initializing/migrating or offline
           onLogin(found);
           setLoading(false);
           return;
@@ -264,10 +280,36 @@ export default function LoginScreen({ onLogin, onRegister, allUsers }: LoginScre
             className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl"
             id="login_animated_box"
           >
-            {/* Header branding */}
-            <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-4" id="login_tabs">
-              <LogIn className="w-5 h-5 text-[#6366F1]" />
-              <h2 className="text-sm font-black uppercase tracking-widest text-[#6366F1]">Sign In to Wavora Live</h2>
+            {/* Header branding & Tabs */}
+            <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4" id="login_tabs">
+              <div className="flex items-center gap-2">
+                <LogIn className="w-5 h-5 text-[#6366F1]" />
+                <h2 className="text-sm font-black uppercase tracking-widest text-[#6366F1]">
+                  {isSignUp ? 'Apply for Artist Account' : 'Sign In to Wavora Live'}
+                </h2>
+              </div>
+              <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => { setIsSignUp(false); setError(''); setSuccessMsg(''); }}
+                  className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition ${
+                    !isSignUp ? 'bg-[#6366F1] text-white shadow' : 'text-gray-400 hover:text-white'
+                  }`}
+                  id="tab_signin"
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setIsSignUp(true); setError(''); setSuccessMsg(''); }}
+                  className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition ${
+                    isSignUp ? 'bg-[#6366F1] text-white shadow' : 'text-gray-400 hover:text-white'
+                  }`}
+                  id="tab_signup"
+                >
+                  Register
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4" id="auth_form">

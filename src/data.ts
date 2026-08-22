@@ -15,7 +15,7 @@ export interface AppState {
 const SEED_USERS: User[] = [
   {
     email: 'wavoralive@gmail.com',
-    password: 'password',
+    password: 'admin2',
     artistName: 'Wavora Administrator',
     plan: 'Elite',
     isApproved: true,
