@@ -20,6 +20,7 @@ import MemberPool from './components/MemberPool';
 import ProfileModal from './components/ProfileModal';
 import RevenueReportsModal from './components/RevenueReportsModal';
 import NotificationsDrawer from './components/NotificationsDrawer';
+import CrazyMusicFactModal from './components/CrazyMusicFactModal';
 
 
 import { 
@@ -54,6 +55,7 @@ export default function App() {
   const [isRevenueModalOpen, setIsRevenueModalOpen] = useState<boolean>(false);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
   const [editingRelease, setEditingRelease] = useState<Release | null>(null);
+  const [submittedReleaseFactData, setSubmittedReleaseFactData] = useState<Release | null>(null);
 
   const [isSyncingData, setIsSyncingData] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
@@ -1363,6 +1365,9 @@ export default function App() {
         releases: newArray,
       };
     });
+
+    // Trigger crazy music fact celebration modal with submitted release details!
+    setSubmittedReleaseFactData({ ...newRelease, coverArtSignedUrl });
   };
 
   const handleSubmitSupportQuery = async (queryText: string) => {
@@ -1841,7 +1846,7 @@ export default function App() {
         )}
 
         {/* Dashboard Content Container */}
-        <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto relative z-10" id="app_view_viewport">
+        <div className="p-4 md:p-6 lg:p-8 2xl:p-10 flex-1 max-w-[1600px] w-full mx-auto relative z-10" id="app_view_viewport">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentTab}
@@ -1898,6 +1903,19 @@ export default function App() {
           onClose={() => setIsNotifDrawerOpen(false)}
           currentUser={currentUser}
           notifications={notifications}
+        />
+      )}
+
+      {/* Release Submission Crazy Music Lore Celebration Modal */}
+      {submittedReleaseFactData && (
+        <CrazyMusicFactModal
+          isOpen={!!submittedReleaseFactData}
+          onClose={() => setSubmittedReleaseFactData(null)}
+          isSubmissionSuccess={true}
+          releaseTitle={submittedReleaseFactData.albumName}
+          artistName={submittedReleaseFactData.mainArtistName}
+          coverArtUrl={submittedReleaseFactData.coverArtSignedUrl || submittedReleaseFactData.coverArtUrl}
+          tracksCount={submittedReleaseFactData.tracks?.length || submittedReleaseFactData.numTracks}
         />
       )}
     </div>

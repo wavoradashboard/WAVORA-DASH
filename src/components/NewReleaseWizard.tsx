@@ -416,7 +416,7 @@ export default function NewReleaseWizard({
 
     const isWav = file.name.toLowerCase().endsWith('.wav');
     const isMp3 = file.name.toLowerCase().endsWith('.mp3');
-    if (!isWav && !isMp3) {
+    if (!isMp3 && !isWav) {
       alert('Strict Check: Audio is required in .wav or .mp3 format.');
       return;
     }

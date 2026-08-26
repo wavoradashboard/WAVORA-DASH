@@ -21,6 +21,7 @@ export default function DashboardHome({
   onOpenRevenueModal,
   notifications,
 }: DashboardHomeProps) {
+
   // Filter user's specific releases
   const userReleases = releases.filter(r => r.email === currentUser.email);
   const totalReleases = userReleases.length;
