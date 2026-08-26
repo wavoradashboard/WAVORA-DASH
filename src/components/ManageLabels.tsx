@@ -23,6 +23,8 @@ export default function ManageLabels({
   const [labelName, setLabelName] = useState('');
   const [targetUserEmail, setTargetUserEmail] = useState(currentUser.email);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const isAdmin = currentUser.email.toLowerCase() === 'admin@g.g' || currentUser.email.toLowerCase() === 'wavoralive@gmail.com' || currentUser.email.toLowerCase() === 'wavoradashboard@gmail.com';
   
@@ -70,24 +72,34 @@ export default function ManageLabels({
     </div>
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
     setError('');
+    setSuccessMsg('');
 
     if (!labelName.trim()) {
       setError('Label Name cannot be empty.');
       return;
     }
 
-    const newLabel: Label = {
-      id: `lbl-${Date.now()}`,
-      email: targetUserEmail, // Associated with specific profile
-      name: labelName.trim(),
-    };
+    setIsSubmitting(true);
+    try {
+      const newLabel: Label = {
+        id: `lbl-${Date.now()}`,
+        email: targetUserEmail, // Associated with specific profile
+        name: labelName.trim(),
+      };
 
-    onAddLabel(newLabel);
-    setLabelName('');
+      await onAddLabel(newLabel);
+      setSuccessMsg(`"${labelName.trim()}" successfully registered and synced!`);
+      setLabelName('');
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to register imprint label.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -121,6 +133,13 @@ export default function ManageLabels({
                   </div>
                 )}
 
+                {successMsg && (
+                  <div className="p-2 border border-emerald-500/30 bg-emerald-950/30 text-emerald-400 font-bold text-[10px] rounded flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    {successMsg}
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assign to Profile</label>
                   <select
@@ -149,10 +168,17 @@ export default function ManageLabels({
 
                 <button
                   type="submit"
-                  className="w-full cursor-pointer py-2 px-3 bg-amber-650 hover:bg-amber-600 bg-amber-650 text-white font-bold text-xs rounded transition flex items-center justify-center gap-1.5 shadow"
+                  disabled={isSubmitting}
+                  className="w-full cursor-pointer py-2 px-3 bg-amber-650 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-xs rounded transition flex items-center justify-center gap-1.5 shadow"
                   id="btn_submit_label"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Register Legal Label
+                  {isSubmitting ? (
+                    <span>Registering & Syncing...</span>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" /> Register Legal Label
+                    </>
+                  )}
                 </button>
               </form>
             </div>

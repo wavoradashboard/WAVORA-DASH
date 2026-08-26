@@ -581,7 +581,10 @@ export default function App() {
   // Admin Actions
   const handleApproveUser = async (email: string) => {
     try {
-      await supabase.from('users').update({ is_approved: true }).eq('email', email);
+      const { error } = await supabase.from('users').update({ is_approved: true }).eq('email', email);
+      if (error) {
+        console.error("Supabase user approval error:", error);
+      }
     } catch (e) {
       console.warn("Supabase approval failed, updating local state only:", e);
     }
@@ -593,7 +596,10 @@ export default function App() {
 
   const handleRejectUser = async (email: string) => {
     try {
-      await supabase.from('users').delete().eq('email', email);
+      const { error } = await supabase.from('users').delete().eq('email', email);
+      if (error) {
+        console.error("Supabase user deletion error:", error);
+      }
     } catch (e) {
       console.warn("Supabase user deletion failed, updating local state only:", e);
     }
@@ -634,20 +640,25 @@ export default function App() {
         console.warn("Auth signup threw, falling back to offline/mock:", authError);
       }
 
-      // Add user to the local roster state too so they instantly appear in lists
-      // Note: A database trigger in Supabase should ideally insert into `users` 
-      // but to be safe, we insert explicitly here for the mock.
+      // Add user to the users table
       try {
-        await supabase.from('users').insert({
-          id: signedUpUser?.user?.id || `usr-${Date.now()}`,
+        const userDbId = (signedUpUser?.user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(signedUpUser.user.id))
+          ? signedUpUser.user.id
+          : crypto.randomUUID();
+
+        const { error: dbError } = await supabase.from('users').insert({
+          id: userDbId,
           email: newUser.email,
           artist_name: newUser.artistName,
           plan: newUser.plan,
           is_approved: true,
           registered_at: newUser.registeredAt || new Date().toISOString()
         });
+        if (dbError) {
+          console.error("Database user insert error:", dbError);
+        }
       } catch (dbError) {
-        console.warn("Database user insert rejected, proceding mock/offline:", dbError);
+        console.warn("Database user insert rejected, proceeding mock/offline:", dbError);
       }
 
       updateState((prev) => ({
@@ -663,7 +674,10 @@ export default function App() {
 
   const handleUpdateReleaseStatus = async (releaseId: string, status: TrackStatus, feedback?: string) => {
     try {
-      await supabase.from('releases').update({ status, feedback: feedback || null }).eq('id', releaseId);
+      const { error } = await supabase.from('releases').update({ status, feedback: feedback || null }).eq('id', releaseId);
+      if (error) {
+        console.error("Supabase release status update error:", error);
+      }
     } catch (e) {
       console.warn("Release update failed, updating locally only:", e);
     }
@@ -679,13 +693,23 @@ export default function App() {
 
   const handleUpdateRelease = async (releaseId: string, updates: Partial<Release>) => {
     try {
-      // In Supabase we mainly care about 'tracks' for now, but handle generically
       let dbUpdates: any = {};
       if (updates.tracks !== undefined) dbUpdates.tracks = updates.tracks;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
       if (updates.feedback !== undefined) dbUpdates.feedback = updates.feedback;
+      if (updates.albumName !== undefined) dbUpdates.album_name = updates.albumName;
+      if (updates.mainArtistName !== undefined) dbUpdates.main_artist_name = updates.mainArtistName;
+      if (updates.genre !== undefined) dbUpdates.genre = updates.genre;
+      if (updates.subGenre !== undefined) dbUpdates.sub_genre = updates.subGenre;
+      if (updates.labelName !== undefined) dbUpdates.label_name = updates.labelName;
+      if (updates.cLine !== undefined) dbUpdates.c_line = updates.cLine;
+      if (updates.pLine !== undefined) dbUpdates.p_line = updates.pLine;
+      if (updates.upc !== undefined) dbUpdates.upc = updates.upc;
       
-      await supabase.from('releases').update(dbUpdates).eq('id', releaseId);
+      const { error } = await supabase.from('releases').update(dbUpdates).eq('id', releaseId);
+      if (error) {
+        console.error("Supabase release update error:", error);
+      }
     } catch (e) {
       console.warn("Release full update failed, updating locally only:", e);
     }
@@ -701,7 +725,10 @@ export default function App() {
 
   const handleReplySupportQuery = async (queryId: string, replyText: string) => {
     try {
-      await supabase.from('support_queries').update({ status: 'Resolved', reply_text: replyText }).eq('id', queryId);
+      const { error } = await supabase.from('support_queries').update({ status: 'Resolved', reply_text: replyText }).eq('id', queryId);
+      if (error) {
+        console.error("Supabase support query reply error:", error);
+      }
     } catch (e) {
       console.warn("Query support reply failed, updating locally only:", e);
     }
@@ -717,7 +744,10 @@ export default function App() {
 
   const handleUpdateOacStatus = async (oacId: string, status: 'Approved' | 'Rejected') => {
     try {
-      await supabase.from('oac_applications').update({ status }).eq('id', oacId);
+      const { error } = await supabase.from('oac_applications').update({ status }).eq('id', oacId);
+      if (error) {
+        console.error("Supabase OAC status update error:", error);
+      }
     } catch (e) {
       console.warn("OAC status update failed, updating locally only:", e);
     }
@@ -732,28 +762,42 @@ export default function App() {
   };
 
   const handlePostRevenue = async (email: string, month: string, amount: number, releaseName: string, currency: 'USD' | 'INR' = 'USD') => {
-    
-    // We should lookup user_id by email before sending to Supabase
-    // But since this is a mock implementation with `public.users` available as lookup we can easily fetch it
-    let targetUserId = `usr-${Date.now()}`;
+    let targetUserId: string | null = null;
     try {
-      const { data: targetUser } = await supabase.from('users').select('id').eq('email', email).single();
-      if (targetUser) {
+      const { data: targetUser } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+      if (targetUser?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUser.id)) {
         targetUserId = targetUser.id;
       }
     } catch (e) {
-      console.warn("User lookup for revenue insertion failed, using custom/offline tracking:", e);
+      console.warn("User lookup for revenue insertion failed:", e);
     }
 
     try {
-      await supabase.from('revenue_reports').insert({
-        user_id: targetUserId,
+      const insertPayload: any = {
         email,
         month,
         amount,
         currency,
         breakdown: [{ releaseName, amount }]
-      });
+      };
+      if (targetUserId) {
+        insertPayload.user_id = targetUserId;
+      }
+
+      const { error } = await supabase.from('revenue_reports').insert(insertPayload);
+      if (error) {
+        console.error("Supabase revenue report insertion error:", error);
+        // If failed due to user_id constraint, retry without user_id
+        if (error.message.includes('user_id')) {
+          await supabase.from('revenue_reports').insert({
+            email,
+            month,
+            amount,
+            currency,
+            breakdown: [{ releaseName, amount }]
+          });
+        }
+      }
     } catch (e) {
       console.warn("Revenue report insertion failed, saving to local state only:", e);
     }
@@ -856,63 +900,78 @@ export default function App() {
 
   // Artist Actions
   const handleAddArtist = async (profile: ArtistProfile) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
-      // Use the email specifically set on the artist object (important for admin registrations)
-      const targetEmail = profile.email || currentUser?.email;
-
-      // If admin is adding for another user (or impersonating), look up their ID
-      let targetUserId = session.user.id;
-      const isActuallyAdmin = isAppAdmin(realAdminUser?.email) || isAppAdmin(currentUser?.email);
+    let targetUserId: string | null = null;
+    let artistId = profile.id;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email)) {
-        // Use the known ID of the currentUser if we are impersonating them
-        if (isImpersonating && currentUser && targetEmail === currentUser.email) {
+      // Target email determination
+      const targetEmail = profile.email || currentUser?.email || session?.user?.email || '';
+
+      if (session?.user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id)) {
+        targetUserId = session.user.id;
+      }
+
+      const isActuallyAdmin = isAppAdmin(realAdminUser?.email) || isAppAdmin(currentUser?.email) || isAppAdmin(session?.user?.email);
+      
+      if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email || session?.user?.email)) {
+        if (isImpersonating && currentUser && targetEmail === currentUser.email && currentUser.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUser.id)) {
           targetUserId = currentUser.id;
         } else {
           try {
-            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).single();
-            if (targetUser) targetUserId = targetUser.id;
+            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).maybeSingle();
+            if (targetUser?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUser.id)) {
+              targetUserId = targetUser.id;
+            }
           } catch (e) {
             console.error("Error looking up target user id:", e);
           }
         }
       }
 
+      const generatedId = crypto.randomUUID();
       const payload: any = {
-        user_id: targetUserId,
+        id: generatedId,
         email: targetEmail,
         name: profile.name,
         spotify_link: profile.spotifyLink,
         apple_music_link: profile.appleMusicLink,
         instagram_link: profile.instagramLink,
+        default_c_line: profile.defaultCLine || null,
+        default_p_line: profile.defaultPLine || null
       };
 
-      try {
-        const fullPayload = {
-          ...payload,
-          default_c_line: profile.defaultCLine,
-          default_p_line: profile.defaultPLine
-        };
-        const { error } = await supabase.from('artists').insert(fullPayload);
-        if (error) {
-          console.warn("Inserting artist custom lines failed, falling back without default lines:", error);
-          const { error: fallbackError } = await supabase.from('artists').insert(payload);
-          if (fallbackError) {
-            console.error("Artist fallback insert failed too:", fallbackError);
-          }
-        }
-      } catch (e) {
-        console.error("Artist insertion exception:", e);
+      if (targetUserId) {
+        payload.user_id = targetUserId;
       }
-    } else {
-      console.warn("No active session found. Saving artist to local state only.");
+
+      const { data, error } = await supabase.from('artists').insert(payload).select().maybeSingle();
+      if (error) {
+        console.warn("Inserting artist with custom payload failed, trying fallback:", error);
+        // Fallback without user_id if FK failed
+        const { data: fallbackData, error: fallbackError } = await supabase.from('artists').insert({
+          id: generatedId,
+          email: targetEmail,
+          name: profile.name,
+          spotify_link: profile.spotifyLink,
+          apple_music_link: profile.appleMusicLink,
+          instagram_link: profile.instagramLink,
+        }).select().maybeSingle();
+        if (fallbackError) {
+          console.error("Artist fallback insert error:", fallbackError);
+        } else if (fallbackData?.id) {
+          artistId = String(fallbackData.id);
+        }
+      } else if (data?.id) {
+        artistId = String(data.id);
+      }
+    } catch (e) {
+      console.error("Artist insertion exception:", e);
     }
 
     updateState((prev) => ({
       ...prev,
-      artists: [...prev.artists, profile],
+      artists: [...prev.artists, { ...profile, id: artistId }],
     }));
   };
 
@@ -1132,47 +1191,81 @@ export default function App() {
   };
 
   const handleAddLabel = async (label: Label) => {
-    let targetUserId = "";
+    let targetUserId: string | null = null;
+    let labelId = label.id;
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      
+      // Use the email specifically set on the label object (important for admin registrations)
+      const targetEmail = label.email || currentUser?.email || session?.user?.email || 'admin@g.g';
+
+      if (session?.user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id)) {
         targetUserId = session.user.id;
-        
-        // Use the email specifically set on the label object (important for admin registrations)
-        const targetEmail = label.email || currentUser?.email;
+      }
 
-        // If admin is adding for another user (or impersonating), we might need that user's actual ID
-        const isActuallyAdmin = isAppAdmin(realAdminUser?.email) || isAppAdmin(currentUser?.email);
+      // If admin is adding for another user (or impersonating), look up their ID
+      const isActuallyAdmin = isAppAdmin(realAdminUser?.email) || isAppAdmin(currentUser?.email) || isAppAdmin(session?.user?.email);
 
-        if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email)) {
-          // Use the known ID of the currentUser if we are impersonating them
-          if (isImpersonating && currentUser && targetEmail === currentUser.email) {
-            targetUserId = currentUser.id;
-          } else {
-            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).single();
-            if (targetUser) targetUserId = targetUser.id;
+      if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email || session?.user?.email)) {
+        if (isImpersonating && currentUser && targetEmail === currentUser.email && currentUser.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUser.id)) {
+          targetUserId = currentUser.id;
+        } else {
+          try {
+            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).maybeSingle();
+            if (targetUser?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUser.id)) {
+              targetUserId = targetUser.id;
+            }
+          } catch (e) {
+            console.error("Error looking up target user id for label:", e);
           }
         }
+      }
 
-        await supabase.from('labels').insert({
-          user_id: targetUserId,
+      const generatedId = crypto.randomUUID();
+      const insertPayload: any = {
+        id: generatedId,
+        email: targetEmail,
+        name: label.name,
+      };
+
+      if (targetUserId) {
+        insertPayload.user_id = targetUserId;
+      }
+
+      const { data, error } = await supabase.from('labels').insert(insertPayload).select().maybeSingle();
+      if (error) {
+        console.warn("Supabase label insertion with user_id failed, trying direct insert:", error);
+        // If error was user_id constraint, retry without user_id
+        const { data: retryData, error: retryError } = await supabase.from('labels').insert({
+          id: generatedId,
           email: targetEmail,
           name: label.name
-        });
+        }).select().maybeSingle();
+        
+        if (retryError) {
+          console.error("Supabase label retry insertion error:", retryError);
+        } else if (retryData?.id) {
+          labelId = String(retryData.id);
+        }
+      } else if (data?.id) {
+        labelId = String(data.id);
       }
     } catch (e) {
-      console.warn("Failed syncing label to Supabase, updating locally only:", e);
+      console.error("Failed syncing label to Supabase:", e);
     }
 
     updateState((prev) => ({
       ...prev,
-      labels: [...prev.labels, label],
+      labels: [...prev.labels, { ...label, id: labelId }],
     }));
   };
 
   const handleRemoveLabel = async (id: string) => {
     try {
-      await supabase.from('labels').delete().eq('id', id);
+      const { error } = await supabase.from('labels').delete().eq('id', id);
+      if (error) {
+        console.error("Supabase label deletion error:", error);
+      }
     } catch (e) {
       console.warn("Failed removing label from Supabase, updating locally only:", e);
     }
