@@ -1192,79 +1192,115 @@ export default function App() {
 
   const handleAddLabel = async (label: Label) => {
     let targetUserId: string | null = null;
-    let labelId = label.id;
+    let labelId = label.id || crypto.randomUUID();
+    let syncError: string | null = null;
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Use the email specifically set on the label object (important for admin registrations)
+      // Use the email specifically set on the label object
       const targetEmail = label.email || currentUser?.email || session?.user?.email || 'admin@g.g';
 
       if (session?.user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id)) {
         targetUserId = session.user.id;
       }
 
-      // If admin is adding for another user (or impersonating), look up their ID
-      const isActuallyAdmin = isAppAdmin(realAdminUser?.email) || isAppAdmin(currentUser?.email) || isAppAdmin(session?.user?.email);
+      // Look up target user ID if available
+      try {
+        const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).maybeSingle();
+        if (targetUser?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUser.id)) {
+          targetUserId = targetUser.id;
+        }
+      } catch (e) {
+        console.error("Error looking up target user id for label:", e);
+      }
 
-      if (isActuallyAdmin && targetEmail !== (realAdminUser?.email || currentUser?.email || session?.user?.email)) {
-        if (isImpersonating && currentUser && targetEmail === currentUser.email && currentUser.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUser.id)) {
-          targetUserId = currentUser.id;
+      const generatedUuid = crypto.randomUUID();
+      let insertSuccess = false;
+
+      // Tier 1: Try with id (uuid), email, name, and user_id (if found)
+      const payload1: any = {
+        id: generatedUuid,
+        email: targetEmail,
+        name: label.name.trim(),
+      };
+      if (targetUserId) {
+        payload1.user_id = targetUserId;
+      }
+
+      const { data: d1, error: err1 } = await supabase.from('labels').insert(payload1).select().maybeSingle();
+      if (!err1) {
+        insertSuccess = true;
+        labelId = String(d1?.id || generatedUuid);
+      } else {
+        console.warn("Label insert Tier 1 failed:", err1.message);
+
+        // Tier 2: Try without user_id (in case of FK constraint)
+        const { data: d2, error: err2 } = await supabase.from('labels').insert({
+          id: generatedUuid,
+          email: targetEmail,
+          name: label.name.trim()
+        }).select().maybeSingle();
+
+        if (!err2) {
+          insertSuccess = true;
+          labelId = String(d2?.id || generatedUuid);
         } else {
-          try {
-            const { data: targetUser } = await supabase.from('users').select('id').eq('email', targetEmail).maybeSingle();
-            if (targetUser?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUser.id)) {
-              targetUserId = targetUser.id;
+          console.warn("Label insert Tier 2 failed:", err2.message);
+
+          // Tier 3: Try without explicit ID (if DB has serial/auto-gen ID)
+          const { data: d3, error: err3 } = await supabase.from('labels').insert({
+            email: targetEmail,
+            name: label.name.trim()
+          }).select().maybeSingle();
+
+          if (!err3) {
+            insertSuccess = true;
+            labelId = String(d3?.id || generatedUuid);
+          } else {
+            console.warn("Label insert Tier 3 failed:", err3.message);
+
+            // Tier 4: Try with label_name column name if column is named label_name
+            const { data: d4, error: err4 } = await supabase.from('labels').insert({
+              email: targetEmail,
+              label_name: label.name.trim()
+            }).select().maybeSingle();
+
+            if (!err4) {
+              insertSuccess = true;
+              labelId = String(d4?.id || generatedUuid);
+            } else {
+              console.error("All Supabase label insert tiers failed:", err4.message);
+              syncError = err4.message || err3.message || err2.message || err1.message;
             }
-          } catch (e) {
-            console.error("Error looking up target user id for label:", e);
           }
         }
       }
-
-      const generatedId = crypto.randomUUID();
-      const insertPayload: any = {
-        id: generatedId,
-        email: targetEmail,
-        name: label.name,
-      };
-
-      if (targetUserId) {
-        insertPayload.user_id = targetUserId;
-      }
-
-      const { data, error } = await supabase.from('labels').insert(insertPayload).select().maybeSingle();
-      if (error) {
-        console.warn("Supabase label insertion with user_id failed, trying direct insert:", error);
-        // If error was user_id constraint, retry without user_id
-        const { data: retryData, error: retryError } = await supabase.from('labels').insert({
-          id: generatedId,
-          email: targetEmail,
-          name: label.name
-        }).select().maybeSingle();
-        
-        if (retryError) {
-          console.error("Supabase label retry insertion error:", retryError);
-        } else if (retryData?.id) {
-          labelId = String(retryData.id);
-        }
-      } else if (data?.id) {
-        labelId = String(data.id);
-      }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed syncing label to Supabase:", e);
+      syncError = e?.message || "Network exception";
     }
 
+    // Always update client state so UI reflects new label immediately
     updateState((prev) => ({
       ...prev,
-      labels: [...prev.labels, { ...label, id: labelId }],
+      labels: [...prev.labels.filter(l => l.name !== label.name), { ...label, id: labelId }],
     }));
+
+    if (syncError) {
+      throw new Error(`Database error: ${syncError}`);
+    }
   };
 
   const handleRemoveLabel = async (id: string) => {
     try {
       const { error } = await supabase.from('labels').delete().eq('id', id);
       if (error) {
-        console.error("Supabase label deletion error:", error);
+        console.warn("Supabase label delete by id failed, attempting delete by name fallback:", error);
+        const targetLbl = appState.labels.find(l => l.id === id);
+        if (targetLbl?.name) {
+          await supabase.from('labels').delete().eq('name', targetLbl.name);
+        }
       }
     } catch (e) {
       console.warn("Failed removing label from Supabase, updating locally only:", e);
@@ -1739,6 +1775,9 @@ export default function App() {
             onDownloadFile={handleDownloadFile}
             onUpdateArtist={handleUpdateArtist}
             onUpdateUser={handleUpdateUser}
+            labels={labels}
+            onAddLabel={handleAddLabel}
+            onRemoveLabel={handleRemoveLabel}
             payoutRequests={appState.payoutRequests || []}
             onUpdatePayoutRequest={handleUpdatePayoutRequest}
             onRefreshData={async () => {

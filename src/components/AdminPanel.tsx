@@ -30,15 +30,18 @@ import {
   Edit2,
   RefreshCw,
   Database,
-  AlertCircle
+  AlertCircle,
+  Tags,
+  Search
 } from 'lucide-react';
-import { User, Release, SupportQuery, OacApplication, RevenueReport, TrackStatus, Plan, Notification, ArtistProfile, PayoutRequest } from '../types';
+import { User, Release, SupportQuery, OacApplication, RevenueReport, TrackStatus, Plan, Notification, ArtistProfile, PayoutRequest, Label } from '../types';
 
 interface AdminPanelProps {
   currentUser: User;
   users: User[];
   releases: Release[];
   artists: ArtistProfile[];
+  labels?: Label[];
   supportQueries: SupportQuery[];
   oacApplications: OacApplication[];
   onApproveUser: (email: string) => void;
@@ -56,6 +59,8 @@ interface AdminPanelProps {
   onDownloadFile: (path: string) => void;
   onUpdateArtist: (id: string, updates: Partial<ArtistProfile>) => void;
   onUpdateUser: (email: string, updates: Partial<User>) => void;
+  onAddLabel?: (label: Label) => Promise<void>;
+  onRemoveLabel?: (id: string) => Promise<void>;
   payoutRequests?: PayoutRequest[];
   onUpdatePayoutRequest: (id: string, status: 'Approved' | 'Rejected', feedback?: string) => void;
   onRefreshData?: () => Promise<void>;
@@ -162,6 +167,7 @@ export default function AdminPanel({
   users,
   releases,
   artists,
+  labels = [],
   supportQueries,
   oacApplications,
   onApproveUser,
@@ -179,6 +185,8 @@ export default function AdminPanel({
   onDownloadFile,
   onUpdateArtist,
   onUpdateUser,
+  onAddLabel,
+  onRemoveLabel,
   payoutRequests = [],
   onUpdatePayoutRequest,
   onRefreshData,
@@ -186,9 +194,50 @@ export default function AdminPanel({
   lastSyncTime,
   dbErrors = {}
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'releases' | 'queries' | 'oac' | 'revenue' | 'notifications' | 'artists' | 'legal' | 'payouts'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'releases' | 'queries' | 'oac' | 'revenue' | 'notifications' | 'artists' | 'legal' | 'payouts' | 'labels'>('users');
   const [inspectRelease, setInspectRelease] = useState<Release | null>(null);
   const [editingTrackIsrcMap, setEditingTrackIsrcMap] = useState<Record<string, string>>({});
+
+  // Label DB States
+  const [adminLabelName, setAdminLabelName] = useState('');
+  const [adminLabelTargetEmail, setAdminLabelTargetEmail] = useState('admin@g.g');
+  const [adminLabelError, setAdminLabelError] = useState('');
+  const [adminLabelSuccess, setAdminLabelSuccess] = useState('');
+  const [adminLabelSubmitting, setAdminLabelSubmitting] = useState(false);
+  const [labelSearchQuery, setLabelSearchQuery] = useState('');
+
+  const handleAdminAddLabelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminLabelError('');
+    setAdminLabelSuccess('');
+
+    if (!adminLabelName.trim()) {
+      setAdminLabelError('Imprint Label Name cannot be empty.');
+      return;
+    }
+
+    if (!onAddLabel) {
+      setAdminLabelError('Label registration handler not connected.');
+      return;
+    }
+
+    setAdminLabelSubmitting(true);
+    try {
+      const newLabel: Label = {
+        id: `lbl-${Date.now()}`,
+        email: adminLabelTargetEmail,
+        name: adminLabelName.trim(),
+      };
+      await onAddLabel(newLabel);
+      setAdminLabelSuccess(`"${adminLabelName.trim()}" successfully registered and synced to Supabase!`);
+      setAdminLabelName('');
+      setTimeout(() => setAdminLabelSuccess(''), 4000);
+    } catch (err: any) {
+      setAdminLabelError(err?.message || 'Failed to sync label to Supabase.');
+    } finally {
+      setAdminLabelSubmitting(false);
+    }
+  };
 
   // New User Provisioning States
   const [createArtistName, setCreateArtistName] = useState('');
@@ -707,6 +756,7 @@ export default function AdminPanel({
           { id: 'revenue', label: 'Post Royalty Ledgers', count: 0, icon: DollarSign },
           { id: 'notifications', label: 'Broadcast Notifications', count: 0, icon: Bell },
           { id: 'legal', label: 'Authorized Tags Control', count: 0, icon: FileText },
+          { id: 'labels', label: 'Label DB', count: labels.length, icon: Tags },
           { id: 'artists', label: 'Managed Artists DB', count: artists.length, icon: Layers }
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1771,6 +1821,184 @@ export default function AdminPanel({
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* MANAGED LABELS DATABASE TAB (LABEL DB) */}
+        {activeTab === 'labels' && (
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 space-y-6" id="admin_labels_section">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 flex items-center gap-2">
+                  <Tags className="w-4 h-4" /> Global Imprint Label Registry ({labels.length})
+                </h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Managed imprint labels catalog stored in Supabase. These labels are available to artists in the release submission wizard.
+                </p>
+              </div>
+
+              {/* Search filter */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search imprint labels..."
+                  value={labelSearchQuery}
+                  onChange={(e) => setLabelSearchQuery(e.target.value)}
+                  className="w-full bg-black border border-white/10 rounded-xl py-1.5 pl-8 pr-3 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-500"
+                  id="admin_labels_search_input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column: Form to Register Label */}
+              <div className="lg:col-span-4 bg-black/60 p-5 rounded-2xl border border-white/10 space-y-4 text-left">
+                <span className="text-xs font-black text-amber-400 uppercase tracking-widest block flex items-center gap-1.5">
+                  <PlusCircle className="w-4 h-4" /> Add Imprint to Label DB
+                </span>
+
+                {adminLabelError && (
+                  <div className="p-2.5 border border-red-500/30 bg-red-950/30 text-red-400 font-bold text-[10px] rounded-xl flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{adminLabelError}</span>
+                  </div>
+                )}
+
+                {adminLabelSuccess && (
+                  <div className="p-2.5 border border-emerald-500/30 bg-emerald-950/30 text-emerald-400 font-bold text-[10px] rounded-xl flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{adminLabelSuccess}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleAdminAddLabelSubmit} className="space-y-3.5" id="admin_add_label_form">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      Assign Target Profile
+                    </label>
+                    <select
+                      className="w-full bg-black border border-white/10 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                      value={adminLabelTargetEmail}
+                      onChange={(e) => setAdminLabelTargetEmail(e.target.value)}
+                      id="admin_label_target_email_select"
+                    >
+                      <option value="admin@g.g">Global Imprint (All Artists & Tiers)</option>
+                      {users.filter(u => u.email !== 'admin@g.g').map((u, idx) => (
+                        <option key={`${u.email}-lbl-assign-${idx}`} value={u.email}>
+                          {u.artistName} ({u.email})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      Imprint Name (Exact Display)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-black border border-white/10 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                      placeholder="e.g. Wavora Records, Sony Music, T-Series"
+                      value={adminLabelName}
+                      onChange={(e) => setAdminLabelName(e.target.value)}
+                      id="admin_label_name_input"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={adminLabelSubmitting}
+                    className="w-full cursor-pointer py-2.5 px-4 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-black text-xs uppercase tracking-tight rounded-xl transition flex items-center justify-center gap-1.5 shadow"
+                    id="btn_admin_submit_label_db"
+                  >
+                    {adminLabelSubmitting ? (
+                      <span>Syncing with Supabase...</span>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" /> Save Imprint to Label DB
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* Right Column: Database Records Grid */}
+              <div className="lg:col-span-8 space-y-3">
+                {(() => {
+                  const filtered = labels.filter(l => 
+                    !labelSearchQuery || 
+                    l.name.toLowerCase().includes(labelSearchQuery.toLowerCase()) ||
+                    l.email.toLowerCase().includes(labelSearchQuery.toLowerCase())
+                  );
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="py-16 text-center bg-black/40 rounded-2xl border border-white/10/60">
+                        <Tags className="w-10 h-10 mx-auto text-gray-700 mb-2" />
+                        <p className="text-xs text-gray-500">
+                          {labelSearchQuery ? 'No imprint labels match your search query.' : 'Label database is currently empty.'}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {filtered.map((lbl) => {
+                        const isSystem = lbl.email === 'admin@g.g' || lbl.name === 'Wavora Live';
+                        const ownerUser = users.find(u => u.email === lbl.email);
+
+                        return (
+                          <div
+                            key={lbl.id}
+                            className="bg-black/60 p-3.5 rounded-2xl border border-white/10 hover:border-amber-500/30 transition-all flex flex-col justify-between gap-2.5 group text-left"
+                            id={`admin_label_card_${lbl.id}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-white text-xs truncate">{lbl.name}</span>
+                                  {isSystem && (
+                                    <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1 py-0.2 rounded font-black uppercase">
+                                      Global
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-gray-500 font-mono truncate mt-0.5">
+                                  {isSystem ? 'System / All Artists' : (ownerUser ? `${ownerUser.artistName} (${lbl.email})` : lbl.email)}
+                                </div>
+                              </div>
+
+                              {onRemoveLabel && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Remove imprint label "${lbl.name}" from database?`)) {
+                                      await onRemoveLabel(lbl.id);
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 border border-transparent hover:border-red-500/20 transition cursor-pointer shrink-0"
+                                  title="Delete label from Supabase"
+                                  id={`btn_admin_delete_label_${lbl.id}`}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between text-[9px] text-gray-600 font-mono border-t border-white/5 pt-1.5">
+                              <span>ID: {lbl.id.length > 18 ? `${lbl.id.slice(0, 8)}...` : lbl.id}</span>
+                              <span className="text-emerald-500/80">● Synced</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
           </div>
         )}
       </div>
