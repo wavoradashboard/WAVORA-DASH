@@ -75,8 +75,12 @@ export default function App() {
         try {
           let q = supabase.from(table).select('*');
           if (!isAdmin) {
-            // For regular users, try filtering by user_id or email
-            if (userId && userId !== 'admin-root') {
+            // For regular users, filter by user_id OR email so releases saved under either are returned
+            if (userId && userId !== 'admin-root' && cleanEmail) {
+              q = q.or(`user_id.eq.${userId},email.eq.${cleanEmail}`);
+            } else if (cleanEmail) {
+              q = q.eq('email', cleanEmail);
+            } else if (userId && userId !== 'admin-root') {
               q = q.eq('user_id', userId);
             }
           } else if (orderCol) {
@@ -84,12 +88,19 @@ export default function App() {
           }
           const res = await q;
           if (res.error) {
-            // Retry without orderCol in case column does not exist
+            // Retry without orderCol or filter in case column does not exist
             const fallback = await supabase.from(table).select('*');
             if (fallback.error) {
               return { data: null, error: fallback.error };
             }
-            return { data: fallback.data, error: null };
+            let filteredData = fallback.data;
+            if (!isAdmin && filteredData) {
+              filteredData = filteredData.filter((item: any) => 
+                (item.email && item.email.toLowerCase() === cleanEmail) || 
+                (item.user_id && item.user_id === userId)
+              );
+            }
+            return { data: filteredData, error: null };
           }
           return { data: res.data, error: null };
         } catch (e: any) {
@@ -1372,89 +1383,89 @@ export default function App() {
   const handleSubmitRelease = async (newRelease: Release) => {
     try {
       const { session } = await safeGetSession();
-      
-      if (session?.user) {
-        // Ensure valid UUID for the database in case of legacy local state IDs
-        let dbId = newRelease.id;
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dbId);
-        if (!isUUID) {
-          dbId = crypto.randomUUID();
-          newRelease.id = dbId; // ensure local state matches
-          console.warn(`Legacy ID format detected. Re-assigned standard UUID for database: ${dbId}`);
+      const effectiveUserId = session?.user?.id || currentUser?.id || 'usr-' + Date.now();
+      const effectiveEmail = currentUser?.email || session?.user?.email || '';
+
+      // Ensure valid UUID for the database in case of legacy local state IDs
+      let dbId = newRelease.id;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dbId);
+      if (!isUUID) {
+        dbId = crypto.randomUUID();
+        newRelease.id = dbId; // ensure local state matches
+        console.warn(`Legacy ID format detected. Re-assigned standard UUID for database: ${dbId}`);
+      }
+
+      const payload: any = {
+        id: dbId,
+        user_id: effectiveUserId,
+        email: effectiveEmail,
+        album_name: newRelease.albumName,
+        type: newRelease.type,
+        main_artist_name: newRelease.mainArtistName,
+        other_artists: newRelease.otherArtists,
+        language: newRelease.language,
+        content_type: newRelease.contentType,
+        num_tracks: newRelease.numTracks,
+        genre: newRelease.genre,
+        sub_genre: newRelease.subGenre,
+        label_name: newRelease.labelName,
+        upc: newRelease.upc,
+        content_id: newRelease.contentId || 'No',
+        c_line: newRelease.cLine,
+        p_line: newRelease.pLine,
+        release_date: newRelease.releaseDate,
+        cover_art_url: newRelease.coverArtUrl,
+        tracks: newRelease.tracks,
+        special_request: newRelease.specialRequest,
+        status: newRelease.status || 'Submitted',
+        submitted_at: newRelease.submittedAt || new Date().toISOString()
+      };
+
+      try {
+        const fullPayload = {
+          ...payload,
+          feature_artists: newRelease.featureArtists
+        };
+        
+        let firstError = null;
+        // If editing AND it was a valid UUID, try updating. Otherwise, just insert it.
+        if (editingRelease && isUUID) {
+          const { error } = await supabase.from('releases').update(fullPayload).eq('id', dbId);
+          firstError = error;
+        } else {
+          const { error } = await supabase.from('releases').insert(fullPayload);
+          firstError = error;
         }
 
-        const payload: any = {
-          id: dbId,
-          user_id: session.user.id,
-          email: currentUser?.email,
-          album_name: newRelease.albumName,
-          type: newRelease.type,
-          main_artist_name: newRelease.mainArtistName,
-          other_artists: newRelease.otherArtists,
-          language: newRelease.language,
-          content_type: newRelease.contentType,
-          num_tracks: newRelease.numTracks,
-          genre: newRelease.genre,
-          sub_genre: newRelease.subGenre,
-          label_name: newRelease.labelName,
-          upc: newRelease.upc,
-          content_id: newRelease.contentId || 'No',
-          c_line: newRelease.cLine,
-          p_line: newRelease.pLine,
-          release_date: newRelease.releaseDate,
-          cover_art_url: newRelease.coverArtUrl,
-          tracks: newRelease.tracks,
-          special_request: newRelease.specialRequest,
-          status: 'Submitted',
-          submitted_at: newRelease.submittedAt
-        };
-
-        try {
-          const fullPayload = {
+        if (firstError) {
+          console.warn("First insert attempt failed, trying fallback serialize within other_artists", firstError);
+          const fallbackPayload = {
             ...payload,
-            feature_artists: newRelease.featureArtists
+            other_artists: {
+              serialized_other: newRelease.otherArtists,
+              serialized_feature: newRelease.featureArtists
+            }
           };
           
-          let firstError = null;
-          // If editing AND it was a valid UUID, try updating. Otherwise, just insert it.
+          let fallbackError = null;
           if (editingRelease && isUUID) {
-            const { error } = await supabase.from('releases').update(fullPayload).eq('id', dbId);
-            firstError = error;
+             const { error } = await supabase.from('releases').update(fallbackPayload).eq('id', dbId);
+             fallbackError = error;
           } else {
-            const { error } = await supabase.from('releases').insert(fullPayload);
-            firstError = error;
+             const { error } = await supabase.from('releases').insert(fallbackPayload);
+             fallbackError = error;
           }
 
-          if (firstError) {
-            console.warn("First attempt failed, trying fallback serialize within other_artists", firstError);
-            const fallbackPayload = {
-              ...payload,
-              other_artists: {
-                serialized_other: newRelease.otherArtists,
-                serialized_feature: newRelease.featureArtists
-              }
-            };
-            
-            let fallbackError = null;
-            if (editingRelease && isUUID) {
-               const { error } = await supabase.from('releases').update(fallbackPayload).eq('id', dbId);
-               fallbackError = error;
-            } else {
-               const { error } = await supabase.from('releases').insert(fallbackPayload);
-               fallbackError = error;
-            }
-
-            if (fallbackError) {
-              console.error("Fallback operation also failed:", fallbackError);
-              alert("Failed to save release to database. Error: " + fallbackError.message);
-            }
+          if (fallbackError) {
+            console.error("Fallback operation also failed:", fallbackError);
+          } else {
+            console.log("Release saved to Supabase via fallback payload:", dbId);
           }
-        } catch (e: any) {
-          console.error("Release database exception:", e);
-          alert("Exception while saving release: " + e.message);
+        } else {
+          console.log("Release saved to Supabase successfully:", dbId);
         }
-      } else {
-        console.warn("No active session found during release submission. Saving to local state only.");
+      } catch (e: any) {
+        console.error("Release database exception:", e);
       }
     } catch (e) {
       console.warn("Auth initialization failed during release submit:", e);
