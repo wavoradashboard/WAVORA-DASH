@@ -13,6 +13,7 @@ import NewReleaseWizard from './components/NewReleaseWizard';
 import ManageArtists from './components/ManageArtists';
 import ManageLabels from './components/ManageLabels';
 import CatalogueView from './components/CatalogueView';
+import ReleaseSuccessView from './components/ReleaseSuccessView';
 import RevenuePage from './components/RevenuePage';
 import SupportPage from './components/SupportPage';
 import AdminPanel from './components/AdminPanel';
@@ -56,6 +57,7 @@ export default function App() {
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
   const [editingRelease, setEditingRelease] = useState<Release | null>(null);
   const [submittedReleaseFactData, setSubmittedReleaseFactData] = useState<Release | null>(null);
+  const [selectedReleaseForView, setSelectedReleaseForView] = useState<Release | null>(null);
 
   const [isSyncingData, setIsSyncingData] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
@@ -1733,12 +1735,26 @@ export default function App() {
           />
         );
       case 'catalogue':
+        if (selectedReleaseForView) {
+          return (
+            <ReleaseSuccessView
+              release={selectedReleaseForView}
+              currentUser={currentUser}
+              onViewCatalogue={() => setSelectedReleaseForView(null)}
+              onNewRelease={() => {
+                setSelectedReleaseForView(null);
+                setCurrentTab('new-release');
+              }}
+            />
+          );
+        }
         return (
           <CatalogueView
             currentUser={currentUser}
             releases={releases}
             onDeleteRelease={handleDeleteRelease}
             onEditRelease={handleEditRelease}
+            onViewReleaseDetails={(rel) => setSelectedReleaseForView(rel)}
           />
         );
       case 'revenue':
