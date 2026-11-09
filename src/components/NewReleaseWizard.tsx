@@ -17,8 +17,9 @@ import {
   Users
 } from 'lucide-react';
 import { User, Release, ReleaseTrack, ArtistProfile, Label } from '../types';
-import { supabase } from '../supabase';
+import { supabase, safeGetSession } from '../supabase';
 import { uploadFileToR2, getR2FileUrl, isR2Configured } from '../r2';
+import ReleaseSuccessView from './ReleaseSuccessView';
 
 export const GENRE_DATA: Record<string, string[]> = {
   "Alternative": ["Indie Rock", "Grunge", "Gothic Rock", "College Rock", "Britpop", "Dream Pop", "Shoegaze", "Post-Punk", "Noise Rock"],
@@ -148,6 +149,7 @@ export default function NewReleaseWizard({
 
   // Wizard state
   const [step, setStep] = useState(1);
+  const [submittedRelease, setSubmittedRelease] = useState<Release | null>(null);
   const [coverArtUploadProgress, setCoverArtUploadProgress] = useState<number>(0);
   const [trackUploadProgress, setTrackUploadProgress] = useState<Record<number, number>>({});
   const [error, setError] = useState('');
@@ -326,7 +328,7 @@ export default function NewReleaseWizard({
       }, 200);
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { session } = await safeGetSession();
         const userId = session?.user?.id || currentUser?.id || 'usr-' + Date.now();
 
         const ext = file.name.split('.').pop() || 'jpg';
@@ -421,6 +423,9 @@ export default function NewReleaseWizard({
       return;
     }
 
+    const objectUrl = URL.createObjectURL(file);
+    handleTrackFieldChange(index, 'audioPreviewUrl', objectUrl);
+
     setTrackUploadProgress(prev => ({ ...prev, [index]: 1 }));
 
     // Simulate upload progress
@@ -433,7 +438,7 @@ export default function NewReleaseWizard({
     }, 250);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await safeGetSession();
       const userId = session?.user?.id || currentUser?.id || 'usr-' + Date.now();
 
       const safeArtist = (primaryArtists.length > 0 ? primaryArtists.join('_') : 'Unknown_Artist').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -584,7 +589,6 @@ export default function NewReleaseWizard({
   };
 
   const handleFinalSubmit = () => {
-    const isAdmin = isAppAdmin;
     const newRelease: Release = {
       id: editingRelease?.id || crypto.randomUUID(),
       email: editingRelease?.email || currentUser.email,
@@ -605,6 +609,7 @@ export default function NewReleaseWizard({
       pLine: pLine || '℗ Wavora Live',
       releaseDate,
       coverArtUrl: coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop',
+      coverArtSignedUrl: coverArtPreview || coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop',
       tracks: trackList,
       specialRequest,
       status: 'Submitted',
@@ -612,8 +617,41 @@ export default function NewReleaseWizard({
     };
 
     onSubmitRelease(newRelease);
-    setCurrentTab('catalogue');
+    setSubmittedRelease(newRelease);
   };
+
+  const handleResetForNew = () => {
+    setSubmittedRelease(null);
+    setStep(1);
+    setAlbumName('');
+    setReleaseType('Single');
+    setFeatureArtists([]);
+    setOtherArtists([]);
+    setLanguage('');
+    setContentType('');
+    setNumTracks(1);
+    setGenre('');
+    setSubGenre('');
+    setSelectedLabel('');
+    setCoverArtFile(null);
+    setCoverArtUrl('');
+    setCoverArtPreview('');
+    setTrackList([]);
+    setSpecialRequest('');
+    setError('');
+    setArtworkWarning('');
+  };
+
+  if (submittedRelease) {
+    return (
+      <ReleaseSuccessView
+        release={submittedRelease}
+        currentUser={currentUser}
+        onViewCatalogue={() => setCurrentTab('catalogue')}
+        onNewRelease={handleResetForNew}
+      />
+    );
+  }
 
   return (
     <div className="p-6 bg-[#0f1424] rounded-3xl border border-slate-900 shadow-xl space-y-6" id="wizard_root">

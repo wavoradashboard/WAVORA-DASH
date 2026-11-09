@@ -32,6 +32,21 @@ const SEED_USERS: User[] = [
     planEndDate: '2030-12-31T23:59:59Z',
   },
   {
+    email: 'demisedamn@gmail.com',
+    password: 'password',
+    artistName: 'Demise Damn',
+    plan: 'Elite',
+    isApproved: true,
+    registeredAt: '2026-01-15T10:00:00Z',
+    planEndDate: '2030-12-31T23:59:59Z',
+    allowedCLines: ['Demise Damn Records', 'Wavora Live VIP Imprint'],
+    allowedPLines: ['Demise Damn Music', 'Wavora Live Master'],
+    bankName: 'HDFC Bank VIP',
+    bankAccountNo: '990011223344',
+    bankIfsc: 'HDFC0000999',
+    bankHolderName: 'Demise Damn',
+  },
+  {
     email: 'luna@wavora.live',
     password: 'password',
     artistName: 'Luna Drift',
@@ -66,6 +81,14 @@ const SEED_USERS: User[] = [
 ];
 
 const SEED_ARTISTS: ArtistProfile[] = [
+  {
+    id: 'art-dd1',
+    email: 'demisedamn@gmail.com',
+    name: 'Demise Damn',
+    spotifyLink: 'https://open.spotify.com/artist/demise_damn',
+    appleMusicLink: 'https://music.apple.com/artist/demise_damn',
+    instagramLink: 'https://instagram.com/demise_damn',
+  },
   {
     id: 'art-1',
     email: 'luna@wavora.live',
@@ -102,6 +125,11 @@ const SEED_ARTISTS: ArtistProfile[] = [
 
 const SEED_LABELS: Label[] = [
   {
+    id: 'lbl-dd1',
+    email: 'demisedamn@gmail.com',
+    name: 'Demise Damn Records',
+  },
+  {
     id: 'lbl-1',
     email: 'zenith@wavora.live',
     name: 'Prism Records',
@@ -114,6 +142,66 @@ const SEED_LABELS: Label[] = [
 ];
 
 const SEED_RELEASES: Release[] = [
+  {
+    id: 'rel-dd1',
+    email: 'demisedamn@gmail.com',
+    albumName: 'Inferno Velocity (VIP Deluxe)',
+    type: 'Album',
+    mainArtistName: 'Demise Damn',
+    featureArtists: [],
+    otherArtists: [],
+    language: 'English',
+    contentType: 'Original',
+    numTracks: 3,
+    genre: 'Electronic',
+    subGenre: 'Dark Synthwave',
+    labelName: 'Demise Damn Records',
+    cLine: '© 2026 Demise Damn Records',
+    pLine: '℗ 2026 Demise Damn Music',
+    upc: '889012345678',
+    releaseDate: '2026-06-01',
+    coverArtUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600&auto=format&fit=crop',
+    status: 'Live',
+    submittedAt: '2026-05-15T08:00:00Z',
+    tracks: [
+      {
+        id: 'trk-dd1',
+        trackName: 'Midnight Overdrive',
+        mainArtistName: 'Demise Damn',
+        featureArtists: [],
+        otherArtists: [],
+        genre: 'Electronic',
+        subGenre: 'Dark Synthwave',
+        language: 'English',
+        producer: 'Demise Damn',
+        lyricist: 'Demise Damn',
+        composer: 'Demise Damn',
+        isrc: 'US-WV-26-00991',
+        explicitContent: false,
+        lyrics: 'Blazing through the dark horizon, digital velocity...',
+        audioFileName: 'Midnight_Overdrive_441k_Master.wav',
+        contentId: 'Yes',
+      },
+      {
+        id: 'trk-dd2',
+        trackName: 'Neon Requiem',
+        mainArtistName: 'Demise Damn',
+        featureArtists: [],
+        otherArtists: [],
+        genre: 'Electronic',
+        subGenre: 'Dark Synthwave',
+        language: 'English',
+        producer: 'Demise Damn',
+        lyricist: 'Demise Damn',
+        composer: 'Demise Damn',
+        isrc: 'US-WV-26-00992',
+        explicitContent: false,
+        audioFileName: 'Neon_Requiem_Lossless.wav',
+        contentId: 'Yes',
+      },
+    ],
+    specialRequest: 'Priority Fast-Track Dolby Atmos and Spotify Editorial Pitching.',
+  },
   {
     id: 'rel-1',
     email: 'luna@wavora.live',
@@ -247,6 +335,18 @@ const SEED_RELEASES: Release[] = [
 ];
 
 const SEED_REVENUE: RevenueReport[] = [
+  {
+    id: 'rev-dd1',
+    email: 'demisedamn@gmail.com',
+    month: 'May 2026',
+    amount: 4850.50,
+    currency: 'USD',
+    breakdown: [
+      { releaseName: 'Inferno Velocity (Spotify Masters)', amount: 2950.20 },
+      { releaseName: 'Inferno Velocity (Apple Music Spatial)', amount: 1320.30 },
+      { releaseName: 'Inferno Velocity (YouTube Content ID)', amount: 580.00 },
+    ],
+  },
   {
     id: 'rev-1',
     email: 'luna@wavora.live',
@@ -382,6 +482,7 @@ export function getStoredData(): AppState {
     if (raw) {
       const parsed = JSON.parse(raw);
       let needsResave = false;
+
       if (!parsed.notifications) {
         parsed.notifications = SEED_NOTIFICATIONS;
         needsResave = true;
@@ -390,6 +491,44 @@ export function getStoredData(): AppState {
         parsed.payoutRequests = SEED_PAYOUTS;
         needsResave = true;
       }
+
+      // Ensure demisedamn@gmail.com is in parsed.users and set to Elite plan
+      if (parsed.users) {
+        const demiseUserIndex = parsed.users.findIndex((u: User) => u.email.toLowerCase() === 'demisedamn@gmail.com');
+        if (demiseUserIndex !== -1) {
+          if (parsed.users[demiseUserIndex].plan !== 'Elite' || !parsed.users[demiseUserIndex].isApproved) {
+            parsed.users[demiseUserIndex].plan = 'Elite';
+            parsed.users[demiseUserIndex].isApproved = true;
+            needsResave = true;
+          }
+        } else {
+          parsed.users.push(SEED_USERS.find(u => u.email === 'demisedamn@gmail.com')!);
+          needsResave = true;
+        }
+      } else {
+        parsed.users = SEED_USERS;
+        needsResave = true;
+      }
+
+      // Also ensure demisedamn's releases and revenue exist if missing
+      if (parsed.releases && !parsed.releases.some((r: Release) => r.email === 'demisedamn@gmail.com')) {
+        const demiseReleases = SEED_RELEASES.filter(r => r.email === 'demisedamn@gmail.com');
+        parsed.releases.push(...demiseReleases);
+        needsResave = true;
+      }
+
+      if (parsed.revenueReports && !parsed.revenueReports.some((r: RevenueReport) => r.email === 'demisedamn@gmail.com')) {
+        const demiseRev = SEED_REVENUE.filter(r => r.email === 'demisedamn@gmail.com');
+        parsed.revenueReports.push(...demiseRev);
+        needsResave = true;
+      }
+
+      if (parsed.artists && !parsed.artists.some((a: ArtistProfile) => a.email === 'demisedamn@gmail.com')) {
+        const demiseArt = SEED_ARTISTS.filter(a => a.email === 'demisedamn@gmail.com');
+        parsed.artists.push(...demiseArt);
+        needsResave = true;
+      }
+
       if (needsResave) {
         saveStoredData(parsed);
       }
@@ -401,21 +540,14 @@ export function getStoredData(): AppState {
 
   // Seed default state
   const defaultState: AppState = {
-    users: [{
-      email: 'admin@g.g',
-      password: 'password', // Resetting this placeholder to 'password' for easier login
-      artistName: 'Administrator',
-      plan: 'Elite',
-      isApproved: true,
-      registeredAt: new Date().toISOString(),
-    }],
-    releases: [],
-    artists: [],
-    labels: [],
-    revenueReports: [],
-    queries: [],
-    oacApplications: [],
-    notifications: [],
+    users: SEED_USERS,
+    releases: SEED_RELEASES,
+    artists: SEED_ARTISTS,
+    labels: SEED_LABELS,
+    revenueReports: SEED_REVENUE,
+    queries: SEED_QUERIES,
+    oacApplications: SEED_OAC,
+    notifications: SEED_NOTIFICATIONS,
     payoutRequests: SEED_PAYOUTS,
   };
   saveStoredData(defaultState);

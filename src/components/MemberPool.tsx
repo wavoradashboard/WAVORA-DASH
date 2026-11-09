@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Users, Search, Edit2, Key, Info, CheckCircle, XCircle } from 'lucide-react';
 import { User, Plan } from '../types';
-import { supabase } from '../supabase';
+import { supabase, safeGetSession } from '../supabase';
 
 interface MemberPoolProps {
   currentUser: User;
@@ -32,7 +32,7 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
     
     // Attempt real Auth update if the target user was created in Auth
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await safeGetSession();
       if (!session) {
         console.warn("No active admin session for auth update; applying locally.");
       }

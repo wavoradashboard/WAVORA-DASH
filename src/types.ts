@@ -55,6 +55,8 @@ export interface ReleaseTrack {
   contentId?: 'Yes' | 'No';
   lyrics?: string;
   audioFileName?: string;
+  audioPreviewUrl?: string;
+  audioSignedUrl?: string;
   googleDriveLink?: string;
 }
 

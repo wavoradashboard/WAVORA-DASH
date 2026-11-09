@@ -77,8 +77,8 @@ export default function Sidebar({
     switch (plan) {
       case 'Elite':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-950/40 text-amber-505 border border-amber-600/30 tracking-wide uppercase">
-            💎 Elite Tier
+          <span className="px-3 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500/25 via-amber-400/15 to-amber-500/25 text-amber-300 border border-amber-500/40 tracking-wider uppercase inline-flex items-center gap-1 shadow-sm shadow-amber-500/20">
+            <Sparkles className="w-3 h-3 text-amber-400" /> VIP Elite Member
           </span>
         );
       case 'Pro':
@@ -230,10 +230,21 @@ export default function Sidebar({
             </div>
 
             {/* User profile capsule in sidebar */}
-            <div className="px-6 py-4 border-b border-white/10 bg-white/5 text-left shrink-0">
-              <div className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Active Identity</div>
+            <div className={`px-6 py-4 border-b text-left shrink-0 transition-all ${
+              isElite 
+                ? 'bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border-amber-500/30 border-l-4 border-l-amber-400 shadow-md shadow-amber-950/40' 
+                : 'bg-white/5 border-white/10'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Active Identity</span>
+                {isElite && (
+                  <span className="text-[9px] text-amber-300 font-black uppercase tracking-wider bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                    VIP GOLD
+                  </span>
+                )}
+              </div>
               <div className="font-bold text-sm text-white truncate">{currentUser.artistName}</div>
-              <div className="text-xs text-gray-400 truncate mt-0.5">{currentUser.email}</div>
+              <div className="text-xs text-slate-300 truncate mt-0.5">{currentUser.email}</div>
               <div className="mt-2.5">{getPlanBadge(currentUser.plan)}</div>
             </div>
 

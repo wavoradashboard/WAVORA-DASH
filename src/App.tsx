@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getStoredData, saveStoredData, AppState } from './data';
 import { User, Release, ArtistProfile, Label, RevenueReport, SupportQuery, OacApplication, TrackStatus, PayoutRequest } from './types';
-import { supabase, isolatedAdminSupabase } from './supabase';
+import { supabase, isolatedAdminSupabase, safeGetSession } from './supabase';
 import { getR2FileUrl, deleteFilesFromR2, isR2Configured } from './r2';
 
 // Importing Tab Components
@@ -435,7 +435,7 @@ export default function App() {
   useEffect(() => {
     const initSupabaseSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { session } = await safeGetSession();
         if (session?.user) {
           const u = session.user;
           const metadata = u.user_metadata || {};
@@ -545,7 +545,7 @@ export default function App() {
     setCurrentUser(user);
     setIsImpersonating(false);
     setRealAdminUser(null);
-    const { data: { session } } = await supabase.auth.getSession();
+    const { session } = await safeGetSession();
     await loadSupabaseData(user.email, session?.user?.id || user.id || 'admin-root');
     const isAppAdmin = (email?: string) => {
       const e = email?.toLowerCase();
@@ -903,7 +903,7 @@ export default function App() {
     let targetUserId: string | null = null;
     let artistId = profile.id;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await safeGetSession();
       
       // Target email determination
       const targetEmail = profile.email || currentUser?.email || session?.user?.email || '';
@@ -1137,7 +1137,7 @@ export default function App() {
       status: 'Pending' as const
     };
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { session } = await safeGetSession();
     if (session?.user) {
       try {
         const { error: insError } = await supabase.from('payout_requests').insert({
@@ -1196,7 +1196,7 @@ export default function App() {
     let syncError: string | null = null;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await safeGetSession();
       
       // Use the email specifically set on the label object
       const targetEmail = label.email || currentUser?.email || session?.user?.email || 'admin@g.g';
@@ -1371,7 +1371,7 @@ export default function App() {
 
   const handleSubmitRelease = async (newRelease: Release) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await safeGetSession();
       
       if (session?.user) {
         // Ensure valid UUID for the database in case of legacy local state IDs
@@ -1501,7 +1501,7 @@ export default function App() {
 
   const handleSubmitSupportQuery = async (queryText: string) => {
     if (!currentUser) return;
-    const { data: { session } } = await supabase.auth.getSession();
+    const { session } = await safeGetSession();
 
     const newQuery: SupportQuery = {
       id: crypto.randomUUID(),
@@ -1537,7 +1537,7 @@ export default function App() {
 
   const handleSubmitOacApplication = async (youtubeLink: string, spotifyLink: string, fullName: string) => {
     if (!currentUser) return;
-    const { data: { session } } = await supabase.auth.getSession();
+    const { session } = await safeGetSession();
 
     const newOac: OacApplication = {
       id: crypto.randomUUID(),
