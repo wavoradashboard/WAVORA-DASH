@@ -99,104 +99,135 @@ export default function Sidebar({
   return (
     <>
       <AnimatePresence>
-        {/* Mobile Top Bar / Full Height Overlay Menu */}
+        {/* Mobile Navigation Drawer Backdrop & Slide-out Panel with Gestures */}
         {isOpenMobile && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 z-[110] bg-[#070710] flex flex-col h-[100dvh] w-screen overflow-hidden"
-            id="mobile_header_full_overlay"
-          >
-            {/* Top Row Header inside overlay */}
-          <div className="flex items-center justify-between px-6 h-16 md:h-20 border-b border-white/10 flex-shrink-0 bg-[#070710] z-20">
-            <div className="flex items-center gap-2.5">
-              <div>
-                <span className="text-sm md:text-base font-black tracking-tighter uppercase text-white">Wavora <span className="text-[#6366F1]">Live</span></span>
-                <div className="text-[8px] md:text-[9px] text-[#6366F1] font-mono tracking-widest uppercase">Digital Ingestions</div>
-              </div>
-            </div>
-            <button
-              type="button"
+          <div className="lg:hidden fixed inset-0 z-[110]" id="mobile_nav_drawer_root">
+            {/* Backdrop with rich blur */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
               onClick={() => setIsOpenMobile(false)}
-              className="p-1.5 rounded-xl hover:bg-white/5 text-gray-350 transition cursor-pointer"
-              id="btn_hamburger_close"
-            >
-              <X className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-          </div>
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl cursor-pointer z-0"
+              id="mobile_drawer_backdrop"
+            />
 
-          {/* Navigation & Body inside overlay */}
-          <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 flex flex-col">
-            <div className="space-y-6">
-              {/* User identity capsule */}
-              <div className="p-4 rounded-2xl border border-white/10 bg-white/5 text-left">
-                <div className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Active Identity</div>
-                <div className="font-bold text-sm text-white truncate">{currentUser.artistName}</div>
-                <div className="text-xs text-gray-400 truncate mt-0.5">{currentUser.email}</div>
-                <div className="mt-2.5">{getPlanBadge(currentUser.plan)}</div>
+            {/* Slide-out Drawer Panel with Drag-to-Close Gesture */}
+            <motion.div 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              drag="x"
+              dragConstraints={{ left: -320, right: 0 }}
+              dragElastic={{ left: 0.25, right: 0 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -60 || info.velocity.x < -200) {
+                  setIsOpenMobile(false);
+                }
+              }}
+              className="absolute top-0 left-0 bottom-0 w-[85vw] max-w-xs sm:max-w-sm bg-gradient-to-b from-[#0a0e1c] via-[#070914] to-black border-r border-indigo-500/20 shadow-2xl flex flex-col h-[100dvh] z-10 touch-pan-y"
+              id="mobile_drawer_panel"
+            >
+              {/* Drag Handle Indicator Pill */}
+              <div className="pt-3 pb-1 flex justify-center">
+                <div className="w-10 h-1 rounded-full bg-slate-700/60" title="Swipe left to close" />
               </div>
 
-              {/* Impersonation active warning in overlay */}
-              {isImpersonating && (
-                <div className="p-3 rounded-xl bg-orange-950/40 border border-orange-500/20 text-xs text-left animate-pulse">
-                  <div className="font-bold text-orange-400 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5" /> Impersonation Active
-                  </div>
-                  <p className="text-gray-300 text-[10px] mt-1">Viewing artist portal for {currentUser.artistName}.</p>
-                  <button
-                    type="button"
-                    onClick={() => { setIsOpenMobile(false); onExitImpersonation(); }}
-                    className="w-full mt-2 py-1.5 px-2 rounded bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] flex items-center justify-center gap-1 transition cursor-pointer"
-                    id="btn_exit_impersonate_mobile"
-                  >
-                    <ArrowLeftRight className="w-3 h-3" /> Back to Admin
-                  </button>
+              {/* Header inside drawer */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 shrink-0">
+                <div>
+                  <span className="text-base font-black tracking-tighter uppercase text-white">Wavora <span className="text-[#6366F1]">Live</span></span>
+                  <div className="text-[9px] text-[#6366F1] font-mono tracking-widest uppercase">Digital Ingestions</div>
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setIsOpenMobile(false)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 transition cursor-pointer active:scale-95"
+                  id="btn_drawer_close"
+                  title="Close Menu (or swipe left)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              {/* Navigation Menu Links */}
-              <nav className="space-y-1.5" id="mobile_nav_menu">
-                {menuItems
-                  .filter(item => item.visible)
-                  .map((item) => {
-                    const IconComponent = item.icon;
-                    const isActive = currentTab === item.id;
-                    return (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => handleTabClick(item.id)}
-                        className={`w-full text-left font-sans flex items-center gap-3.5 px-4 py-3 text-xs font-bold tracking-tight uppercase rounded-xl transition duration-150 cursor-pointer ${
-                          isActive 
-                            ? 'bg-[#6366F1]/10 text-[#6366F1] border-l-2 border-[#6366F1]' 
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
-                        id={`mobile_tab_${item.id}`}
-                      >
-                        <IconComponent className={`w-4 h-4 ${isActive ? 'text-[#6366F1]' : 'text-gray-450'}`} />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-              </nav>
-            </div>
+              {/* Drawer Body & Nav Links */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-5 flex flex-col">
+                {/* Active user profile capsule */}
+                <div className="p-4 rounded-2xl border border-indigo-500/20 bg-slate-900/60 text-left shadow-md">
+                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">Active Identity</div>
+                  <div className="font-extrabold text-sm text-white truncate">{currentUser.artistName}</div>
+                  <div className="text-xs text-indigo-300 truncate mt-0.5">{currentUser.email}</div>
+                  <div className="mt-2.5">{getPlanBadge(currentUser.plan)}</div>
+                </div>
 
-              {/* Sign Out Console */}
-              <div className="pt-4 border-t border-white/10">
+                {/* Impersonation active alert */}
+                {isImpersonating && (
+                  <div className="p-3 rounded-xl bg-orange-950/40 border border-orange-500/20 text-xs text-left animate-pulse">
+                    <div className="font-bold text-orange-400 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> Impersonation Active
+                    </div>
+                    <p className="text-gray-300 text-[10px] mt-1">Viewing portal for {currentUser.artistName}.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setIsOpenMobile(false); onExitImpersonation(); }}
+                      className="w-full mt-2 py-1.5 px-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] flex items-center justify-center gap-1 transition cursor-pointer"
+                      id="btn_exit_impersonate_mobile"
+                    >
+                      <ArrowLeftRight className="w-3 h-3" /> Back to Admin
+                    </button>
+                  </div>
+                )}
+
+                {/* Navigation Menu Links */}
+                <nav className="space-y-1.5" id="mobile_nav_menu">
+                  {menuItems
+                    .filter(item => item.visible)
+                    .map((item) => {
+                      const IconComponent = item.icon;
+                      const isActive = currentTab === item.id;
+                      return (
+                        <button
+                          type="button"
+                          key={item.id}
+                          onClick={() => handleTabClick(item.id)}
+                          className={`w-full text-left flex items-center gap-3.5 px-4 py-3 text-xs font-bold tracking-tight uppercase rounded-xl transition duration-150 cursor-pointer ${
+                            isActive 
+                              ? 'bg-[#6366F1]/15 text-[#6366F1] border-l-4 border-[#6366F1] font-black' 
+                              : 'text-slate-300 hover:text-white hover:bg-white/5'
+                          }`}
+                          id={`mobile_tab_${item.id}`}
+                        >
+                          <IconComponent className={`w-4 h-4 ${isActive ? 'text-[#6366F1]' : 'text-slate-400'}`} />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                </nav>
+
+                {/* Swipe hint */}
+                <div className="mt-auto pt-4 text-center">
+                  <span className="text-[10px] text-slate-500 font-mono italic">
+                    ← Swipe left anywhere on drawer to close
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Sign Out Bar */}
+              <div className="p-4 border-t border-white/10 bg-slate-950/80">
                 <button
                   type="button"
                   onClick={() => { setIsOpenMobile(false); onLogout(); }}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-tight uppercase text-red-500 hover:text-red-400 hover:bg-red-950/10 transition cursor-pointer border border-red-500/10"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-tight uppercase text-red-400 hover:text-red-300 hover:bg-red-950/20 transition cursor-pointer border border-red-500/20"
                   id="btn_sidebar_logout_mobile"
                 >
-                  <LogOut className="w-4 h-4 text-red-500" />
+                  <LogOut className="w-4 h-4 text-red-400" />
                   <span>Sign Out Console</span>
                 </button>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
