@@ -711,13 +711,13 @@ Dispatched via Wavora Live Music Distribution Platform`;
       ctx.strokeStyle = isLive ? 'rgba(16, 185, 129, 0.6)' : 'rgba(99, 102, 241, 0.6)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(140, footerY, 800, 60, 30);
+      ctx.roundRect(290, footerY, 500, 56, 28);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#f8fafc';
-      ctx.font = '800 18px -apple-system, sans-serif';
-      ctx.fillText('DISTRIBUTED BY WAVORA LIVE  •  100% ROYALTIES  •  150+ GLOBAL DSPS', 540, footerY + 36);
+      ctx.font = '800 20px -apple-system, sans-serif';
+      ctx.fillText('DISTRIBUTED BY WAVORA LIVE', 540, footerY + 35);
 
       // Trigger download
       const link = document.createElement('a');
@@ -1541,10 +1541,8 @@ Thank you for distributing your music with Wavora Live!`;
               </div>
 
               {/* Footer Glassmorphic Pill Badge */}
-              <div className="relative z-10 flex items-center justify-center gap-1.5 px-3 py-1 bg-white/5 border border-white/15 rounded-full text-[8px] font-bold text-slate-300 mt-1 shadow-md backdrop-blur-md">
+              <div className="relative z-10 flex items-center justify-center px-3.5 py-1 bg-white/5 border border-white/15 rounded-full text-[8px] font-bold text-slate-300 mt-1 shadow-md backdrop-blur-md">
                 <span>Distributed by Wavora Live</span>
-                <span className="text-emerald-400 font-bold">•</span>
-                <span className="text-emerald-400 font-extrabold uppercase">150+ Global DSPs</span>
               </div>
             </div>
           </div>
