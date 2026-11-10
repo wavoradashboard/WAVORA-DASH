@@ -516,7 +516,17 @@ export default function CatalogueView({
                         <div className="flex justify-between items-center pt-3 border-t border-slate-900/60 flex-wrap gap-2">
                           <span className="text-[10px] text-slate-500">Submitted at: {new Date(rel.submittedAt).toLocaleString()}</span>
                           
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {onViewReleaseDetails && (
+                              <button
+                                type="button"
+                                onClick={() => onViewReleaseDetails(rel)}
+                                className="px-3 py-1 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] tracking-wide transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                                id={`btn_expanded_poster_${rel.id}`}
+                              >
+                                {rel.status === 'Live' ? '🔥 View / Customize OUT NOW Poster' : '🎨 Customize Poster & Upload Art'}
+                              </button>
+                            )}
                             {rel.status === 'Rejected' && onEditRelease && (
                               <button
                                 type="button"

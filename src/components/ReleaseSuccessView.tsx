@@ -30,7 +30,9 @@ import {
   RadioTower,
   FileDown,
   Printer,
-  Clock
+  Clock,
+  Upload,
+  ImagePlus
 } from 'lucide-react';
 import { Release, User, ReleaseTrack } from '../types';
 
@@ -80,6 +82,34 @@ export default function ReleaseSuccessView({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Custom Poster Artwork state
+  const [customPosterCoverUrl, setCustomPosterCoverUrl] = useState<string | null>(null);
+  const posterFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCustomCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload a valid image file (PNG, JPG, JPEG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (typeof event.target?.result === 'string') {
+          setCustomPosterCoverUrl(event.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResetCustomCover = () => {
+    setCustomPosterCoverUrl(null);
+    if (posterFileInputRef.current) {
+      posterFileInputRef.current.value = '';
+    }
+  };
 
   const tracks = release.tracks && release.tracks.length > 0 ? release.tracks : [
     {
@@ -699,7 +729,7 @@ Dispatched via Wavora Live Music Distribution Platform`;
     };
 
     // Load artwork and logo images asynchronously before exporting canvas
-    const coverArtSrc = release.coverArtSignedUrl || release.coverArtUrl;
+    const coverArtSrc = customPosterCoverUrl || release.coverArtSignedUrl || release.coverArtUrl;
     const logoSrc = '/assets/aistudio/IMG_20260610_015205_335_a0de0a77.webp';
 
     let loadedCover: HTMLImageElement | undefined = undefined;
@@ -730,7 +760,9 @@ Dispatched via Wavora Live Music Distribution Platform`;
     // Load Cover Image if available
     if (coverArtSrc) {
       const coverImg = new Image();
-      coverImg.crossOrigin = 'anonymous';
+      if (!coverArtSrc.startsWith('data:')) {
+        coverImg.crossOrigin = 'anonymous';
+      }
       coverImg.onload = () => {
         loadedCover = coverImg;
         coverDone = true;
@@ -1321,6 +1353,66 @@ Thank you for distributing your music with Wavora Live!`;
               </div>
             )}
 
+            {/* Custom Poster Artwork Upload Control */}
+            <div className="p-4 bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-black rounded-2xl border border-indigo-500/30 space-y-3" id="custom_poster_art_upload_section">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ImagePlus className="w-4 h-4 text-amber-400" />
+                  <span className="font-extrabold text-white text-xs uppercase tracking-wider">
+                    Poster Cover Artwork
+                  </span>
+                </div>
+                {customPosterCoverUrl ? (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    Custom Applied
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-slate-800 text-slate-400 border border-slate-700">
+                    Release Master Art
+                  </span>
+                )}
+              </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Upload your own custom artwork or promo graphic specifically for this poster. Your official release metadata and store delivery files will remain unchanged.
+              </p>
+
+              {/* Hidden file input for custom poster cover */}
+              <input 
+                ref={posterFileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={handleCustomCoverUpload}
+                className="hidden"
+                id="input_custom_poster_cover"
+              />
+
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => posterFileInputRef.current?.click()}
+                  className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition cursor-pointer shadow-md shadow-indigo-600/20 active:scale-95"
+                  id="btn_upload_custom_poster_art"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{customPosterCoverUrl ? 'Replace Custom Artwork' : 'Upload Custom Cover Art'}</span>
+                </button>
+
+                {customPosterCoverUrl && (
+                  <button
+                    type="button"
+                    onClick={handleResetCustomCover}
+                    className="px-3 py-2 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    id="btn_reset_poster_art"
+                    title="Revert back to original release artwork"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Reset to Original</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="p-4 bg-black/40 rounded-2xl border border-white/10 space-y-2 text-slate-300 text-[11px]">
               <div className="flex justify-between border-b border-white/5 pb-1.5">
                 <span className="text-slate-500">Poster Track Title:</span>
@@ -1330,6 +1422,12 @@ Thank you for distributing your music with Wavora Live!`;
                 <span className="text-slate-500">Artist Name:</span>
                 <span className="font-bold text-indigo-300 truncate max-w-[180px]">
                   {currentTrack.mainArtistName || currentUser.artistName}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-1.5">
+                <span className="text-slate-500">Cover Artwork:</span>
+                <span className={`font-bold truncate max-w-[180px] ${customPosterCoverUrl ? 'text-amber-300' : 'text-slate-200'}`}>
+                  {customPosterCoverUrl ? '🎨 Custom Uploaded Art' : '🎵 Official Release Cover'}
                 </span>
               </div>
               <div className="flex justify-between border-b border-white/5 pb-1.5">
@@ -1347,7 +1445,7 @@ Thank you for distributing your music with Wavora Live!`;
             </div>
 
             <p className="text-[10px] text-slate-400 italic leading-relaxed">
-              💡 Tip: Click "Download HD Poster (PNG)" to download a 1080x1080 high-resolution social media graphic featuring your album artwork, vinyl record accent, and official Wavora Live logo!
+              💡 Tip: Click "{release.status === 'Live' ? 'Download HD OUT NOW Poster' : 'Download HD Poster (PNG)'}" to download a 1080x1080 high-resolution social media graphic featuring your artwork, vinyl record accent, and official Wavora Live logo!
             </p>
           </div>
 
@@ -1394,13 +1492,26 @@ Thank you for distributing your music with Wavora Live!`;
                 </div>
 
                 {/* Square Album Cover */}
-                <div className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-xl overflow-hidden shadow-2xl border-2 border-white/40 bg-black">
+                <div 
+                  onClick={() => posterFileInputRef.current?.click()}
+                  className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-xl overflow-hidden shadow-2xl border-2 border-white/40 bg-black cursor-pointer group/art"
+                  title="Click to upload custom poster artwork"
+                >
                   <img 
-                    src={release.coverArtSignedUrl || release.coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=400&auto=format&fit=crop'} 
+                    src={customPosterCoverUrl || release.coverArtSignedUrl || release.coverArtUrl || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=400&auto=format&fit=crop'} 
                     alt={currentTrack.trackName}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover/art:scale-105"
                     referrerPolicy="no-referrer"
                   />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/art:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-black uppercase tracking-wider gap-1">
+                    <Upload className="w-4 h-4 text-amber-300" />
+                    <span>Change Art</span>
+                  </div>
+                  {customPosterCoverUrl && (
+                    <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md text-[8px] font-black uppercase text-amber-300 border border-amber-400/40">
+                      Custom
+                    </div>
+                  )}
                 </div>
               </div>
 
