@@ -841,6 +841,7 @@ export default function AdminPanel({
                     onChange={(e) => setCreatePlan(e.target.value as Plan)}
                     id="admin_create_user_plan"
                   >
+                    <option value="Free">Free Tier</option>
                     <option value="Basic">Basic Tier</option>
                     <option value="Pro">Pro Tier</option>
                     <option value="Elite">Elite Tier</option>
@@ -1445,6 +1446,7 @@ export default function AdminPanel({
                       required
                     >
                       <option value="">-- Choose Plan --</option>
+                      <option value="Free">Free Tier</option>
                       <option value="Basic">Basic Tier</option>
                       <option value="Pro">Pro Premium Tier</option>
                       <option value="Elite">Elite Custom Tier</option>

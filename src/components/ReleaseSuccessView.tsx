@@ -444,7 +444,7 @@ Dispatched via Wavora Live Music Distribution Platform`;
           <div class="row"><span class="lbl">Record Label Imprint:</span><span class="val">${release.labelName || 'Independent Release'}</span></div>
           <div class="row"><span class="lbl">Copyright Line (C):</span><span class="val">${release.cLine || `© ${new Date().getFullYear()} ${currentUser.artistName}`}</span></div>
           <div class="row"><span class="lbl">Phonogram Line (P):</span><span class="val">${release.pLine || `℗ ${new Date().getFullYear()} ${currentUser.artistName}`}</span></div>
-          <div class="row"><span class="lbl">Royalty Payout Share:</span><span class="val">100% Direct Royalty Payout</span></div>
+          <div class="row"><span class="lbl">Royalty Payout Share:</span><span class="val">Direct DSP Distribution Payout</span></div>
         </div>
 
         <div class="card-title" style="margin-bottom: 6px;">TRACKLIST & AUDIO MANIFEST (${tracks.length})</div>
@@ -1317,7 +1317,7 @@ Thank you for distributing your music with Wavora Live!`;
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="font-bold text-xs text-white">Rights & Copyright Verified</div>
-            <p className="text-[10px] text-slate-400 leading-tight">Publishing C & P lines logged for 100% royalty payout.</p>
+            <p className="text-[10px] text-slate-400 leading-tight">Publishing C & P lines logged for automated DSP royalty payout.</p>
           </div>
 
           <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-indigo-500/30 space-y-1.5">
@@ -1611,10 +1611,10 @@ Thank you for distributing your music with Wavora Live!`;
 
         <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-2">
           <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4" /> 100% Royalty Protection
+            <ShieldCheck className="w-4 h-4" /> Direct Royalty Protection
           </div>
           <p className="text-[11px] text-gray-400 leading-relaxed">
-            All streams, downloads, and Content ID revenues flow directly into your <strong className="text-slate-200">Wavora Live Earnings</strong> ledger with zero commission deduction.
+            All streams, downloads, and Content ID revenues flow directly into your <strong className="text-slate-200">Wavora Live Earnings</strong> ledger according to your tier.
           </p>
         </div>
       </div>

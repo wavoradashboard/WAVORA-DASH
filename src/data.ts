@@ -78,6 +78,15 @@ const SEED_USERS: User[] = [
     registeredAt: '2026-06-01T11:20:00Z',
     planEndDate: '2027-06-01T11:20:00Z',
   },
+  {
+    email: 'echo@wavora.live',
+    password: 'password',
+    artistName: 'Echo Pulse',
+    plan: 'Free',
+    isApproved: true,
+    registeredAt: '2026-05-10T12:00:00Z',
+    planEndDate: '2028-05-10T12:00:00Z',
+  },
 ];
 
 const SEED_ARTISTS: ArtistProfile[] = [

@@ -1,4 +1,4 @@
-export type Plan = 'Basic' | 'Pro' | 'Elite';
+export type Plan = 'Free' | 'Basic' | 'Pro' | 'Elite';
 
 export type TrackStatus = 'Submitted' | 'Approved' | 'Rejected' | 'Live';
 
@@ -123,7 +123,7 @@ export interface Notification {
   title: string;
   message: string;
   targetType: 'Everyone' | 'Plan' | 'Artist';
-  targetValue?: string; // specific plan ('Basic' | 'Pro' | 'Elite') or artist email
+  targetValue?: string; // specific plan ('Free' | 'Basic' | 'Pro' | 'Elite') or artist email
   severity: 'Info' | 'Warning' | 'Success' | 'Critical';
   createdAt: string;
 }

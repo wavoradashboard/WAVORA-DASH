@@ -143,6 +143,7 @@ export default function NewReleaseWizard({
     );
   }
 
+  const isFree = currentUser.plan === 'Free';
   const isBasic = currentUser.plan === 'Basic';
   const isPro = currentUser.plan === 'Pro';
   const isElite = currentUser.plan === 'Elite';
@@ -176,7 +177,7 @@ export default function NewReleaseWizard({
   const getMinReleaseDate = (): Date => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const daysToAdd = isElite ? 1 : isPro ? 3 : 5;
+    const daysToAdd = isElite ? 1 : isPro ? 3 : isBasic ? 5 : 7;
     const minDate = new Date(today);
     minDate.setDate(today.getDate() + daysToAdd);
     return minDate;
@@ -534,8 +535,8 @@ export default function NewReleaseWizard({
     const selectedDate = new Date(releaseDate + 'T00:00:00');
     const minAllowedDate = getMinReleaseDate();
     if (selectedDate < minAllowedDate) {
-      const days = isElite ? '1 day' : isPro ? '3 days' : '5 days';
-      const tier = isElite ? 'Elite' : isPro ? 'Pro' : 'Basic';
+      const days = isElite ? '1 day' : isPro ? '3 days' : isBasic ? '5 days' : '7 days';
+      const tier = isElite ? 'Elite' : isPro ? 'Pro' : isBasic ? 'Basic' : 'Free';
       return `Release date must be at least ${days} from today for the ${tier} plan (Minimum allowed date: ${getMinReleaseDateString()})`;
     }
 
@@ -1018,7 +1019,7 @@ export default function NewReleaseWizard({
                     onChange={(e) => setReleaseDate(e.target.value)}
                   />
                   <p className="text-[9px] text-[#6366F1] font-semibold">
-                    Min. {isElite ? '1 day' : isPro ? '3 days' : '5 days'} from today ({isElite ? 'Elite' : isPro ? 'Pro' : 'Basic'} tier)
+                    Min. {isElite ? '1 day' : isPro ? '3 days' : isBasic ? '5 days' : '7 days'} from today ({isElite ? 'Elite' : isPro ? 'Pro' : isBasic ? 'Basic' : 'Free'} tier)
                   </p>
                 </div>
 

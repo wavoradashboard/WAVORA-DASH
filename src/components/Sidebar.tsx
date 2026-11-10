@@ -43,6 +43,7 @@ export default function Sidebar({
   isSidebarCollapsed,
   setIsSidebarCollapsed
 }: SidebarProps) {
+  const isFree = currentUser.plan === 'Free';
   const isBasic = currentUser.plan === 'Basic';
   const isPro = currentUser.plan === 'Pro';
   const isElite = currentUser.plan === 'Elite';
@@ -87,10 +88,17 @@ export default function Sidebar({
             ⚡ Pro Tier
           </span>
         );
-      default:
+      case 'Basic':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[rgba(255,255,255,0.1)] text-gray-300 border border-[#2F2F2F] tracking-wide uppercase">
             🎵 Basic Tier
+          </span>
+        );
+      case 'Free':
+      default:
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 tracking-wide uppercase">
+            🌱 Free Tier
           </span>
         );
     }

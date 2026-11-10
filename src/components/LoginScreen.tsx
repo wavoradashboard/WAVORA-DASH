@@ -273,7 +273,7 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
           </h1>
 
           <p className="text-gray-400 text-xs leading-relaxed max-w-sm">
-            Distribute your music worldwide to Spotify, Apple Music, TikTok, Amazon, and 150+ major streaming platforms. Keep 100% of your royalties.
+            Distribute your music worldwide to Spotify, Apple Music, TikTok, Amazon, and 150+ major streaming platforms with direct payout distribution.
           </p>
 
           <div className="space-y-4 pt-2" id="features_benefits">

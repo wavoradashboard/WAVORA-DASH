@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, KeyRound, FileText, Shield, User as UserIcon, Check } from 'lucide-react';
-import { User } from '../types';
+import { User, Plan } from '../types';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, onSavePassw
   };
 
   // Get plan badge styling
-  const getPlanBadge = (plan: 'Basic' | 'Pro' | 'Elite') => {
+  const getPlanBadge = (plan: Plan) => {
     switch (plan) {
       case 'Elite':
         return (
@@ -63,10 +63,17 @@ export default function ProfileModal({ isOpen, onClose, currentUser, onSavePassw
             ✦ Pro Distribution
           </span>
         );
-      default:
+      case 'Basic':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black tracking-widest uppercase bg-[#1A1A1A] border border-[#2F2F2F] text-gray-300" id="badge_basic">
             Basic Tier
+          </span>
+        );
+      case 'Free':
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black tracking-widest uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-300" id="badge_free">
+            🌱 Free Tier
           </span>
         );
     }
@@ -238,7 +245,7 @@ export default function ProfileModal({ isOpen, onClose, currentUser, onSavePassw
             >
               <p className="font-bold text-gray-200">1. CORE INTELLECTUAL PROPERTY & UPLOAD POLICY</p>
               <p>
-                By registering and submitting digital music items to Wavora Live, you guarantee and warrant that you hold 100% of the underlying copyrights, master rights, mechanical licenses, and publishing credits for every composition uploaded under your associated unique user address.
+                By registering and submitting digital music items to Wavora Live, you guarantee and warrant that you hold full underlying copyrights, master rights, mechanical licenses, and publishing credits for every composition uploaded under your associated unique user address.
               </p>
               <p className="font-bold text-gray-200">2. FORBIDDEN CONTENT & INFRINGEMENT</p>
               <p>

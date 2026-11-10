@@ -122,14 +122,14 @@ export default function DashboardHome({
               </h2>
 
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-                Your account is configured on the <strong className="text-amber-300 font-bold">Wavora VIP Elite Tier</strong>. Enjoy 24-hour fast-track DSP distribution, 100% royalty payouts, direct SoundExchange sync, and a dedicated VIP account concierge desk.
+                Your account is configured on the <strong className="text-amber-300 font-bold">Wavora VIP Elite Tier</strong>. Enjoy 24-hour fast-track DSP distribution, direct royalty payouts, direct SoundExchange sync, and a dedicated VIP account concierge desk.
               </p>
 
               {/* VIP Executive Status Pill Bar */}
               <div className="pt-1 flex flex-wrap items-center gap-3 text-xs text-slate-300 font-semibold">
                 <div className="flex items-center gap-1.5 bg-black/50 px-3 py-1.5 rounded-xl border border-white/10">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>0% Commission (100% Artist Revenue)</span>
+                  <span>VIP Direct Royalty Pipeline</span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-black/50 px-3 py-1.5 rounded-xl border border-white/10">
                   <Headphones className="w-4 h-4 text-indigo-400" />
@@ -313,10 +313,10 @@ export default function DashboardHome({
           )}
           <div className="text-[10px] text-gray-400 mt-2 flex items-center gap-1 font-mono uppercase truncate">
             <span className="text-emerald-400 font-bold flex items-center gap-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" /> 100% Retained
+              <ArrowUpRight className="w-3.5 h-3.5" /> Direct Payout
             </span>
             <span>•</span>
-            <span>Direct Payout</span>
+            <span>Verified Revenue</span>
           </div>
         </motion.div>
 
