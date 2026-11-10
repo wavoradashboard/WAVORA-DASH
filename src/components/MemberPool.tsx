@@ -13,16 +13,19 @@ interface MemberPoolProps {
 
 export default function MemberPool({ currentUser, users, onImpersonateUser, onUpdateUser }: MemberPoolProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [planFilter, setPlanFilter] = useState<string>('All');
   const [editingPasswordEmail, setEditingPasswordEmail] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [passwordChangeSuccessEmail, setPasswordChangeSuccessEmail] = useState<string | null>(null);
 
   // Group active members (not pending, not admin, not rejected)
   const activeUsers = users.filter(u => u.isApproved === true && u.email.toLowerCase() !== 'admin@g.g' && u.email.toLowerCase() !== 'wavoralive@gmail.com' && u.email.toLowerCase() !== 'wavoradashboard@gmail.com');
-  const displayedUsers = activeUsers.filter(user => 
-    user.artistName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const displayedUsers = activeUsers.filter(user => {
+    const matchesSearch = user.artistName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlan = planFilter === 'All' || user.plan === planFilter;
+    return matchesSearch && matchesPlan;
+  });
 
   const handleAdminChangePassword = async (email: string) => {
     if (!newPassword.trim() || newPassword.length < 6) {
@@ -74,17 +77,34 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
             Monitor, manage, and impersonate all globally active accounts on the platform. Adjust plans, set expiry dates, and modify access credentials.
           </p>
         </div>
-        <div className="relative w-full md:w-64">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pt-0.5">
-            <Search className="w-4 h-4 text-slate-500" />
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Plan Filter dropdown */}
+          <select
+            value={planFilter}
+            onChange={(e) => setPlanFilter(e.target.value)}
+            className="bg-[#151c2e] border border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+            id="member_pool_plan_filter"
+          >
+            <option value="All">All Plans ({activeUsers.length})</option>
+            <option value="Free">🌱 Free ({activeUsers.filter(u => u.plan === 'Free').length})</option>
+            <option value="Basic">🎵 Basic ({activeUsers.filter(u => u.plan === 'Basic').length})</option>
+            <option value="Pro">⚡ Pro ({activeUsers.filter(u => u.plan === 'Pro').length})</option>
+            <option value="Elite">★ Elite ({activeUsers.filter(u => u.plan === 'Elite').length})</option>
+          </select>
+
+          <div className="relative w-full md:w-60">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pt-0.5">
+              <Search className="w-4 h-4 text-slate-500" />
+            </div>
+            <input
+              type="text"
+              className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 pl-10 pr-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              id="input_member_pool_search"
+            />
           </div>
-          <input
-            type="text"
-            className="w-full bg-[#151c2e] border border-slate-800 rounded-xl py-2 pl-10 pr-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
       </div>
 
@@ -125,11 +145,21 @@ export default function MemberPool({ currentUser, users, onImpersonateUser, onUp
                       <select 
                         value={user.plan}
                         onChange={(e) => handleUpdatePlan(user.email, e.target.value as Plan)}
-                        className="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                        className={`border text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer ${
+                          user.plan === 'Elite' 
+                            ? 'bg-amber-950/40 border-amber-500/40 text-amber-300' 
+                            : user.plan === 'Pro' 
+                            ? 'bg-purple-950/40 border-purple-500/40 text-purple-300' 
+                            : user.plan === 'Basic'
+                            ? 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300'
+                            : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                        }`}
+                        id={`select_member_plan_${user.email}`}
                       >
-                        <option value="Basic">Basic</option>
-                        <option value="Pro">Pro</option>
-                        <option value="Elite">Elite</option>
+                        <option value="Free" className="bg-slate-900 text-emerald-300">Free</option>
+                        <option value="Basic" className="bg-slate-900 text-indigo-300">Basic</option>
+                        <option value="Pro" className="bg-slate-900 text-purple-300">Pro</option>
+                        <option value="Elite" className="bg-slate-900 text-amber-300">Elite</option>
                       </select>
                     </td>
                     <td className="px-6 py-4">
