@@ -16,8 +16,8 @@ const customFetch = async (url: RequestInfo | URL, init?: RequestInit) => {
   try {
     const res = await fetch(url, init);
 
-    // If a refresh token request returns non-OK (e.g. 400 Bad Request, Invalid Refresh Token), clear stale local session
-    if (!res.ok && (urlString.includes('grant_type=refresh_token') || urlString.includes('/auth/v1/token'))) {
+    // If a refresh token request fails (e.g. 400 Bad Request, Invalid Refresh Token), clear stale local session keys and return standard 400 invalid_grant
+    if (!res.ok && urlString.includes('grant_type=refresh_token')) {
       try {
         const storageKeysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -29,21 +29,15 @@ const customFetch = async (url: RequestInfo | URL, init?: RequestInit) => {
         storageKeysToRemove.forEach(k => localStorage.removeItem(k));
       } catch (e) {}
 
-      return new Response(JSON.stringify({ access_token: null, user: null }), {
-        status: 200,
+      return new Response(JSON.stringify({ error: 'invalid_grant', error_description: 'Invalid or expired refresh token' }), {
+        status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // If Supabase auth endpoint returns 5xx status, rewrite response to prevent Gotrue from throwing AuthRetryableFetchError
+    // If Supabase auth endpoint returns 5xx status, rewrite response to 400 to prevent Gotrue from throwing AuthRetryableFetchError
     if (!res.ok && res.status >= 500 && urlString.includes('/auth/v1/')) {
-      if (urlString.includes('/user') || urlString.includes('refresh_token') || urlString.includes('/session')) {
-        return new Response(JSON.stringify({ access_token: null, user: null }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      return new Response(JSON.stringify({ error: 'server_error', error_description: 'Supabase server temporarily unavailable' }), {
+      return new Response(JSON.stringify({ error: 'server_error', error_description: 'Authentication server temporarily unavailable' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -52,15 +46,9 @@ const customFetch = async (url: RequestInfo | URL, init?: RequestInit) => {
   } catch (e) {
     console.warn('Supabase network request failed (offline mode fallback active):', urlString, e);
     
-    // For auth calls, returning 200 or 400 avoids AuthRetryableFetchError uncaught exceptions
+    // For auth calls, returning 400 avoids AuthRetryableFetchError uncaught exceptions without triggering AuthInvalidTokenResponseError
     if (urlString.includes('/auth/v1/')) {
-      if (urlString.includes('/user') || urlString.includes('refresh_token') || urlString.includes('/session')) {
-        return new Response(JSON.stringify({ access_token: null, user: null }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-      return new Response(JSON.stringify({ error: 'offline', error_description: 'Database connection offline' }), {
+      return new Response(JSON.stringify({ error: 'offline', error_description: 'Authentication network unreachable' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -103,7 +91,12 @@ export const safeGetSession = async () => {
   try {
     const { data, error } = await supabase.auth.getSession();
     if (error) {
-      if (error.message?.includes('Refresh Token') || error.message?.includes('invalid_grant')) {
+      if (
+        error.message?.includes('Refresh Token') || 
+        error.message?.includes('invalid_grant') ||
+        error.message?.includes('session or user missing') ||
+        error.message?.includes('session missing')
+      ) {
         try {
           await supabase.auth.signOut({ scope: 'local' });
         } catch (e) {}

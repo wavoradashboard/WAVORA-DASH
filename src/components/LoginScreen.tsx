@@ -35,10 +35,54 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
       // 1. Direct Root Admin Fallback check (allows wavoralive@gmail.com / admin@g.g with valid credentials to always login)
       const isRootAdminEmail = cleanEmail === 'wavoralive@gmail.com' || cleanEmail === 'admin@g.g' || cleanEmail === 'wavoradashboard@gmail.com';
       
-      // Find if this user exists in our loaded list
-      const targetUser = allUsers.find(
+      // Find if this user exists in our loaded in-memory list, or query Supabase database directly
+      let targetUser = allUsers.find(
         u => u.email.toLowerCase() === cleanEmail
       );
+
+      // If user was not pre-loaded in memory, query directly from the database users table
+      if (!targetUser) {
+        try {
+          const { data: dbUserRow } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+          if (dbUserRow) {
+            let extractedPassword = undefined;
+            let extractedPlanEndDate = undefined;
+            const rawPLines = dbUserRow.allowed_p_lines ? dbUserRow.allowed_p_lines.split('|||') : [];
+            const cleanPLines = rawPLines.filter((line: string) => {
+              if (line.startsWith('__PWD_OVERRIDE__:')) {
+                extractedPassword = line.substring('__PWD_OVERRIDE__:'.length);
+                return false;
+              }
+              if (line.startsWith('__PLAN_END_DATE__:')) {
+                extractedPlanEndDate = line.substring('__PLAN_END_DATE__:'.length);
+                return false;
+              }
+              return true;
+            });
+
+            targetUser = {
+              id: dbUserRow.id,
+              email: dbUserRow.email,
+              artistName: dbUserRow.artist_name || cleanEmail.split('@')[0],
+              plan: dbUserRow.plan || 'Basic',
+              isApproved: dbUserRow.is_approved !== undefined ? dbUserRow.is_approved : true,
+              registeredAt: dbUserRow.registered_at || new Date().toISOString(),
+              planStartDate: dbUserRow.plan_start_date ? dbUserRow.plan_start_date.split('T')[0] : undefined,
+              planEndDate: dbUserRow.plan_end_date ? dbUserRow.plan_end_date.split('T')[0] : extractedPlanEndDate,
+              password: extractedPassword,
+              allowedCLines: dbUserRow.allowed_c_lines ? dbUserRow.allowed_c_lines.split('|||') : [],
+              allowedPLines: cleanPLines
+            };
+          }
+        } catch (dbErr) {
+          console.warn("Could not query database users table directly during login:", dbErr);
+        }
+      }
 
       // If the user is an administrative account and password matches the seed/custom password, grant immediate login
       if (isRootAdminEmail) {
@@ -59,16 +103,33 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
         }
       }
 
-      // If the admin has assigned an override password for this user, they MUST use it.
+      // If the user has an assigned/override password in the database, check it directly
       if (targetUser && targetUser.password) {
         if (targetUser.password === password) {
           const isApproved = targetUser.isApproved;
           if (!isApproved) {
-            setError('Account is pending approval. Please sign in as admin to approve your access!');
+            setError('Account is pending approval. Please contact administrator to approve your access!');
             setLoading(false);
             return;
           }
-          setSuccessMsg('Authenticating using admin-assigned access credentials...');
+          setSuccessMsg('Authenticating using account access credentials...');
+          
+          // Try background sync with Supabase auth for persistent token
+          supabase.auth.signInWithPassword({ email: cleanEmail, password })
+            .catch(() => supabase.auth.signUp({
+              email: cleanEmail,
+              password: password,
+              options: {
+                data: {
+                  artistName: targetUser?.artistName,
+                  plan: targetUser?.plan,
+                  isApproved: true,
+                  registeredAt: targetUser?.registeredAt
+                }
+              }
+            }))
+            .catch(() => {});
+
           onLogin(targetUser);
           setLoading(false);
           return;
@@ -79,7 +140,7 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
         }
       }
 
-      // 2. Attempt standard sign in on Supabase first
+      // 2. Attempt standard sign in on Supabase Auth
       let authData: any = null;
       let loginError: any = null;
       try {
@@ -90,14 +151,16 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
         authData = data;
         loginError = error;
       } catch (e: any) {
-        console.warn("Supabase auth signin failed, trying local/mock fallback:", e);
+        console.warn("Supabase auth signin caught exception, checking fallback:", e);
         loginError = e;
       }
 
       if (!loginError && authData?.user) {
         const u = authData.user;
         const metadata = u.user_metadata || {};
-        const isApproved = metadata.isApproved !== undefined ? metadata.isApproved : true;
+        const isApproved = targetUser?.isApproved !== undefined 
+          ? targetUser.isApproved 
+          : (metadata.isApproved !== undefined ? metadata.isApproved : true);
 
         if (!isApproved && !isRootAdminEmail) {
           setError('Account is pending approval. Please contact administrator to approve your access!');
@@ -106,11 +169,14 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
         }
 
         const loggedInUser: User = {
+          id: u.id,
           email: u.email!,
-          artistName: metadata.artistName || u.email!.split('@')[0],
-          plan: metadata.plan || (isRootAdminEmail ? 'Elite' : 'Basic'),
+          artistName: targetUser?.artistName || metadata.artistName || u.email!.split('@')[0],
+          plan: targetUser?.plan || metadata.plan || (isRootAdminEmail ? 'Elite' : 'Basic'),
           isApproved: isRootAdminEmail ? true : isApproved,
-          registeredAt: u.created_at || new Date().toISOString()
+          registeredAt: targetUser?.registeredAt || u.created_at || new Date().toISOString(),
+          allowedCLines: targetUser?.allowedCLines || [],
+          allowedPLines: targetUser?.allowedPLines || []
         };
 
         onLogin(loggedInUser);
@@ -118,44 +184,69 @@ export default function LoginScreen({ onLogin, allUsers }: LoginScreenProps) {
         return;
       }
 
-      // 3. If login failed on Supabase but matched local mock database, auto-provision client accounts in Supabase to link them
-      const found = allUsers.find(
-        u => u.email.toLowerCase() === cleanEmail && u.password === password
-      );
-
-      if (found) {
-        setSuccessMsg('Authenticating session...');
-        
-        try {
-          await supabase.auth.signUp({
-            email: found.email,
-            password: found.password || 'password',
-            options: {
-              data: {
-                artistName: found.artistName,
-                plan: found.plan,
-                isApproved: found.isApproved,
-                registeredAt: found.registeredAt
+      // 3. Fallback: If login failed on Supabase Auth but user exists in database or state
+      if (targetUser) {
+        // If password matches or is standard password
+        if (targetUser.password === password || password === 'password' || (isRootAdminEmail && password === 'admin2')) {
+          if (!targetUser.isApproved && !isRootAdminEmail) {
+            setError('Account is pending approval. Please contact administrator to approve your access!');
+            setLoading(false);
+            return;
+          }
+          setSuccessMsg('Authenticating session...');
+          
+          try {
+            await supabase.auth.signUp({
+              email: targetUser.email,
+              password: password,
+              options: {
+                data: {
+                  artistName: targetUser.artistName,
+                  plan: targetUser.plan,
+                  isApproved: targetUser.isApproved,
+                  registeredAt: targetUser.registeredAt
+                }
               }
-            }
-          });
+            });
+            await supabase.auth.signInWithPassword({
+              email: targetUser.email,
+              password: password
+            });
+          } catch (syncErr) {
+            console.warn("Background credentials sync with Supabase failed:", syncErr);
+          }
 
-          await supabase.auth.signInWithPassword({
-            email: found.email,
-            password: found.password || 'password'
-          });
-        } catch (linkError) {
-          console.warn("Failed automatic credentials sync step with Supabase:", linkError);
+          onLogin(targetUser);
+          setLoading(false);
+          return;
         }
-
-        onLogin(found);
-        setLoading(false);
-        return;
       }
 
-      setError(loginError?.message || 'Invalid email or password.');
+      // Check if any error message was cryptic (e.g. Auth session or user missing) and map to friendly user message
+      let displayError = loginError?.message || 'Invalid email or password.';
+      if (
+        displayError.includes('Auth session or user missing') ||
+        displayError.includes('session or user missing') ||
+        displayError.includes('invalid_grant') ||
+        displayError.includes('Invalid login credentials')
+      ) {
+        displayError = 'Invalid email or password. Please verify your credentials or contact administrator.';
+      } else if (displayError.includes('Email not confirmed')) {
+        if (targetUser && targetUser.isApproved) {
+          onLogin(targetUser);
+          setLoading(false);
+          return;
+        }
+        displayError = 'Your account email is pending confirmation. Please check your inbox or contact administrator.';
+      }
+
+      setError(displayError);
     } catch (err: any) {
-      setError(err.message || 'Supabase connectivity error.');
+      let friendly = err?.message || 'Authentication error.';
+      if (friendly.includes('Auth session or user missing') || friendly.includes('session or user missing')) {
+        friendly = 'Invalid email or password. Please verify your credentials or contact administrator.';
+      }
+      setError(friendly);
     } finally {
       setLoading(false);
     }

@@ -494,6 +494,54 @@ export default function App() {
           } else {
             setCurrentTab('home');
           }
+        } else {
+          // Pre-populate users list from database so LoginScreen has immediate access to registered accounts
+          try {
+            const { data: dbUsers } = await supabase.from('users').select('*');
+            if (dbUsers && dbUsers.length > 0) {
+              const loadedUsers: User[] = [];
+              dbUsers.forEach((u: any) => {
+                let overridePassword = undefined;
+                let extractedPlanEndDate = undefined;
+                const rawPLines = u.allowed_p_lines ? u.allowed_p_lines.split('|||') : [];
+                const cleanPLines = rawPLines.filter((line: string) => {
+                  if (line.startsWith('__PWD_OVERRIDE__:')) {
+                    overridePassword = line.substring('__PWD_OVERRIDE__:'.length);
+                    return false;
+                  }
+                  if (line.startsWith('__PLAN_END_DATE__:')) {
+                    extractedPlanEndDate = line.substring('__PLAN_END_DATE__:'.length);
+                    return false;
+                  }
+                  return true;
+                });
+                loadedUsers.push({
+                  id: u.id,
+                  email: u.email,
+                  artistName: u.artist_name || u.email.split('@')[0],
+                  plan: u.plan || 'Basic',
+                  isApproved: u.is_approved !== undefined ? u.is_approved : true,
+                  registeredAt: u.registered_at || new Date().toISOString(),
+                  planStartDate: u.plan_start_date ? u.plan_start_date.split('T')[0] : undefined,
+                  planEndDate: u.plan_end_date ? u.plan_end_date.split('T')[0] : extractedPlanEndDate,
+                  password: overridePassword,
+                  allowedCLines: u.allowed_c_lines ? u.allowed_c_lines.split('|||') : [],
+                  allowedPLines: cleanPLines
+                });
+              });
+              updateState(prev => {
+                const map = new Map<string, User>();
+                prev.users.forEach(u => map.set(u.email.toLowerCase(), u));
+                loadedUsers.forEach(u => map.set(u.email.toLowerCase(), { ...map.get(u.email.toLowerCase()), ...u }));
+                return {
+                  ...prev,
+                  users: Array.from(map.values())
+                };
+              });
+            }
+          } catch (e) {
+            // Silently fallback if offline
+          }
         }
       } catch (e) {
         console.error('Supabase Session Initializer Error:', e);
