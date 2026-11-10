@@ -503,7 +503,7 @@ Dispatched via Wavora Live Music Distribution Platform`;
 
     const trackToUse = tracks[selectedTrackIndex] || tracks[0];
     const trackTitle = trackToUse ? trackToUse.trackName : release.albumName;
-    const artistName = trackToUse?.mainArtistName || release.mainArtistName;
+    const artistName = trackToUse?.mainArtistName || release.mainArtistName || currentUser.artistName || 'Artist';
     const featStr = trackToUse?.featureArtists?.length 
       ? ` FEAT. ${trackToUse.featureArtists.join(', ')}` 
       : (release.featureArtists?.length ? ` FEAT. ${release.featureArtists.join(', ')}` : '');
@@ -672,52 +672,92 @@ Dispatched via Wavora Live Music Distribution Platform`;
         ctx.fill();
       }
 
-      // 5. Track / Release Title
+      // 5. Track / Release Title with Auto-Fitting Font Size (Never Cut Off!)
+      const maxTextWidth = 920;
+      let titleFontSize = 48;
       ctx.fillStyle = '#ffffff';
-      ctx.font = '900 48px -apple-system, sans-serif';
       ctx.textAlign = 'center';
 
-      let displayTitle = trackTitle.toUpperCase();
-      if (displayTitle.length > 24) {
-        displayTitle = displayTitle.slice(0, 22) + '...';
+      const cleanTitle = `"${trackTitle.trim()}"`.toUpperCase();
+      ctx.font = `900 ${titleFontSize}px -apple-system, sans-serif`;
+      while (ctx.measureText(cleanTitle).width > maxTextWidth && titleFontSize > 26) {
+        titleFontSize -= 2;
+        ctx.font = `900 ${titleFontSize}px -apple-system, sans-serif`;
       }
-      ctx.fillText(`"${displayTitle}"`, 540, 698);
+      ctx.fillText(cleanTitle, 540, 694);
 
-      // 6. Artist Name
+      // 6. Artist Name with Auto-Fitting & Multi-Line Support (Never Cut Off!)
       ctx.fillStyle = isLive ? '#6ee7b7' : '#a5b4fc';
-      ctx.font = '700 28px -apple-system, sans-serif';
-      let displayArtist = fullArtistStr.toUpperCase();
-      if (displayArtist.length > 36) {
-        displayArtist = displayArtist.slice(0, 34) + '...';
+      let artistFontSize = 32;
+      ctx.font = `700 ${artistFontSize}px -apple-system, sans-serif`;
+      
+      const cleanArtist = fullArtistStr.trim().toUpperCase();
+      let measuredWidth = ctx.measureText(cleanArtist).width;
+      
+      // Gradually reduce font size if single-line is slightly wide
+      while (measuredWidth > maxTextWidth && artistFontSize > 22) {
+        artistFontSize -= 1.5;
+        ctx.font = `700 ${artistFontSize}px -apple-system, sans-serif`;
+        measuredWidth = ctx.measureText(cleanArtist).width;
       }
-      ctx.fillText(displayArtist, 540, 750);
+
+      let storesRibbonY = 804;
+      let footerPillY = 882;
+
+      if (measuredWidth <= maxTextWidth) {
+        // Fits comfortably on one line
+        ctx.fillText(cleanArtist, 540, 746);
+      } else {
+        // Long artist name or featured artists: render across 2 centered lines cleanly
+        let line1 = artistName.trim().toUpperCase();
+        let line2 = featStr ? featStr.trim().toUpperCase() : '';
+
+        if (!line2) {
+          // No feat string, split by words at the midpoint
+          const words = cleanArtist.split(' ');
+          const mid = Math.ceil(words.length / 2);
+          line1 = words.slice(0, mid).join(' ');
+          line2 = words.slice(mid).join(' ');
+        }
+
+        let multiFontSize = 24;
+        ctx.font = `700 ${multiFontSize}px -apple-system, sans-serif`;
+        while ((ctx.measureText(line1).width > maxTextWidth || ctx.measureText(line2).width > maxTextWidth) && multiFontSize > 16) {
+          multiFontSize -= 1;
+          ctx.font = `700 ${multiFontSize}px -apple-system, sans-serif`;
+        }
+
+        ctx.fillText(line1, 540, 735);
+        ctx.fillText(line2, 540, 764);
+        storesRibbonY = 812;
+        footerPillY = 890;
+      }
 
       // 7. Streaming Stores Ribbon (No Release Date!)
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.roundRect(140, 782, 800, 48, 24);
+      ctx.roundRect(140, storesRibbonY, 800, 48, 24);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#cbd5e1';
       ctx.font = '800 16px -apple-system, sans-serif';
-      ctx.fillText('SPOTIFY  •  APPLE MUSIC  •  YOUTUBE MUSIC  •  AMAZON  •  DEEZER  •  TIDAL', 540, 812);
+      ctx.fillText('SPOTIFY  •  APPLE MUSIC  •  YOUTUBE MUSIC  •  AMAZON  •  DEEZER  •  TIDAL', 540, storesRibbonY + 30);
 
       // 8. Footer Glassmorphic Pill Ribbon
-      const footerY = 865;
       ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.strokeStyle = isLive ? 'rgba(16, 185, 129, 0.6)' : 'rgba(99, 102, 241, 0.6)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(290, footerY, 500, 56, 28);
+      ctx.roundRect(290, footerPillY, 500, 56, 28);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#f8fafc';
       ctx.font = '800 20px -apple-system, sans-serif';
-      ctx.fillText('DISTRIBUTED BY WAVORA LIVE', 540, footerY + 35);
+      ctx.fillText('DISTRIBUTED BY WAVORA LIVE', 540, footerPillY + 35);
 
       // Trigger download
       const link = document.createElement('a');
@@ -1527,11 +1567,11 @@ Thank you for distributing your music with Wavora Live!`;
               </div>
 
               {/* Track Title & Artist Name (NO RELEASE DATE!) */}
-              <div className="relative z-10 space-y-0.5 max-w-full px-2">
-                <h4 className="font-black text-white text-xs sm:text-sm tracking-tight truncate">
+              <div className="relative z-10 space-y-0.5 max-w-full px-2 text-center">
+                <h4 className="font-black text-white text-xs sm:text-sm tracking-tight leading-tight line-clamp-2">
                   "{currentTrack.trackName}"
                 </h4>
-                <p className="text-[10px] font-bold text-indigo-300 truncate">
+                <p className="text-[10px] font-bold text-indigo-300 leading-snug line-clamp-2">
                   {currentTrack.mainArtistName || currentUser.artistName}
                   {currentTrack.featureArtists?.length ? ` (feat. ${currentTrack.featureArtists.join(', ')})` : ''}
                 </p>
